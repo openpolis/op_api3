@@ -1,0 +1,18 @@
+Django
+MySQL-python
+psycopg2
+Markdown
+PyYAML
+django-filter
+djangorestframework
+django-extensions
+django-model-utils
+South
+Werkzeug
+docutils
+
+-e git+git@github.com:joke2k/django-environ.git#egg=environ
+
+# optionally
+# ipython
+# readline (through easy_install)

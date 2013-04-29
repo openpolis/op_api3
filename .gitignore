@@ -1,0 +1,5 @@
+.idea
+/log/*
+.env
+quickstart
+settings_local.py
