@@ -1,0 +1,13 @@
+Django
+MySQL-python
+psycopg2
+Markdown
+PyYAML
+django-filter
+djangorestframework
+django-extensions
+django-model-utils
+South
+Werkzeug
+docutils
+django-environ
