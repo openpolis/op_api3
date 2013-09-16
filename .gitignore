@@ -4,4 +4,4 @@
 quickstart
 settings_local.py
 *.py[cd]
-.zip
+*.zip
