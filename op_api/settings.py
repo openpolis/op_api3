@@ -141,6 +141,7 @@ INSTALLED_APPS = (
     # used when reading from old tables (import)
     'op_api.politici',
     'op_api.territori',
+    'op_api.parlamento',
 )
 
 # A sample logging configuration. The only tangible logging
