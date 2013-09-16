@@ -2,7 +2,7 @@
 from django.db import models
 from django_extensions.db.models import TimeStampedModel
 from django.utils.translation import ugettext_lazy as _
-from op_api3.models import PrioritizedModel, UnifiedModel
+from op_api.models import PrioritizedModel, UnifiedModel
 from model_utils import Choices
 
 

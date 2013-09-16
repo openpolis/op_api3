@@ -1,12 +1,11 @@
-from django.views.generic.list import MultipleObjectMixin
-
-from op_api3.mixins import ShortListModelMixin
-from pops.models import Person
 from rest_framework import generics
 from rest_framework.decorators import api_view
 from rest_framework.reverse import reverse
 from rest_framework.response import Response
-from pops.serializers import PersonSerializer
+
+from op_api.mixins import ShortListModelMixin
+from op_api.pops.models import Person
+from op_api.pops.serializers import PersonSerializer
 
 
 @api_view(['GET'])

@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 __author__ = 'guglielmo'
 
-from django.core.exceptions import ObjectDoesNotExist
-from django.core.management.base import BaseCommand, CommandError
-
 from optparse import make_option
 import logging
 
-from politici.models import *
-from pops.models import *
+from django.core.management.base import BaseCommand
+
+from locations.models import *
+from op_api.territori.models import *
 
 
 class Command(BaseCommand):
@@ -18,7 +17,7 @@ class Command(BaseCommand):
     Old database connection is named 'politici' and is accessible as a read-only
     database in django orm.
     """
-    help = "Import persons data from old politici database"
+    help = "Import locations data from old politici database"
 
     option_list = BaseCommand.option_list + (
         make_option('--limit',
@@ -62,105 +61,42 @@ class Command(BaseCommand):
         limit = int(options['limit'])
 
         if limit:
-            op_politicians = OpPolitician.objects.using('politici').all()[offset:offset+limit]
+            op_locations = OpLocation.objects.using('politici').all()[offset:offset+limit]
         else:
-            op_politicians = OpPolitician.objects.using('politici').all()[offset:]
+            op_locations = OpLocation.objects.using('politici').all()[offset:]
 
         c = offset
-        for op_person in op_politicians:
+        for op_location in op_locations:
 
             # increment counter, to be shown in import log
             c += 1
 
-            if op_person.sex:
-                if op_person.sex == 'M':
-                    op_person_sex = Person.SEX.male
-                else:
-                    op_person_sex = Person.SEX.female
-
             #
-            # Contacts
-            #
-            op_resources = op_person.opresources_set.all()
-            contacts = []
-            if op_resources:
-                for op_resource in op_resources:
-                    created = False
-                    contact_type, created = ContactType.objects.get_or_create(
-                        name=op_resource.resources_type.denominazione
-                    )
-                    if created:
-                        self.logger.info(u"%s - Aggiunto nuovo contact type: %s" % (c, contact_type))
-
-                    created = False
-                    contact, created = Contact.objects.get_or_create(
-                        description=op_resource.descrizione,
-                        value=op_resource.valore,
-                        contact_type=contact_type,
-                    )
-                    if created:
-                        self.logger.info(u"%s - Aggiunto nuovo contact: %s" % (c, contact))
-
-                    contacts.append(contact)
-
-            #
-            # Profession
+            # Location Types
             #
 
-            # profession is created only if non-existing
-            profession = None
+            op_location_type = op_location.location_type
+            location_type, created = LocationType.objects.get_or_create(
+                name=op_location_type.name
+            )
+            if created:
+                self.logger.info(u"%s - Aggiunta nuova location type: %s" % (c, location_type))
+
+            #
+            # Location
+            #
+
             created = False
-            if op_person.profession is not None:
-                profession, created = Profession.objects.get_or_create(
-                    name=op_person.profession.description,
-                )
-                if created:
-                    self.logger.info(u"%s - Aggiunta professione: %s" % (c, profession))
-                    # check if the profession is a sub-division of an original profession (OP)
-                    # in case, get_or_create the original profession, as main record of the UnifiedModel
-                    if op_person.profession.oid is not None:
-                        op_original_prof = OpProfession.objects.using('politici').get(pk=op_person.profession.oid)
-                        mpc = False
-                        main_profession, mpc = Profession.objects.get_or_create(
-                            name=op_original_prof.description,
-                        )
-                        if mpc:
-                            self.logger.info(u"%s - Aggiunta professione main: %s" % (c, main_profession))
-                        profession.main = main_profession
-                        profession.save()
+            location, created = Location.objects.get_or_create(
+                location_type=location_type,
+                name=op_location.name
+            )
+            if created:
+                self.logger.info(u"%s - Aggiunta nuova location: %s" % (c, location))
+            else:
+                self.logger.debug(u"%s - Trovata location: %s" % (c, location))
 
-            #
-            # Education Levels
-            #
 
-            # extract all OP education levels for the politician
-            op_education_levels = [el.education_level for el in op_person.oppoliticianhasopeducationlevel_set.all()]
-
-            # build the education_levels in the new DB, creating sub-instances and main instances if non-existing
-            education_levels = []
-            if op_education_levels:
-                for op_education_level in op_education_levels:
-
-                    # new EducationLevel record is created only if non-extisting
-                    created = False
-                    education_level, created = EducationLevel.objects.get_or_create(
-                        name=op_education_level.description,
-                    )
-                    if created:
-                        self.logger.info(u"%s - Aggiunto livello educativo: %s" % (c, education_level))
-                        # check if the education level is a sub-division of an original one (UnifiedModel)
-                        if op_education_level.oid is not None:
-                            op_original_education_level = OpEducationLevel.objects.using('politici').\
-                                get(pk=op_education_level.oid)
-                            main_education_level, mel = EducationLevel.objects.get_or_create(
-                                name=op_original_education_level.description,
-                            )
-                            if mel:
-                                self.logger.info(u"%s - Aggiunto livello educativo main: %s" % (c, main_education_level))
-
-                            education_level.main = main_education_level
-                            education_level.save()
-                    education_levels.append(education_level)
 
             #
             # Person

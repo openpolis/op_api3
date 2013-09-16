@@ -22,10 +22,10 @@ MEDIA_URL = '/media/'
 STATIC_ROOT = root('static')
 STATIC_URL = '/static/'
 
-SECRET_KEY = env('SECRET_KEY') # Raises ImproperlyConfigured exception if SECRET_KEY not in os.environ
+SECRET_KEY = env('SECRET_KEY')  # Raises ImproperlyConfigured exception if SECRET_KEY not in os.environ
 
 REPO_ROOT = root()
-PROJECT_ROOT = root('op_api3')
+PROJECT_ROOT = root('op_api')
 
 ADMINS = ()
 MANAGERS = ADMINS
@@ -112,10 +112,10 @@ MIDDLEWARE_CLASSES = (
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-ROOT_URLCONF = 'op_api3.urls'
+ROOT_URLCONF = 'op_api.urls'
 
 # Python dotted path to the WSGI application used by Django's runserver.
-WSGI_APPLICATION = 'op_api3.wsgi.application'
+WSGI_APPLICATION = 'op_api.wsgi.application'
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
@@ -136,11 +136,11 @@ INSTALLED_APPS = (
     'django_extensions',
     'rest_framework',
     'south',
-    'pops',
-    'locations',
+    'op_api.pops',
+    'op_api.locations',
     # used when reading from old tables (import)
-    'politici',
-    'territori',
+    'op_api.politici',
+    'op_api.territori',
 )
 
 # A sample logging configuration. The only tangible logging
@@ -207,7 +207,7 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.YAMLRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
-        ),
+    ),
     'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAuthenticatedOrReadOnly',),
     'PAGINATE_BY': 25
 }

@@ -1,6 +1,7 @@
 __author__ = 'guglielmo'
-from pops.models import Person
 from rest_framework import serializers
+
+from op_api.pops.models import Person
 
 
 class PersonSerializer(serializers.HyperlinkedModelSerializer):

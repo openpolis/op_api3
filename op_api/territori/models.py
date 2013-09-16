@@ -226,7 +226,7 @@ class OpLocation(models.Model):
 
     def getConstituencies(self, election_type=None, prov_id=None):
         """docstring for getConstituency"""
-        from politici.models import OpConstituency
+        from op_api.politici.models import OpConstituency
 
         if prov_id is None:
             prov_id = self.getProvince().id
@@ -242,7 +242,7 @@ class OpLocation(models.Model):
         return OpConstituency.objects.db_manager(DBNAME).filter(**kwargs)
 
     def getConstituency(self, election_type, prov_id=None):
-        from politici.models import OpConstituency
+        from op_api.politici.models import OpConstituency
 
         try:
             return self.getConstituencies(election_type, prov_id)[0]
@@ -251,7 +251,7 @@ class OpLocation(models.Model):
 
     def getNationalReps(self, election_type, prov_id=None):
         """docstring for getNationalReps"""
-        from politici.models import OpInstitutionCharge
+        from op_api.politici.models import OpInstitutionCharge
 
         constituency = self.getConstituency(election_type, prov_id)
         charges = OpInstitutionCharge.objects.db_manager(DBNAME).filter(
@@ -275,7 +275,7 @@ class OpLocation(models.Model):
 
     def getLocalReps(self, institution_name):
         """docstring for getLocalReps"""
-        from politici.models import OpInstitutionCharge
+        from op_api.politici.models import OpInstitutionCharge
 
         charges = OpInstitutionCharge.objects.db_manager(DBNAME).filter(
             institution__name=institution_name,
