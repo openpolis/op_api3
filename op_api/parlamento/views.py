@@ -1,10 +1,10 @@
+from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from rest_framework import generics, pagination, filters
-from op_api.parlamento.fields import LegislaturaField, UltimoAggiornamentoField
-from op_api.parlamento.models import Carica, Gruppo, PoliticianHistoryCache
-from op_api.parlamento.serializers import GruppoSerializer, ParlamentareSerializer
+from rest_framework import generics, filters
+from op_api.parlamento.models import Carica, Gruppo, PoliticianHistoryCache, Seduta, Votazione
+from op_api.parlamento.serializers import GruppoSerializer, CustomPaginationSerializer, ParlamentareSerializer, VotazioneSerializer, SedutaSerializer
 from op_api.parlamento.utils import reverse_url, get_legislatura_from_request, get_last_update
 
 __author__ = 'daniele'
@@ -57,6 +57,8 @@ class LegislaturaDetailView(APILegislaturaMixin, APIView):
             'gruppi': self.get_reverse_url('gruppo-list', format=request_format),
             'circoscrizioni': self.get_reverse_url('circoscrizione-list', format=request_format),
             'parlamentari': self.get_reverse_url('parlamentare-list', format=request_format),
+            'sedute': self.get_reverse_url('seduta-list', format=request_format),
+            'votazioni': self.get_reverse_url('votazione-list', format=request_format),
         }
         return Response(data)
 
@@ -100,12 +102,6 @@ class CircoscrizioneDetailView(APILegislaturaMixin, APIView):
     pass
 
 
-class CustomPaginationSerializer(pagination.PaginationSerializer):
-
-    legislatura = LegislaturaField(source='*')
-    data = UltimoAggiornamentoField(source='*')
-
-
 class ParlamentareListView(generics.ListAPIView, APILegislaturaMixin):
     serializer_class = ParlamentareSerializer
     pagination_serializer_class = CustomPaginationSerializer
@@ -145,5 +141,66 @@ class ParlamentareListView(generics.ListAPIView, APILegislaturaMixin):
         return queryset
 
 
-class ParlamentareDetailView(APILegislaturaMixin, APIView):
-    pass
+class ParlamentareDetailView(generics.RetrieveAPIView, APILegislaturaMixin):
+    serializer_class = ParlamentareSerializer
+    pagination_serializer_class = CustomPaginationSerializer
+    queryset = PoliticianHistoryCache.objects.using('politici').filter(chi_tipo='P')
+    #pk_url_kwarg = 'carica'
+    #lookup_field = 'chi_id'
+    def get_object(self, queryset=None):
+        # Determine the base queryset to use.
+        if queryset is None:
+            queryset = self.filter_queryset(self.get_queryset())
+        else:
+            pass  # Deprecation warning
+
+        last_update = get_last_update(queryset)
+        queryset = queryset.select_related('carica', 'carica__gruppo', 'carica__politico').filter(data=last_update)
+
+        obj = get_object_or_404(queryset,
+                                chi_id=self.kwargs.get('carica'),
+                                )
+
+        # May raise a permission denied
+        self.check_object_permissions(self.request, obj)
+
+        return obj
+
+
+class SedutaListView(generics.ListAPIView, APILegislaturaMixin):
+    queryset = Seduta.objects.using('politici')
+    model = Seduta
+    filter_fields = ('ramo', 'data', 'is_imported', 'numero', )
+    serializer_class = SedutaSerializer
+
+
+class SedutaDetailView(generics.RetrieveAPIView, APILegislaturaMixin):
+    queryset = Seduta.objects.using('politici')
+    model = Seduta
+    pk_url_kwarg = 'seduta'
+    serializer_class = SedutaSerializer
+
+
+class VotazioneListView(generics.ListAPIView, APILegislaturaMixin):
+    queryset = Votazione.objects.using('politici')
+    model = Votazione
+    serializer_class = VotazioneSerializer
+    filter_fields = ('esito', 'is_imported', 'tipologia', )
+
+    def get_queryset(self):
+        qs = super(VotazioneListView, self).get_queryset()
+
+        seduta = self.request.QUERY_PARAMS.get('seduta', None)
+        if seduta is not None:
+            qs = qs.filter(seduta__pk=int(seduta))
+
+        return qs
+
+
+class VotazioneDetailView(generics.RetrieveAPIView, APILegislaturaMixin):
+    queryset = Votazione.objects.using('politici')
+    model = Votazione
+    pk_url_kwarg = 'votazione'
+    serializer_class = VotazioneSerializer
+
+

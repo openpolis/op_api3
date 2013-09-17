@@ -61,3 +61,46 @@ class HyperlinkedParlamentariField(serializers.HyperlinkedIdentityField):
         return reverse_url(
             view_name, request, format=format, filters={self.filter: obj.pk}
         )
+
+
+class HyperlinkedParlamentareField(serializers.HyperlinkedRelatedField):
+
+    def __init__(self, *args, **kwargs):
+        kwargs = kwargs.copy()
+        kwargs.update({
+            'view_name': 'parlamentare-detail',
+        })
+        super(HyperlinkedParlamentareField, self).__init__(*args, **kwargs)
+
+    def get_url(self, obj, view_name, request, format):
+        return reverse_url(view_name, request, format=format, kwargs={'carica': obj.pk})
+
+
+class HyperlinkedSedutaField(serializers.HyperlinkedRelatedField):
+
+    def __init__(self, *args, **kwargs):
+        kwargs = kwargs.copy()
+        kwargs.update({
+            'view_name': 'seduta-detail',
+        })
+        super(HyperlinkedSedutaField, self).__init__(*args, **kwargs)
+
+    def get_url(self, obj, view_name, request, request_format):
+        return reverse_url(
+            view_name, request, format=request_format, kwargs={'seduta': obj.pk}
+        )
+
+
+class HyperlinkedVotazioneField(serializers.HyperlinkedRelatedField):
+
+    def __init__(self, *args, **kwargs):
+        kwargs = kwargs.copy()
+        kwargs.update({
+            'view_name': 'votazione-detail',
+        })
+        super(HyperlinkedVotazioneField, self).__init__(*args, **kwargs)
+
+    def get_url(self, obj, view_name, request, request_format):
+        return reverse_url(
+            view_name, request, format=request_format, kwargs={'votazione': obj.pk}
+        )

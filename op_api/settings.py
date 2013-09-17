@@ -110,6 +110,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     # Uncomment the next line for simple clickjacking protection:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 )
 
 ROOT_URLCONF = 'op_api.urls'
@@ -136,6 +137,7 @@ INSTALLED_APPS = (
     'django_extensions',
     'rest_framework',
     'south',
+    'corsheaders',
     'op_api.pops',
     'op_api.locations',
     # used when reading from old tables (import)
@@ -209,6 +211,21 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.YAMLRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
     ),
+    'DEFAULT_FILTER_BACKENDS': ('rest_framework.filters.DjangoFilterBackend',),
     'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAuthenticatedOrReadOnly',),
     'PAGINATE_BY': 25
 }
+
+# CORS Headers configuration
+# https://github.com/ottoyiu/django-cors-headers/
+CORS_ORIGIN_ALLOW_ALL = True
+# CORS_ORIGIN_WHITELIST = (
+#     'google.com',
+#     'hostname.example.com'
+# )
+# CORS_ORIGIN_REGEX_WHITELIST = ('^http?://(\w+\.)?google\.com$', )
+# CORS_ALLOW_METHODS = ('GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS')
+# CORS_ALLOW_HEADERS = ('x-requested-with', 'content-type', 'accept', 'origin', 'authorization')
+# CORS_EXPOSE_HEADERS = ()
+# CORS_PREFLIGHT_MAX_AGE = 86400
+# CORS_ALLOW_CREDENTIALS = False

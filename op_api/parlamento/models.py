@@ -132,3 +132,58 @@ class TipoCarica(models.Model):
     class Meta:
         db_table = 'opp_tipo_carica'
 
+
+class Seduta(models.Model):
+    data = models.DateField(null=True, blank=True)
+    numero = models.IntegerField()
+    ramo = models.CharField(max_length=1L)
+    legislatura = models.IntegerField()
+    url = models.TextField(blank=True)
+    is_imported = models.IntegerField()
+
+    class Meta:
+        db_table = 'opp_seduta'
+
+
+class Votazione(models.Model):
+
+    seduta = models.ForeignKey(Seduta)
+    carica_set = models.ManyToManyField(Carica, through='VotazioneHasCarica')
+
+    numero_votazione = models.IntegerField()
+    titolo = models.TextField(blank=True)
+    titolo_aggiuntivo = models.TextField(blank=True)
+    presenti = models.IntegerField(null=True, blank=True)
+    votanti = models.IntegerField(null=True, blank=True)
+    maggioranza = models.IntegerField(null=True, blank=True)
+    astenuti = models.IntegerField(null=True, blank=True)
+    favorevoli = models.IntegerField(null=True, blank=True)
+    contrari = models.IntegerField(null=True, blank=True)
+    esito = models.CharField(max_length=20L, blank=True)
+    ribelli = models.IntegerField(null=True, blank=True)
+    margine = models.IntegerField(null=True, blank=True)
+    tipologia = models.CharField(max_length=20L, blank=True)
+    descrizione = models.TextField(blank=True)
+    url = models.CharField(max_length=255L, blank=True)
+    finale = models.IntegerField()
+    nb_commenti = models.IntegerField()
+    is_imported = models.IntegerField()
+    ut_fav = models.IntegerField()
+    ut_contr = models.IntegerField()
+    is_maggioranza_sotto_salva = models.IntegerField()
+
+    class Meta:
+        db_table = 'opp_votazione'
+        ordering = ('numero_votazione', )
+
+
+class VotazioneHasCarica(models.Model):
+    votazione = models.ForeignKey(Votazione)
+    carica = models.ForeignKey(Carica)
+    voto = models.CharField(max_length=40L, blank=True)
+    ribelle = models.IntegerField()
+    maggioranza_sotto_salva = models.IntegerField()
+
+    class Meta:
+        db_table = 'opp_votazione_has_carica'
+
