@@ -1,5 +1,6 @@
 # Django settings for op_api3 project.
 import environ
+from sys import path
 root = environ.Path(__file__) - 2  # three folder back (/a/b/c/ - 3 = /)
 
 # set default values and casting
@@ -26,6 +27,10 @@ SECRET_KEY = env('SECRET_KEY')  # Raises ImproperlyConfigured exception if SECRE
 
 REPO_ROOT = root()
 PROJECT_ROOT = root('op_api')
+
+# Add our project to our pythonpath, this way we don't need to type our project
+# name in our dotted import paths:
+path.append(PROJECT_ROOT)
 
 ADMINS = ()
 MANAGERS = ADMINS
@@ -111,6 +116,7 @@ MIDDLEWARE_CLASSES = (
     # Uncomment the next line for simple clickjacking protection:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 )
 
 ROOT_URLCONF = 'op_api.urls'
@@ -138,6 +144,7 @@ INSTALLED_APPS = (
     'rest_framework',
     'south',
     'corsheaders',
+    'debug_toolbar',
     'op_api.pops',
     'op_api.locations',
     # used when reading from old tables (import)
@@ -213,7 +220,9 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_FILTER_BACKENDS': ('rest_framework.filters.DjangoFilterBackend',),
     'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAuthenticatedOrReadOnly',),
-    'PAGINATE_BY': 25
+    'PAGINATE_BY': 25,
+    'PAGINATE_BY_PARAM': 'page_size',  # Allow client to override, using `?page_size=xxx`.
+    'MAX_PAGINATE_BY': 1000            # Maximum limit allowed when using `?page_size=xxx`.
 }
 
 # CORS Headers configuration
@@ -229,3 +238,23 @@ CORS_ORIGIN_ALLOW_ALL = True
 # CORS_EXPOSE_HEADERS = ()
 # CORS_PREFLIGHT_MAX_AGE = 86400
 # CORS_ALLOW_CREDENTIALS = False
+
+# DEBUG TOOLBAR
+INTERNAL_IPS = ('127.0.0.1',)
+DEBUG_TOOLBAR_PANELS = (
+    'debug_toolbar.panels.version.VersionDebugPanel',
+    'debug_toolbar.panels.timer.TimerDebugPanel',
+    'debug_toolbar.panels.settings_vars.SettingsVarsDebugPanel',
+    'debug_toolbar.panels.headers.HeaderDebugPanel',
+    'debug_toolbar.panels.request_vars.RequestVarsDebugPanel',
+    'debug_toolbar.panels.template.TemplateDebugPanel',
+    'debug_toolbar.panels.sql.SQLDebugPanel',
+    'debug_toolbar.panels.signals.SignalDebugPanel',
+    'debug_toolbar.panels.logger.LoggingPanel',
+)
+DEBUG_TOOLBAR_CONFIG = {
+    'INTERCEPT_REDIRECTS': False,
+    'HIDE_DJANGO_SQL': False,
+    'TAG': 'div',
+    'ENABLE_STACKTRACES' : True,
+}

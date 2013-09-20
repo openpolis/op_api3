@@ -23,6 +23,8 @@ class UltimoAggiornamentoField(serializers.Field):
     page_field = 'data'
 
     def to_native(self, value):
+        if 'data' in self.context['request'].QUERY_PARAMS:
+            return self.context['request'].QUERY_PARAMS.get('data')
         return get_last_update()
 
 
@@ -99,6 +101,21 @@ class HyperlinkedVotazioneField(serializers.HyperlinkedRelatedField):
             'view_name': 'votazione-detail',
         })
         super(HyperlinkedVotazioneField, self).__init__(*args, **kwargs)
+
+    def get_url(self, obj, view_name, request, request_format):
+        return reverse_url(
+            view_name, request, format=request_format, kwargs={'votazione': obj.pk}
+        )
+
+
+class HyperlinkedVotazioneIdentityField(serializers.HyperlinkedIdentityField):
+
+    def __init__(self, *args, **kwargs):
+        kwargs = kwargs.copy()
+        kwargs.update({
+            'view_name': 'votazione-detail',
+        })
+        super(HyperlinkedVotazioneIdentityField, self).__init__(*args, **kwargs)
 
     def get_url(self, obj, view_name, request, request_format):
         return reverse_url(

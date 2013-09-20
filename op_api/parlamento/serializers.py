@@ -3,6 +3,7 @@ from rest_framework import pagination
 
 from op_api.parlamento import models
 from op_api.parlamento import fields
+from parlamento.utils import get_last_update
 
 
 __author__ = 'daniele'
@@ -31,7 +32,7 @@ class CaricaSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Carica
         fields = (
-            'id',
+            'id', 'parliament_id',
             'tipo_carica',
             'data_inizio', 'data_fine',
             'legislatura', 'circoscrizione',
@@ -51,12 +52,6 @@ class ParlamentareHistorySerializer(serializers.ModelSerializer):
             "ribellioni", "ribellioni_pos", "ribellioni_delta",
             "ramo",
         )
-
-
-class CustomPaginationSerializer(pagination.PaginationSerializer):
-
-    legislatura = fields.LegislaturaField(source='*')
-    data = fields.UltimoAggiornamentoField(source='*')
 
 
 class ParlamentareSerializer(serializers.ModelSerializer):
@@ -91,6 +86,15 @@ class ParlamentareSerializer(serializers.ModelSerializer):
         ) + statistic_fields
 
 
+class CustomPaginationSerializer(pagination.PaginationSerializer):
+
+    legislatura = fields.LegislaturaField(source='*')
+    data = fields.UltimoAggiornamentoField(source='*')
+
+    class Meta:
+        object_serializer_class = ParlamentareSerializer
+
+
 class SedutaSerializer(serializers.ModelSerializer):
 
     votazione_set = fields.HyperlinkedVotazioneField(many=True)
@@ -108,13 +112,14 @@ class SedutaSerializer(serializers.ModelSerializer):
 
 class VotazioneSerializer(serializers.ModelSerializer):
 
-    carica_set = fields.HyperlinkedParlamentareField(read_only=True, many=True)
+    #carica_set = fields.HyperlinkedParlamentareField(read_only=True, many=True)
+    votazione_url = fields.HyperlinkedVotazioneIdentityField()
     seduta = fields.HyperlinkedSedutaField(read_only=True)
 
     class Meta:
         model = models.Votazione
         fields = (
-            'id', 'seduta',
+            'id', 'seduta', 'votazione_url',
             'numero_votazione',
             'titolo', 'titolo_aggiuntivo', 'descrizione',
             'presenti', 'votanti', 'maggioranza', 'astenuti',
@@ -122,5 +127,41 @@ class VotazioneSerializer(serializers.ModelSerializer):
             'margine', 'tipologia',
             'finale', 'nb_commenti',
             'ut_fav', 'ut_contr', 'is_maggioranza_sotto_salva',
-            'is_imported', 'url', 'carica_set',
+            'is_imported', 'url', #'carica_set',
         )
+
+
+class VotoSerializer(serializers.ModelSerializer):
+
+    # id = serializers.Field(source='group.id')
+    # name = serializers.Field(source='group.name')
+
+    class Meta:
+        model = models.VotazioneHasCarica
+        fields = (
+            'carica', 'voto', 'ribelle', 'maggioranza_sotto_salva',
+        )
+
+
+class VotazioneDettagliataSerializer(serializers.ModelSerializer):
+
+    #carica_set = fields.HyperlinkedParlamentareField(read_only=True, many=True)
+    votazionehascarica_set = VotoSerializer()
+    votazione_url = fields.HyperlinkedVotazioneIdentityField()
+    seduta = fields.HyperlinkedSedutaField(read_only=True)
+
+    class Meta:
+        model = models.Votazione
+        fields = (
+            'id', 'seduta', 'votazione_url',
+            'numero_votazione',
+            'titolo', 'titolo_aggiuntivo', 'descrizione',
+            'presenti', 'votanti', 'maggioranza', 'astenuti',
+            'favorevoli', 'contrari', 'esito', 'ribelli',
+            'margine', 'tipologia',
+            'finale', 'nb_commenti',
+            'ut_fav', 'ut_contr', 'is_maggioranza_sotto_salva',
+            'is_imported', 'url', 'votazionehascarica_set',
+        )
+
+
