@@ -12,3 +12,4 @@ Werkzeug
 docutils
 django-environ
 
+django-cors-headers==0.11
