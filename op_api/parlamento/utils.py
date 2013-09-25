@@ -16,11 +16,10 @@ def get_legislatura_from_request(request):
     return request.resolver_match.kwargs.get('legislatura', None)
 
 
-def get_last_update(queryset=None):
-    if not queryset:
-        queryset = PoliticianHistoryCache.objects.using('politici')
-
-    return queryset.aggregate(last_update=Max('data'))['last_update']
+def get_last_update():
+    return PoliticianHistoryCache.objects.using('politici').aggregate(
+        last_update=Max('data')
+    )['last_update']
 
 
 def reverse_url(name, request, format=None, legislatura=None, args=None, kwargs=None, filters=None):

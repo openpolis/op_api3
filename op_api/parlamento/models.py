@@ -113,6 +113,7 @@ class PoliticianHistoryCache(models.Model):
 
     class Meta:
         db_table = 'opp_politician_history_cache'
+        ordering = ('carica__politico__cognome', 'carica__politico__nome')
 
 
 class Politico(models.Model):

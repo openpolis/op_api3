@@ -10,6 +10,7 @@ from op_api.parlamento.models import Carica, Gruppo, PoliticianHistoryCache, Sed
 from op_api.parlamento.serializers import GruppoSerializer, CustomPaginationSerializer, ParlamentareSerializer, VotazioneSerializer, SedutaSerializer, VotazioneDettagliataSerializer
 from op_api.parlamento.utils import reverse_url, get_legislatura_from_request, get_last_update
 
+
 __author__ = 'daniele'
 
 
@@ -98,7 +99,12 @@ class CircoscrizioneListView(APILegislaturaMixin, APIView):
                                                                       format=kwargs.get('format', None))
             circoscrizioni.append(circoscrizione)
 
-        return Response(circoscrizioni)
+        return Response({
+            'results': sorted(circoscrizioni, key=lambda c: c['ramo'] + c['nome']),
+            'count': len(circoscrizioni),
+            'next': None,
+            'previous': None,
+        })
 
 
 class CircoscrizioneDetailView(APILegislaturaMixin, APIView):
@@ -112,7 +118,7 @@ class ParlamentareListView(generics.ListAPIView, APILegislaturaMixin):
         .filter(chi_tipo='P')\
         .select_related('carica', 'gruppo', 'carica__politico', 'carica__tipo_carica')
     filter_backends = (filters.OrderingFilter,)
-    ordering = ParlamentareSerializer.Meta.statistic_fields
+    ordering = ('carica__politico__cognome', 'carica__politico__nome') + ParlamentareSerializer.Meta.statistic_fields
 
     def get_queryset(self):
         """
@@ -122,7 +128,7 @@ class ParlamentareListView(generics.ListAPIView, APILegislaturaMixin):
         queryset = super(ParlamentareListView, self).get_queryset()
 
         # extract last update date to filter history cache results
-        self.last_update = get_last_update(queryset)
+        self.last_update = get_last_update()
         queryset = queryset.filter(data=self.last_update)
 
         # filtro per data
