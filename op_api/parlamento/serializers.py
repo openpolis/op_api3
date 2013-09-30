@@ -3,7 +3,6 @@ from rest_framework import pagination
 
 from op_api.parlamento import models
 from op_api.parlamento import fields
-from parlamento.utils import get_last_update
 
 
 __author__ = 'daniele'
@@ -27,7 +26,6 @@ class PoliticoSerializer(serializers.ModelSerializer):
 class CaricaSerializer(serializers.ModelSerializer):
 
     tipo_carica = fields.CaricaField()
-    #politico = PoliticoSerializer()
 
     class Meta:
         model = models.Carica
@@ -104,7 +102,6 @@ class SedutaSerializer(serializers.ModelSerializer):
         depth = 0
         fields = (
             'id', 'data', 'numero', 'ramo',
-            #'legislatura',
             'url', 'is_imported',
             'votazione_set',
         )
@@ -112,7 +109,6 @@ class SedutaSerializer(serializers.ModelSerializer):
 
 class VotazioneSerializer(serializers.ModelSerializer):
 
-    #carica_set = fields.HyperlinkedParlamentareField(read_only=True, many=True)
     votazione_url = fields.HyperlinkedVotazioneIdentityField()
     seduta = fields.HyperlinkedSedutaField(read_only=True)
 
@@ -127,14 +123,11 @@ class VotazioneSerializer(serializers.ModelSerializer):
             'margine', 'tipologia',
             'finale', 'nb_commenti',
             'ut_fav', 'ut_contr', 'is_maggioranza_sotto_salva',
-            'is_imported', 'url', #'carica_set',
+            'is_imported', 'url'
         )
 
 
 class VotoSerializer(serializers.ModelSerializer):
-
-    # id = serializers.Field(source='group.id')
-    # name = serializers.Field(source='group.name')
 
     class Meta:
         model = models.VotazioneHasCarica
@@ -145,8 +138,7 @@ class VotoSerializer(serializers.ModelSerializer):
 
 class VotazioneDettagliataSerializer(serializers.ModelSerializer):
 
-    #carica_set = fields.HyperlinkedParlamentareField(read_only=True, many=True)
-    votazionehascarica_set = VotoSerializer()
+    votazionehascarica_set = VotoSerializer(many=True)
     votazione_url = fields.HyperlinkedVotazioneIdentityField()
     seduta = fields.HyperlinkedSedutaField(read_only=True)
 
