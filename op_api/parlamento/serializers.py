@@ -89,8 +89,8 @@ class CustomPaginationSerializer(pagination.PaginationSerializer):
     legislatura = fields.LegislaturaField(source='*')
     data = fields.UltimoAggiornamentoField(source='*')
 
-    class Meta:
-        object_serializer_class = ParlamentareSerializer
+    #class Meta:
+    #    object_serializer_class = ParlamentareSerializer
 
 
 class SedutaSerializer(serializers.ModelSerializer):

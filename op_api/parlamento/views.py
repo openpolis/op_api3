@@ -170,16 +170,13 @@ class ParlamentareDetailView(generics.RetrieveAPIView, APILegislaturaMixin):
     serializer_class = ParlamentareSerializer
     pagination_serializer_class = CustomPaginationSerializer
     queryset = PoliticianHistoryCache.objects.using('politici').filter(chi_tipo='P')
-    #pk_url_kwarg = 'carica'
-    #lookup_field = 'chi_id'
+
     def get_object(self, queryset=None):
         # Determine the base queryset to use.
         if queryset is None:
             queryset = self.filter_queryset(self.get_queryset())
-        else:
-            pass  # Deprecation warning
 
-        last_update = get_last_update(queryset)
+        last_update = get_last_update()
         queryset = queryset.select_related('carica', 'carica__gruppo', 'carica__politico').filter(data=last_update)
 
         obj = get_object_or_404(queryset,
