@@ -1,6 +1,5 @@
 Django
 MySQL-python
-psycopg2
 Markdown
 PyYAML
 django-filter
@@ -16,3 +15,4 @@ docutils
 # optionally
 # ipython
 # readline (through easy_install)
+# psycopg2

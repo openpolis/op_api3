@@ -136,8 +136,10 @@ INSTALLED_APPS = (
     'django_extensions',
     'rest_framework',
     'south',
-    'pops',
-    'locations',
+
+    # pops and locations need GEO and GDAL
+    # 'pops',
+    # 'locations',
     # used when reading from old tables (import)
     'politici',
     'territori',
