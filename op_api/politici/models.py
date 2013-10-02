@@ -3,7 +3,7 @@ from django.db import models
 from django.db import connections
 from django.conf import settings
 from django.utils.encoding import smart_unicode
-from territori.models import OpLocation
+from op_api.territori.models import OpLocation
 
 
 def dict_fetchall(cursor):
@@ -442,7 +442,6 @@ class OpInstitutionChargeManager(models.Manager):
     """class to handle queries on OpInstitutionCharge"""
 
     def get_statistics(self, request):
-        from django.db import connection
         cursor = connections['politici'].cursor()
 
         base_sql = """

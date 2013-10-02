@@ -1,11 +1,11 @@
 from django.conf.urls import patterns, url, include
 from rest_framework.urlpatterns import format_suffix_patterns
-from pops.views import PersonList, PersonDetail
+from op_api.politici.views import UserList, UserDetail
 
-urlpatterns = patterns('pops.views',
-                       url(r'^$', 'api_root', name='pops-api-root'),
-                       url(r'^persons$', PersonList.as_view(), name='person-list'),
-                       url(r'^persons/(?P<pk>\d+)$', PersonDetail.as_view(), name='person-detail'),
+urlpatterns = patterns('op_api.politici.views',
+                       url(r'^$', 'api_root', name='politici-api-root'),
+                       url(r'^users$', UserList.as_view(), name='opuser-list'),
+                       url(r'^users/(?P<pk>\d+)$', UserDetail.as_view(), name='opuser-detail'),
                        )
 
 # Format suffixes

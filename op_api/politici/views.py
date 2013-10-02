@@ -1,12 +1,12 @@
 from django.views.generic.list import MultipleObjectMixin
-
-from op_api3.mixins import ShortListModelMixin
-from politici.models import OpUser
 from rest_framework import generics
 from rest_framework.decorators import api_view
 from rest_framework.reverse import reverse
 from rest_framework.response import Response
-from politici.serializers import UserSerializer
+
+from op_api.mixins import ShortListModelMixin
+from op_api.politici.models import OpUser
+from op_api.politici.serializers import UserSerializer
 
 @api_view(['GET'])
 def api_root(request, format=None):

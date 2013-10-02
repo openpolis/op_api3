@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.contrib.gis.db import models
 from django.utils.translation import ugettext_lazy as _
-from op_api3.models import PrioritizedModel
+from op_api.models import PrioritizedModel
 from model_utils.models import TimeStampedModel
 
 

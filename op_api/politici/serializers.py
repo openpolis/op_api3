@@ -1,5 +1,7 @@
-from politici.models import OpUser
 from rest_framework import serializers
+
+from op_api.politici.models import OpUser
+
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:

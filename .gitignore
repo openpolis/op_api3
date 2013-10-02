@@ -3,3 +3,5 @@
 .env
 quickstart
 settings_local.py
+*.py[cd]
+*.zip
