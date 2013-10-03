@@ -1,2 +1,4 @@
 # Local development dependencies go here
 -r base.txt
+
+django-debug-toolbar
