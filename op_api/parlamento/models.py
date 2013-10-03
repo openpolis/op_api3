@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from django.contrib.gis.db import models
+from django.db import models
 
 
 class Carica(models.Model):
@@ -28,7 +28,7 @@ class Carica(models.Model):
 
     class Meta:
         db_table = 'opp_carica'
-
+        managed = False
 
 class CaricaHasGruppo(models.Model):
     carica = models.ForeignKey(Carica)
@@ -41,6 +41,7 @@ class CaricaHasGruppo(models.Model):
 
     class Meta:
         db_table = 'opp_carica_has_gruppo'
+        managed = False
 
 
 class Gruppo(models.Model):
@@ -52,6 +53,7 @@ class Gruppo(models.Model):
 
     class Meta:
         db_table = 'opp_gruppo'
+        managed = False
 
 
 class GruppoIsMaggioranza(models.Model):
@@ -63,6 +65,7 @@ class GruppoIsMaggioranza(models.Model):
 
     class Meta:
         db_table = 'opp_gruppo_is_maggioranza'
+        managed = False
 
 
 class GruppoRamo(models.Model):
@@ -75,6 +78,7 @@ class GruppoRamo(models.Model):
 
     class Meta:
         db_table = 'opp_gruppo_ramo'
+        managed = False
 
 
 class PoliticianHistoryCache(models.Model):
@@ -114,6 +118,7 @@ class PoliticianHistoryCache(models.Model):
     class Meta:
         db_table = 'opp_politician_history_cache'
         ordering = ('carica__politico__cognome', 'carica__politico__nome')
+        managed = False
 
 
 class Politico(models.Model):
@@ -124,6 +129,7 @@ class Politico(models.Model):
 
     class Meta:
         db_table = 'opp_politico'
+        managed = False
 
 
 class TipoCarica(models.Model):
@@ -132,6 +138,7 @@ class TipoCarica(models.Model):
 
     class Meta:
         db_table = 'opp_tipo_carica'
+        managed = False
 
 
 class Seduta(models.Model):
@@ -144,6 +151,7 @@ class Seduta(models.Model):
 
     class Meta:
         db_table = 'opp_seduta'
+        managed = False
 
 
 class Votazione(models.Model):
@@ -176,6 +184,7 @@ class Votazione(models.Model):
     class Meta:
         db_table = 'opp_votazione'
         ordering = ('numero_votazione', )
+        managed = False
 
 
 class VotazioneHasCarica(models.Model):
@@ -187,4 +196,5 @@ class VotazioneHasCarica(models.Model):
 
     class Meta:
         db_table = 'opp_votazione_has_carica'
+        managed = False
 
