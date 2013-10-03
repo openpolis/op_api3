@@ -1,7 +1,6 @@
 .idea
 /log/*
 .env
-quickstart
-settings_local.py
+/public/*
 *.py[cd]
 *.zip
