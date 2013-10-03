@@ -1,7 +1,7 @@
 # Django settings for op_api3 project.
 import environ
 from sys import path
-root = environ.Path(__file__) - 2  # three folder back (/a/b/c/ - 3 = /)
+root = environ.Path(__file__) - 3  # three folder back (/a/b/c/ - 3 = /)
 
 # set default values and casting
 env = environ.Env(
@@ -13,13 +13,11 @@ env.read_env(root('.env'))
 DEBUG = env('DEBUG')  # False if not in os.environ
 TEMPLATE_DEBUG = DEBUG
 
-
-
 DATABASES = {
     'default': env.db('DB_DEFAULT_URL'),
     'politici': env.db('DB_POLITICI_URL'),
-    'parlamento16': env.db('DB_POLITICI_URL_16'),
-    'parlamento17': env.db('DB_POLITICI_URL_17'),
+    'parlamento16': env.db('DB_PARLAMENTO16_URL'),
+    'parlamento17': env.db('DB_PARLAMENTO17_URL'),
 }
 
 MEDIA_ROOT = root('assets')
@@ -82,9 +80,6 @@ STATICFILES_FINDERS = (
     #'django.contrib.staticfiles.finders.DefaultStorageFinder',
 )
 
-# Make this unique, and don't share it with anybody.
-SECRET_KEY = '!xb+%ey4ozr=n9=a&amp;xq0_=gk=gk6#&amp;43ug^skqso1r97t%us%-'
-
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.Loader',
@@ -101,7 +96,6 @@ MIDDLEWARE_CLASSES = (
     # Uncomment the next line for simple clickjacking protection:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
 )
 
 ROOT_URLCONF = 'op_api.urls'
@@ -132,7 +126,6 @@ INSTALLED_APPS = (
     # 'op_api.pops',
     # 'op_api.locations',
     'corsheaders',
-    'debug_toolbar',
     # used when reading from old tables (import)
     'op_api.politici',
     'op_api.territori',
