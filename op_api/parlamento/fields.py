@@ -25,7 +25,8 @@ class UltimoAggiornamentoField(serializers.Field):
     def to_native(self, value):
         if 'data' in self.context['request'].QUERY_PARAMS:
             return self.context['request'].QUERY_PARAMS.get('data')
-        return get_last_update()
+
+        return get_last_update(value.object_list.db)
 
 
 class RamoField(serializers.CharField):
