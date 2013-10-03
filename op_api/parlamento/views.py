@@ -157,7 +157,7 @@ class ParlamentareListView(APILegislaturaMixin, generics.ListAPIView):
             queryset = queryset.filter(data=data)
 
         # filtro per ramo
-        ramo = self.request.QUERY_PARAMS.get('ramo', None)
+        ramo = self.request.QUERY_PARAMS.get('ramo', '').upper()
         if ramo in ('C', 'S'):
             queryset = queryset.filter(ramo=ramo)
 
