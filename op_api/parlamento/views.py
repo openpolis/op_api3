@@ -2,6 +2,7 @@ from datetime import date
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from rest_framework.compat import parse_date
+from rest_framework.filters import DjangoFilterBackend
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
@@ -14,10 +15,23 @@ from op_api.parlamento.utils import reverse_url, get_legislatura_from_request, g
 __author__ = 'daniele'
 
 
+from repubblica import Repubblica
+class DBSelectBackend(object):
+
+    def filter_queryset(self, request, queryset, view):
+        db_alias = view.db_alias
+        return queryset.using(db_alias)
+
+
 class APILegislaturaMixin(object):
     """
     All views in this module extends this class
     """
+    filter_backends = (DBSelectBackend, DjangoFilterBackend)
+
+    @property
+    def db_alias(self):
+        return Repubblica.get_legislatura(self.legislatura)['database']
 
     @property
     def legislatura(self):
@@ -67,8 +81,8 @@ class LegislaturaDetailView(APILegislaturaMixin, APIView):
         return Response(data)
 
 
-class GruppoListView(generics.ListAPIView, APILegislaturaMixin):
-    queryset = Gruppo.objects.using('politici').all()
+class GruppoListView(APILegislaturaMixin, generics.ListAPIView):
+    queryset = Gruppo.objects.all()
     serializer_class = GruppoSerializer
 
 
@@ -83,7 +97,7 @@ class CircoscrizioneListView(APILegislaturaMixin, APIView):
     """
     def get(self, request, *args, **kwargs):
         circoscrizioni = []
-        for c in Carica.objects.using('politici').values('circoscrizione', 'tipo_carica_id').filter(
+        for c in Carica.objects.using(self.db_alias).values('circoscrizione', 'tipo_carica_id').filter(
             tipo_carica_id__in=[1, 4, 5],
             circoscrizione__isnull=False,
         ).distinct():
@@ -111,13 +125,12 @@ class CircoscrizioneDetailView(APILegislaturaMixin, APIView):
     pass
 
 
-class ParlamentareListView(generics.ListAPIView, APILegislaturaMixin):
+class ParlamentareListView(APILegislaturaMixin, generics.ListAPIView):
     serializer_class = ParlamentareSerializer
     pagination_serializer_class = CustomPaginationSerializer
-    queryset = PoliticianHistoryCache.objects.using('politici')\
-        .filter(chi_tipo='P')\
+    queryset = PoliticianHistoryCache.objects.filter(chi_tipo='P')\
         .select_related('carica', 'gruppo', 'carica__politico', 'carica__tipo_carica')
-    filter_backends = (filters.OrderingFilter,)
+    filter_backends = APILegislaturaMixin.filter_backends + (filters.OrderingFilter,)
     ordering = ('carica__politico__cognome', 'carica__politico__nome') + ParlamentareSerializer.Meta.statistic_fields
 
     def get_queryset(self):
@@ -126,10 +139,6 @@ class ParlamentareListView(generics.ListAPIView, APILegislaturaMixin):
         """
 
         queryset = super(ParlamentareListView, self).get_queryset()
-
-        # extract last update date to filter history cache results
-        self.last_update = get_last_update()
-        queryset = queryset.filter(data=self.last_update)
 
         # filtro per data
         data = self.request.QUERY_PARAMS.get('data', None)
@@ -142,6 +151,10 @@ class ParlamentareListView(generics.ListAPIView, APILegislaturaMixin):
             queryset = queryset.filter(
                 carica__data_inizio__lt=data,
             ).filter(Q(carica__data_fine__isnull=True) | Q(carica__data_inizio__gt=data))
+        else:
+            # extract last update date to filter history cache results
+            data = get_last_update(self.db_alias)
+            queryset = queryset.filter(data=data)
 
         # filtro per ramo
         ramo = self.request.QUERY_PARAMS.get('ramo', None)
@@ -166,17 +179,17 @@ class ParlamentareListView(generics.ListAPIView, APILegislaturaMixin):
         return queryset
 
 
-class ParlamentareDetailView(generics.RetrieveAPIView, APILegislaturaMixin):
+class ParlamentareDetailView(APILegislaturaMixin, generics.RetrieveAPIView):
     serializer_class = ParlamentareSerializer
     pagination_serializer_class = CustomPaginationSerializer
-    queryset = PoliticianHistoryCache.objects.using('politici').filter(chi_tipo='P')
+    queryset = PoliticianHistoryCache.objects.filter(chi_tipo='P')
 
     def get_object(self, queryset=None):
         # Determine the base queryset to use.
         if queryset is None:
             queryset = self.filter_queryset(self.get_queryset())
 
-        last_update = get_last_update()
+        last_update = get_last_update(self.db_alias)
         queryset = queryset.select_related('carica', 'carica__gruppo', 'carica__politico').filter(data=last_update)
 
         obj = get_object_or_404(queryset,
@@ -189,27 +202,29 @@ class ParlamentareDetailView(generics.RetrieveAPIView, APILegislaturaMixin):
         return obj
 
 
-class SedutaListView(generics.ListAPIView, APILegislaturaMixin):
-    queryset = Seduta.objects.using('politici').prefetch_related('votazione_set')
+class SedutaListView(APILegislaturaMixin, generics.ListAPIView):
+    queryset = Seduta.objects.prefetch_related('votazione_set')
     model = Seduta
     serializer_class = SedutaSerializer
-    filter_backends = (filters.OrderingFilter, filters.DjangoFilterBackend, )
+    filter_backends = APILegislaturaMixin.filter_backends + (filters.OrderingFilter, )
     filter_fields = ('ramo', 'data', 'numero', 'is_imported')
     ordering = ('numero', 'data')
 
 
-class SedutaDetailView(generics.RetrieveAPIView, APILegislaturaMixin):
-    queryset = Seduta.objects.using('politici')
+class SedutaDetailView(APILegislaturaMixin, generics.RetrieveAPIView):
     model = Seduta
     pk_url_kwarg = 'seduta'
     serializer_class = SedutaSerializer
 
 
-class VotazioneListView(generics.ListAPIView, APILegislaturaMixin):
-    queryset = Votazione.objects.using('politici').select_related('seduta')
+class VotazioneListView(APILegislaturaMixin, generics.ListAPIView):
+    queryset = Votazione.objects.select_related('seduta')
     model = Votazione
     serializer_class = VotazioneSerializer
     filter_fields = ('esito', 'is_imported', 'tipologia', )
+
+    def filter_queryset(self, *args, **kwargs):
+        return super(VotazioneListView, self).filter_queryset(*args, **kwargs)
 
     def get_queryset(self):
         qs = super(VotazioneListView, self).get_queryset()
@@ -221,8 +236,8 @@ class VotazioneListView(generics.ListAPIView, APILegislaturaMixin):
         return qs
 
 
-class VotazioneDetailView(generics.RetrieveAPIView, APILegislaturaMixin):
-    queryset = Votazione.objects.using('politici').prefetch_related('votazionehascarica_set')
+class VotazioneDetailView(APILegislaturaMixin, generics.RetrieveAPIView):
+    queryset = Votazione.objects.prefetch_related('votazionehascarica_set')
     model = Votazione
     pk_url_kwarg = 'votazione'
     serializer_class = VotazioneDettagliataSerializer

@@ -16,8 +16,8 @@ def get_legislatura_from_request(request):
     return request.resolver_match.kwargs.get('legislatura', None)
 
 
-def get_last_update():
-    return PoliticianHistoryCache.objects.using('politici').aggregate(
+def get_last_update(db_alias):
+    return PoliticianHistoryCache.objects.using(db_alias).aggregate(
         last_update=Max('data')
     )['last_update']
 
