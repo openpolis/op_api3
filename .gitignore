@@ -2,5 +2,6 @@
 /log/*
 .env
 /public/*
+/deploy_config/uwsgi.ini
 *.py[cd]
 *.zip

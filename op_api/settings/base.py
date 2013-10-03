@@ -5,7 +5,7 @@ root = environ.Path(__file__) - 3  # three folder back (/a/b/c/ - 3 = /)
 
 # set default values and casting
 env = environ.Env(
-    DEBUG=(bool, False),
+    DEBUG=(bool, True),
 )
 env.read_env(root('.env'))
 
@@ -118,7 +118,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.admin',
     'django.contrib.admindocs',
-    'django.contrib.gis',
+#    'django.contrib.gis',
     'django_extensions',
     'rest_framework',
     'south',
