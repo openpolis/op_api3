@@ -1,5 +1,6 @@
 from datetime import date
 from django.db.models import Q
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from rest_framework.compat import parse_date
 from rest_framework.filters import DjangoFilterBackend
@@ -31,7 +32,12 @@ class APILegislaturaMixin(object):
 
     @property
     def db_alias(self):
-        return Repubblica.get_legislatura(self.legislatura)['database']
+        legislatura = Repubblica.get_legislatura(self.legislatura)
+        try:
+            return legislatura['database']
+        except KeyError:
+            raise Http404("Legislatura {0} not found".format(legislatura))
+
 
     @property
     def legislatura(self):
