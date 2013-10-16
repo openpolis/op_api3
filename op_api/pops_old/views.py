@@ -4,8 +4,8 @@ from rest_framework.reverse import reverse
 from rest_framework.response import Response
 
 from op_api.mixins import ShortListModelMixin
-from op_api.pops.models import Person
-from op_api.pops.serializers import PersonSerializer
+from op_api.pops_old.models import Person
+from op_api.pops_old.serializers import PersonSerializer
 
 
 @api_view(['GET'])

@@ -33,6 +33,8 @@ class ShortListModelMixin(ListModelMixin):
             serializer = self.get_serializer(self.object_list)
 
         if 'list_fields' in kwargs:
-            serializer.data['results'] = [dict((k,v) for k, v in i.iteritems() if k in kwargs['list_fields']) for i in serializer.data['results']]
+            serializer.data['results'] = [
+                dict((k,v) for k, v in i.iteritems() if k in kwargs['list_fields']) for i in serializer.data['results']
+            ]
 
         return Response(serializer.data)

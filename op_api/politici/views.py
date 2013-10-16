@@ -1,12 +1,13 @@
+from django.conf import settings
 from django.views.generic.list import MultipleObjectMixin
-from rest_framework import generics
+from rest_framework import generics, pagination
 from rest_framework.decorators import api_view
 from rest_framework.reverse import reverse
 from rest_framework.response import Response
 
-from op_api.mixins import ShortListModelMixin
-from op_api.politici.models import OpUser
-from op_api.politici.serializers import UserSerializer
+from op_api.politici.models import OpUser, OpPolitician
+from op_api.politici.serializers import UserSerializer, PoliticianSerializer
+
 
 @api_view(['GET'])
 def api_root(request, format=None):
@@ -14,33 +15,50 @@ def api_root(request, format=None):
     The entry endpoint of our API.
     """
     return Response({
-        'users': reverse('opuser-list', request=request),
-        })
+        'users': reverse('politici-user-list', request=request, format=format),
+        'politicians': reverse('politici-politician-list', request=request, format=format),
+    })
 
-class PoliticiDBSelectMixin(MultipleObjectMixin):
-    def get_queryset(self):
-        queryset = super(PoliticiDBSelectMixin, self).get_queryset()
+class PoliticiDBSelectMixin(object):
+    """
+    Defines a filter_queryset method,
+    to be added before all views that extend GenericAPIView,
+    in order to select correct DB source
+    """
+    def filter_queryset(self, queryset):
         return queryset.using('politici')
 
 
-
-
-class UserList(PoliticiDBSelectMixin, ShortListModelMixin, generics.ListCreateAPIView):
+class UserList(PoliticiDBSelectMixin, generics.ListAPIView):
     """
-    API endpoint that represents a list of users for the politici application.
+    Represents a paginated list of users of the politici application.
     """
     model = OpUser
     serializer_class = UserSerializer
-    list_fields = ('url', 'nickname')
+    paginate_by = 25
+    max_paginate_by = 100
 
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, list_fields=self.list_fields, **kwargs)
-
-
-class UserDetail(PoliticiDBSelectMixin, generics.RetrieveUpdateDestroyAPIView):
+class UserDetail(PoliticiDBSelectMixin, generics.RetrieveAPIView):
     """
-    API endpoint that represents a single user.
+    Represents a single politici user.
     """
     model = OpUser
     serializer_class = UserSerializer
 
+
+class PoliticianList(PoliticiDBSelectMixin, generics.ListAPIView):
+    """
+    Represents the list of politicians
+    """
+    model = OpPolitician
+    queryset = model.objects.select_related('content')
+    serializer_class = PoliticianSerializer
+    paginate_by = 25
+    max_paginate_by = 100
+
+class PoliticianDetail(PoliticiDBSelectMixin, generics.RetrieveAPIView):
+    """
+    API endpoint that represents a single politician.
+    """
+    model = OpPolitician
+    serializer_class = PoliticianSerializer
