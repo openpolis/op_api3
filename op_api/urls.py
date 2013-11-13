@@ -8,5 +8,6 @@ urlpatterns = patterns('',
                        #url(r'^pops/', include('op_api.pops.urls')),
                        url(r'^politici/', include('op_api.politici.urls')),
                        url(r'^parlamento/', include('op_api.parlamento.urls', namespace='parlamento')),
+                       url(r'^territori/', include('op_api.territori.urls')),
                        )
 
