@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from op_api.politici.models import OpUser, OpPolitician, OpContent
+from op_api.politici.models import OpUser, OpPolitician, OpContent, OpInstitutionCharge, OpOpenContent
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -27,3 +27,24 @@ class PoliticianSerializer(serializers.ModelSerializer):
             'content',
         )
 
+
+class OpenContentSerializer(serializers.ModelSerializer):
+    content = ContentSerializer()
+    class Meta:
+        model = OpOpenContent
+        #fields = ('id', 'created_at', 'updated_at' )
+
+
+class OpInstitutionChargeSerializer(serializers.ModelSerializer):
+    content = OpenContentSerializer()
+    politician = serializers.HyperlinkedRelatedField(view_name='politici-politician-detail')
+    institution = serializers.HyperlinkedRelatedField(view_name='politici-institution-detail')
+    charge_type = serializers.HyperlinkedRelatedField(view_name='politici-chargetype-detail')
+    location = serializers.HyperlinkedRelatedField(view_name='territori-location-detail')
+    class Meta:
+        model = OpInstitutionCharge
+        view_name = 'politici-instcharge-detail'
+        fields = (
+            'politician', 'institution', 'charge_type', 'location',
+            'date_start', 'date_end', 'description', 'content'
+        )
