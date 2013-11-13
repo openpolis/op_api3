@@ -5,7 +5,7 @@ from rest_framework.decorators import api_view
 from rest_framework.reverse import reverse
 from rest_framework.response import Response
 
-from op_api.politici.models import OpUser, OpPolitician
+from op_api.politici.models import OpUser, OpPolitician, OpInstitution
 from op_api.politici.serializers import UserSerializer, PoliticianSerializer
 
 
@@ -17,6 +17,7 @@ def api_root(request, format=None):
     return Response({
         'users': reverse('politici-user-list', request=request, format=format),
         'politicians': reverse('politici-politician-list', request=request, format=format),
+        'institutions': reverse('politici-institution-list', request=request, format=format),
     })
 
 class PoliticiDBSelectMixin(object):
@@ -62,3 +63,14 @@ class PoliticianDetail(PoliticiDBSelectMixin, generics.RetrieveAPIView):
     """
     model = OpPolitician
     serializer_class = PoliticianSerializer
+
+
+class InstitutionList(PoliticiDBSelectMixin, generics.ListAPIView):
+    """
+    Represents the list of institutions
+    """
+    model = OpInstitution
+    paginate_by = 25
+    max_paginate_by = 100
+
+
