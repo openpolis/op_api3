@@ -107,8 +107,28 @@ class InstitutionChargeList(PoliticiDBSelectMixin, generics.ListAPIView):
     """
     Represents the list of institution charges
 
-    Accepts these filters through GET querystring parameters:
+    Accepts these filters through the following **GET** querystring parameters:
 
+    * ``date_start`` - charges started *exactly* on the date
+    * ``date_end`` - charges ended *exactly* on the date
+    * ``date`` - charges **active** on the date
+    * ``institution_id`` - ID of the institution
+    * ``charge_type_id`` - ID of the charge_type
+    * ``location_id`` - ID of the location
+
+    Dates have the format: ``YYYY-MM-DD``
+
+    Results have a standard pagination, with 25 results per page.
+
+    To get JSON format, specify ``format=json`` as a **GET** parameter,
+    or add ``.json`` to the URL.
+
+    Example usage
+
+        >> r = requests.get('http://api.openpolis.it/politici/instcharges.json?date=1990-01-01')
+        >> res = r.json()
+        >> print res['count']
+        1539
     """
     model = OpInstitutionCharge
     queryset = model.objects.select_related('content')

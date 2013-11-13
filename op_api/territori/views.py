@@ -18,6 +18,26 @@ def api_root(request, format=None):
     })
 
 class LocationList(PoliticiDBSelectMixin, generics.ListAPIView):
+    """
+    Represents the list of locations
+
+    Accepts these filters through the following **GET** querystring parameters:
+
+    * ``loc_type`` - type of locations to fetch
+
+    These are the values accepted by the ``loc_type`` filter:
+
+    * C, c, Comune, Com, comune, c, ...
+    * P, p, Provincia, Prov, Pr, provincia, ...
+    * R, r, Regione, regione, Reg, ...
+    * N, n, Nazione, nazione, ...
+
+    Results have a standard pagination, with 25 results per page.
+
+    To get JSON format, specify ``format=json`` as a **GET** parameter,
+    or add ``.json`` to the URL.
+
+    """
 
     LOC_TYPES = {
         'C': 'comune',
@@ -26,9 +46,6 @@ class LocationList(PoliticiDBSelectMixin, generics.ListAPIView):
         'N': 'nazionale',
     }
 
-    """
-    Represents the list of locations
-    """
     model = OpLocation
     paginate_by = 25
     max_paginate_by = 100
@@ -42,7 +59,7 @@ class LocationList(PoliticiDBSelectMixin, generics.ListAPIView):
         queryset = super(LocationList, self).get_queryset()
 
         # filtro per location_type
-        loc_type = self.request.QUERY_PARAMS.get('loc_type', '').upper()
+        loc_type = self.request.QUERY_PARAMS.get('loc_type', '')[0].upper()
         if loc_type in self.LOC_TYPES.keys():
             lt = OpLocationType.objects.using('politici').get(name__iexact=self.LOC_TYPES[loc_type])
             queryset = queryset.filter(location_type=lt)
