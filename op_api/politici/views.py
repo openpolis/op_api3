@@ -4,6 +4,7 @@ from rest_framework import generics, pagination
 from rest_framework.decorators import api_view
 from rest_framework.reverse import reverse
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 
 from op_api.politici.models import OpUser, OpPolitician
 from op_api.politici.serializers import UserSerializer, PoliticianSerializer
@@ -33,6 +34,7 @@ class UserList(PoliticiDBSelectMixin, generics.ListAPIView):
     """
     Represents a paginated list of users of the politici application.
     """
+    permission_classes = (IsAuthenticated,)
     model = OpUser
     serializer_class = UserSerializer
     paginate_by = 25
@@ -42,6 +44,7 @@ class UserDetail(PoliticiDBSelectMixin, generics.RetrieveAPIView):
     """
     Represents a single politici user.
     """
+    permission_classes = (IsAuthenticated,) 
     model = OpUser
     serializer_class = UserSerializer
 
