@@ -8,7 +8,7 @@ from django.core.management.base import BaseCommand
 
 from op_api.politici.models import *
 from popolo.models import *
-
+import re
 
 class Command(BaseCommand):
     """
@@ -67,11 +67,28 @@ class Command(BaseCommand):
 
         c = offset
         i=0
+        resources_type_map = {
+            1 : ContactDetail.CONTACT_TYPES.email,
+            2 : ContactDetail.CONTACT_TYPES.email,
+            5 : ContactDetail.CONTACT_TYPES.twitter,
+            6 : ContactDetail.CONTACT_TYPES.facebook,
+        }
         for op_person in op_politicians:
+
+            op_id = op_person.content_id
+
+
+
+
+
 
             c += 1
 
-            op_id = op_person.content_id
+
+
+
+
+
 
 
             p = Person()
@@ -120,6 +137,21 @@ class Command(BaseCommand):
                 person.gender = gender
                 person.save()
                 print person, "updated"
+
+
+            op_person_resources = OpResources.objects.using('politici').filter(
+                politician_id=op_id,resources_type_id__in=(1,2,5,6))
+
+            for op_resource in op_person_resources:
+                contact, created = ContactDetail.objects.get_or_create(
+                    contact_type=resources_type_map[op_resource.resources_type_id],
+                    value=op_resource.valore,
+                    content_type=ContentType.objects.get(model='Person'),
+                    object_id=person.id,
+                    defaults={
+                        'label':op_resource.descrizione
+                    }
+                )
 
 
         self.logger.info("Inizio import da vecchio DB")
