@@ -1,30 +1,34 @@
 # -*- coding: utf-8 -*-
 from datetime import date
 from django.db.models import Q
+from django.utils.datastructures import SortedDict
 
 from rest_framework import generics, pagination
 from rest_framework.compat import parse_date
-from rest_framework.decorators import api_view
 from rest_framework.reverse import reverse
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
 
 from op_api.politici.models import OpUser, OpPolitician, OpInstitution, OpChargeType, OpInstitutionCharge
 from op_api.politici.serializers import UserSerializer, PoliticianSerializer, OpInstitutionChargeSerializer
 
 
-@api_view(['GET'])
-def api_root(request, format=None):
+class PoliticiView(APIView):
     """
-    The entry endpoint of our API.
+    List of available resources' endpoints for the ``politici`` section of the API
     """
-    return Response({
-        'users': reverse('politici-user-list', request=request, format=format),
-        'politicians': reverse('politici-politician-list', request=request, format=format),
-        'institutions': reverse('politici-institution-list', request=request, format=format),
-        'chargetypes': reverse('politici-chargetype-list', request=request, format=format),
-        'institution charges': reverse('politici-instcharge-list', request=request, format=format),
-    })
+    def get(self, request, **kwargs):
+        format = kwargs.get('format', None)
+        data = SortedDict([
+            ('users [protected]', reverse('politici:user-list', request=request, format=format)),
+            ('politicians', reverse('politici:politician-list', request=request, format=format)),
+            ('institutions', reverse('politici:institution-list', request=request, format=format)),
+            ('chargetypes', reverse('politici:chargetype-list', request=request, format=format)),
+            ('institution charges', reverse('politici:instcharge-list', request=request, format=format)),
+        ])
+        return Response(data)
+
 
 class PoliticiDBSelectMixin(object):
     """
