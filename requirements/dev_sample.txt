@@ -2,4 +2,4 @@
 -r base.txt
 
 django-debug-toolbar
--e /Users/guglielmo/Workspace/django-popolo
+-e /home/guest/Workspace/django-popolo
