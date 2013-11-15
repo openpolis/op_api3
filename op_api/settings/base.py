@@ -16,8 +16,8 @@ TEMPLATE_DEBUG = DEBUG
 DATABASES = {
     'default': env.db('DB_DEFAULT_URL'),
     'politici': env.db('DB_POLITICI_URL'),
-    'parlamento16': env.db('DB_PARLAMENTO16_URL'),
-    'parlamento17': env.db('DB_PARLAMENTO17_URL'),
+#    'parlamento16': env.db('DB_PARLAMENTO16_URL'),
+ #   'parlamento17': env.db('DB_PARLAMENTO17_URL'),
 }
 
 MEDIA_ROOT = root('assets')
@@ -123,13 +123,14 @@ INSTALLED_APPS = (
     'rest_framework',
     'south',
     # pops and locations need GEO and GDAL
-    # 'op_api.pops',
+     'op_api.pops',
     # 'op_api.locations',
     'corsheaders',
     # used when reading from old tables (import)
     'op_api.politici',
     'op_api.territori',
     'op_api.parlamento',
+    'popolo',
 )
 
 # A sample logging configuration. The only tangible logging
