@@ -81,6 +81,7 @@ class OpProfessionManager(models.Manager):
         return self.filter(oid__isnull=True)
 
 
+
 class OpProfession(models.Model):
     id = models.IntegerField(primary_key=True)
     description = models.CharField(max_length=255)

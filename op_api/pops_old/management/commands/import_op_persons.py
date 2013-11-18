@@ -6,8 +6,8 @@ import logging
 
 from django.core.management.base import BaseCommand
 
-from politici.models import *
-from op_api.pops.models import *
+from op_api.politici.models import *
+from op_api.pops_old.models import *
 
 
 class Command(BaseCommand):
