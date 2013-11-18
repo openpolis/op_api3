@@ -3,5 +3,6 @@
 .env
 /public/*
 /deploy_config/uwsgi.ini
+/requirements/dev.txt
 *.py[cd]
 *.zip

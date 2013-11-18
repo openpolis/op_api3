@@ -5,7 +5,7 @@ __author__ = 'guglielmo'
 class LocationSerializer(serializers.ModelSerializer):
     """
     """
-    id = serializers.HyperlinkedIdentityField(view_name='territori-location-detail')
+    id = serializers.HyperlinkedIdentityField(view_name='territori:location-detail')
     class Meta:
         model = OpLocation
         fields = ('id', 'location_type', 'name', 'inhabitants' )

@@ -6,7 +6,7 @@ from op_api.politici.models import OpUser, OpPolitician, OpContent, OpInstitutio
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = OpUser
-        view_name = 'politici-user-detail'
+        view_name = 'politici:user-detail'
         fields = ('url', 'first_name', 'last_name', 'nickname', 'is_active', 'email')
 
 
@@ -19,7 +19,7 @@ class PoliticianSerializer(serializers.ModelSerializer):
     content = ContentSerializer()
     class Meta:
         model = OpPolitician
-        view_name = 'politici-politician-detail'
+        view_name = 'politici:politician-detail'
         fields = (
             'first_name', 'last_name',
             'birth_date', 'death_date', 'birth_location',
@@ -37,13 +37,13 @@ class OpenContentSerializer(serializers.ModelSerializer):
 
 class OpInstitutionChargeSerializer(serializers.ModelSerializer):
     content = OpenContentSerializer()
-    politician = serializers.HyperlinkedRelatedField(view_name='politici-politician-detail')
-    institution = serializers.HyperlinkedRelatedField(view_name='politici-institution-detail')
-    charge_type = serializers.HyperlinkedRelatedField(view_name='politici-chargetype-detail')
-    location = serializers.HyperlinkedRelatedField(view_name='territori-location-detail')
+    politician = serializers.HyperlinkedRelatedField(view_name='politici:politician-detail')
+    institution = serializers.HyperlinkedRelatedField(view_name='politici:institution-detail')
+    charge_type = serializers.HyperlinkedRelatedField(view_name='politici:chargetype-detail')
+    location = serializers.HyperlinkedRelatedField(view_name='territori:location-detail')
     class Meta:
         model = OpInstitutionCharge
-        view_name = 'politici-instcharge-detail'
+        view_name = 'politici:instcharge-detail'
         fields = (
             'politician', 'institution', 'charge_type', 'location',
             'date_start', 'date_end', 'description', 'content'
