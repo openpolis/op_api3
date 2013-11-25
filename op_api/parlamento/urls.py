@@ -19,8 +19,8 @@ urls = (
 
 urlpatterns = patterns('',
                        url(r'^$', views.LegislaturaListView.as_view(), name='legislatura-list'),
-                       url(r'^legislatura-(?P<legislatura>[IVX]+)/$', views.LegislaturaDetailView.as_view(), name='legislatura-detail'),
-                       url(r'^legislatura-(?P<legislatura>[IVX]+)/', include(patterns('', *urls)))
+                       url(r'^legislatura-(?P<legislatura>[IVX0-9]+)/$', views.LegislaturaDetailView.as_view(), name='legislatura-detail'),
+                       url(r'^legislatura-(?P<legislatura>[IVX0-9]+)/', include(patterns('', *urls)))
                        )
 
 

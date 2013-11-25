@@ -2,6 +2,7 @@
 """
 Dati relativi alla repubblica italiana.
 """
+from copy import deepcopy
 
 import re
 from datetime import date
@@ -64,143 +65,125 @@ def roman_to_int(s):
 
 class Repubblica(object):
 
-    LEGISLATURE = {
-        0: {
+    LEGISLATURE = [
+        {
             'name': u"Assemblea Costituente",
             'voting_date': date(1956, 6, 2),
             'start_date': date(1946, 6, 25),
             'end_date': date(1948, 1, 31),
         },
-
-        1: {
+        {
             'name': u"I Legislatura",
             'voting_date': date(1948, 4, 18),
             'start_date': date(1948, 5, 8),
             'end_date': date(1953, 6, 24),
         },
-
-        2: {
+        {
             'name': u"II Legislatura",
             'voting_date':  date(1953, 6, 7),
             'start_date':  date(1953, 6, 25),
             'end_date':  date(1958, 6, 11)
         },
-
-        3: {
+        {
             'name': u"III Legislatura",
             'voting_date':  date(1958, 5, 25),
             'start_date':  date(1958, 6, 12),
             'end_date':  date(1963, 5, 15)
         },
-
-        4: {
+        {
             'name': u"IV Legislatura",
             'voting_date':  date(1963, 4, 28),
             'start_date':  date(1963, 5, 16),
             'end_date':  date(1968, 6, 4)
         },
-
-        5: {
+        {
             'name': u"V Legislatura",
             'voting_date':  date(1968, 5, 19),
             'start_date':  date(1968, 6, 5),
             'end_date':  date(1972, 5, 24)
         },
-
-        6: {
+        {
             'name': u"VI Legislatura",
             'voting_date':  date(1972, 5, 7),
             'start_date':  date(1972, 5, 25),
             'end_date':  date(1976, 7, 4)
         },
-
-        7: {
+        {
             'name': u"VII Legislatura",
             'voting_date':  date(1976, 6, 20),
             'start_date':  date(1976, 7, 5),
             'end_date':  date(1979, 6, 19)
         },
-
-        8: {
+        {
             'name': u"VIII Legislatura",
             'voting_date':  date(1979, 6, 3),
             'start_date':  date(1979, 6, 20),
             'end_date':  date(1983, 7, 11)
         },
-
-        9: {
+        {
             'name': u"IX Legislatura",
             'voting_date':  date(1983, 6, 26),
             'start_date':  date(1983, 7, 12),
             'end_date':  date(1987, 7, 1)
         },
-
-        10: {
+        {
             'name': u"X Legislatura",
             'voting_date':  date(1987, 6, 14),
             'start_date':  date(1987, 7, 2),
             'end_date':  date(1992, 4, 22)
         },
-
-        11: {
+        {
             'name': u"XI Legislatura",
             'voting_date':  date(1992, 4, 5),
             'start_date':  date(1992, 4, 23),
             'end_date':  date(1994, 4, 14)
         },
-
-        12: {
+        {
             'name': u"XII Legislatura",
             'voting_date':  date(1994, 3, 27),
             'start_date':  date(1994, 4, 15),
             'end_date':  date(1996, 5, 8)
         },
-
-        13: {
+        {
             'name': u"XIII Legislatura",
             'voting_date':  date(1996, 4, 21),
             'start_date':  date(1996, 5, 9),
             'end_date':  date(2001, 5, 29)
         },
-
-        14: {
+        {
             'name': u"XIV Legislatura",
             'voting_date':  date(2001, 5, 13),
             'start_date':  date(2001, 5, 30),
             'end_date':  date(2006, 4, 27)
         },
-
-        15: {
+        {
             'name': u"XV Legislatura",
             'voting_date':  date(2006, 4, 9),
             'start_date':  date(2006, 4, 28),
             'end_date':  date(2008, 4, 28)
         },
-
-        16: {
+        {
             'name': u"XVI Legislatura",
             'voting_date':  date(2008, 4, 13),
             'start_date':  date(2008, 4, 29),
             'end_date':  date(2013, 3, 14),
             'database': 'parlamento16',
         },
-
-        17: {
+        {
             'name': u"XVII Legislatura",
             'voting_date':  date(2013, 2, 24),
             'start_date':  date(2013, 3, 15),
             'end_date': None,
             'database': 'parlamento17',
-        },
-
-    }
+        }
+    ]
 
     @classmethod
     def get_legislature(cls):
         """
         lista di tutte le legislature inserite
         """
-        return cls.LEGISLATURE
+        return deepcopy(cls.LEGISLATURE)
 
     @classmethod
     def get_legislatura(cls, key):

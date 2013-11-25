@@ -64,10 +64,13 @@ class LegislaturaListView(APILegislaturaMixin, APIView):
     """
     def get(self, request, **kwargs):
         request_format = kwargs.get('format', None)
-        data = {
-            'XVI': self.get_reverse_url('legislatura-detail', kwargs={'legislatura': 'XVI'}, format=request_format),
-            'XVII': self.get_reverse_url('legislatura-detail', kwargs={'legislatura': 'XVII'}, format=request_format),
-        }
+        data = []
+        for ix, lex in enumerate(Repubblica.get_legislature()):
+            lex['url'] = self.get_reverse_url('legislatura-detail', kwargs={'legislatura': str(ix)}, format=request_format)
+            if 'database' in lex:
+                del lex['database']
+            data.append(lex)
+        data.reverse()
         return Response(data)
 
 
