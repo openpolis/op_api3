@@ -18,7 +18,7 @@ def get_legislatura_from_request(request):
 
 def get_last_update(db_alias):
     return PoliticianHistoryCache.objects.using(db_alias).aggregate(
-        last_update=Max('data')
+        last_update=Max('update_date')
     )['last_update']
 
 

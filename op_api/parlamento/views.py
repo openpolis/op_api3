@@ -1,4 +1,5 @@
 from datetime import date
+from collections import OrderedDict as odict
 from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -8,6 +9,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 
 from rest_framework import generics, filters
+from op_api.parlamento import lex
 from op_api.parlamento.models import Carica, Gruppo, PoliticianHistoryCache, Seduta, Votazione
 from op_api.parlamento.serializers import GruppoSerializer, CustomPaginationSerializer, ParlamentareSerializer, VotazioneSerializer, SedutaSerializer, VotazioneDettagliataSerializer
 from op_api.parlamento.utils import reverse_url, get_legislatura_from_request, get_last_update
@@ -16,7 +18,6 @@ from op_api.parlamento.utils import reverse_url, get_legislatura_from_request, g
 __author__ = 'daniele'
 
 
-from repubblica import Repubblica
 class DBSelectBackend(object):
 
     def filter_queryset(self, request, queryset, view):
@@ -32,12 +33,10 @@ class APILegislaturaMixin(object):
 
     @property
     def db_alias(self):
-        legislatura = Repubblica.get_legislatura(self.legislatura)
-        try:
-            return legislatura['database']
-        except KeyError:
+        legislatura = lex.get_legislatura(self.legislatura)
+        if legislatura.database is None:
             raise Http404("Legislatura {0} not found".format(legislatura))
-
+        return legislatura.database
 
     @property
     def legislatura(self):
@@ -45,6 +44,24 @@ class APILegislaturaMixin(object):
         APIView uses a custom Request that wraps django Request
         """
         return get_legislatura_from_request(self.request)
+
+    def prepare_legislatura(self, legislatura, request_format):
+        url_kwargs = {
+            'kwargs': {'legislatura': str(legislatura.number)},
+            'format': request_format,
+        }
+        return odict([
+            ('name', legislatura.name),
+            ('start_date', legislatura.start_date),
+            ('end_date', legislatura.end_date),
+            ('voting_date', legislatura.voting_date),
+            ('url', self.get_reverse_url('legislatura-detail', **url_kwargs)),
+            ('groups_url', self.get_reverse_url('gruppo-list', **url_kwargs)),
+            ('districts_url', self.get_reverse_url('circoscrizione-list', **url_kwargs)),
+            ('parliamentarians_url', self.get_reverse_url('parlamentare-list', **url_kwargs)),
+            ('sittings_url', self.get_reverse_url('seduta-list', **url_kwargs)),
+            ('votes_url', self.get_reverse_url('votazione-list', **url_kwargs)),
+        ])
 
     def get_reverse_url(self, name, format=None, legislatura=None, args=None, kwargs=None, filters=None):
 
@@ -65,11 +82,8 @@ class LegislaturaListView(APILegislaturaMixin, APIView):
     def get(self, request, **kwargs):
         request_format = kwargs.get('format', None)
         data = []
-        for ix, lex in enumerate(Repubblica.get_legislature()):
-            lex['url'] = self.get_reverse_url('legislatura-detail', kwargs={'legislatura': str(ix)}, format=request_format)
-            if 'database' in lex:
-                del lex['database']
-            data.append(lex)
+        for legislatura in lex.get_legislature():
+            data.append(self.prepare_legislatura(legislatura, request_format))
         data.reverse()
         return Response(data)
 
@@ -80,13 +94,7 @@ class LegislaturaDetailView(APILegislaturaMixin, APIView):
     """
     def get(self, request, **kwargs):
         request_format = kwargs.get('format', None)
-        data = {
-            'gruppi': self.get_reverse_url('gruppo-list', format=request_format),
-            'circoscrizioni': self.get_reverse_url('circoscrizione-list', format=request_format),
-            'parlamentari': self.get_reverse_url('parlamentare-list', format=request_format),
-            'sedute': self.get_reverse_url('seduta-list', format=request_format),
-            'votazioni': self.get_reverse_url('votazione-list', format=request_format),
-        }
+        data = self.prepare_legislatura(lex.get_legislatura(self.legislatura), request_format)
         return Response(data)
 
 
@@ -106,24 +114,24 @@ class CircoscrizioneListView(APILegislaturaMixin, APIView):
     """
     def get(self, request, *args, **kwargs):
         circoscrizioni = []
-        for c in Carica.objects.using(self.db_alias).values('circoscrizione', 'tipo_carica_id').filter(
-            tipo_carica_id__in=[1, 4, 5],
-            circoscrizione__isnull=False,
+        for c in Carica.objects.using(self.db_alias).values('district', 'charge_type_id').filter(
+            charge_type_id__in=[1, 4, 5],
+            district__isnull=False,
         ).distinct():
-            circoscrizione = dict(nome=c['circoscrizione'])
-            if c['tipo_carica_id'] == 1:
-                circoscrizione['ramo'] = 'camera'
-            elif c['tipo_carica_id'] in [4, 5]:
-                circoscrizione['ramo'] = 'senato'
+            circoscrizione = dict(name=c['district'])
+            if c['charge_type_id'] == 1:
+                circoscrizione['house'] = 'camera'
+            elif c['charge_type_id'] in [4, 5]:
+                circoscrizione['house'] = 'senato'
             else:
-                circoscrizione['ramo'] = 'ERROR:{}'.format(c['tipo_carica_id'])
-            circoscrizione['parlamentari_url'] = self.get_reverse_url('parlamentare-list',
-                                                                      filters={'circoscrizione': c['circoscrizione']},
+                circoscrizione['house'] = 'ERROR:{}'.format(c['charge_type_id'])
+            circoscrizione['parliamentarians_url'] = self.get_reverse_url('parlamentare-list',
+                                                                      filters={'district': c['district']},
                                                                       format=kwargs.get('format', None))
             circoscrizioni.append(circoscrizione)
 
         return Response({
-            'results': sorted(circoscrizioni, key=lambda c: c['ramo'] + c['nome']),
+            'results': sorted(circoscrizioni, key=lambda c: c['house'] + c['name']),
             'count': len(circoscrizioni),
             'next': None,
             'previous': None,
@@ -138,9 +146,9 @@ class ParlamentareListView(APILegislaturaMixin, generics.ListAPIView):
     serializer_class = ParlamentareSerializer
     pagination_serializer_class = CustomPaginationSerializer
     queryset = PoliticianHistoryCache.objects.filter(chi_tipo='P')\
-        .select_related('carica', 'gruppo', 'carica__politico', 'carica__tipo_carica')
+        .select_related('charge', 'group', 'charge__politician', 'charge__charge_type')
     filter_backends = APILegislaturaMixin.filter_backends + (filters.OrderingFilter,)
-    ordering = ('carica__politico__cognome', 'carica__politico__nome') + ParlamentareSerializer.Meta.statistic_fields
+    ordering = ('charge__politician__surname', 'charge__politician__name') + ParlamentareSerializer.Meta.statistic_fields
 
     def get_queryset(self):
         """
@@ -150,7 +158,7 @@ class ParlamentareListView(APILegislaturaMixin, generics.ListAPIView):
         queryset = super(ParlamentareListView, self).get_queryset()
 
         # filtro per data
-        data = self.request.QUERY_PARAMS.get('data', None)
+        data = self.request.QUERY_PARAMS.get('date', None)
         if data:
             data = parse_date(data)
             if data > date.today():
@@ -158,32 +166,32 @@ class ParlamentareListView(APILegislaturaMixin, generics.ListAPIView):
                 return queryset.none()
 
             queryset = queryset.filter(
-                carica__data_inizio__lt=data,
-            ).filter(Q(carica__data_fine__isnull=True) | Q(carica__data_inizio__gt=data))
+                charge__start_date__lt=data,
+            ).filter(Q(charge__end_date__isnull=True) | Q(charge__start_date__gt=data))
         else:
             # extract last update date to filter history cache results
             data = get_last_update(self.db_alias)
-            queryset = queryset.filter(data=data)
+            queryset = queryset.filter(update_date=data)
 
         # filtro per ramo
-        ramo = self.request.QUERY_PARAMS.get('ramo', '').upper()
+        ramo = self.request.QUERY_PARAMS.get('house', '').upper()
         if ramo in ('C', 'S'):
-            queryset = queryset.filter(ramo=ramo)
+            queryset = queryset.filter(house=ramo)
 
         # filtro per circoscrizione
-        circoscrizione = self.request.QUERY_PARAMS.get('circoscrizione', None)
+        circoscrizione = self.request.QUERY_PARAMS.get('district', None)
         if circoscrizione is not None:
-            queryset = queryset.filter(carica__circoscrizione=circoscrizione)
+            queryset = queryset.filter(charge__district=circoscrizione)
 
         # filtro per gruppo
-        gruppo = self.request.QUERY_PARAMS.get('gruppo', None)
+        gruppo = self.request.QUERY_PARAMS.get('group', None)
         if gruppo is not None:
-            queryset = queryset.filter(gruppo=int(gruppo))
+            queryset = queryset.filter(group=int(gruppo))
 
         # filtro per genere
-        genere = self.request.QUERY_PARAMS.get('genere', None)
+        genere = self.request.QUERY_PARAMS.get('gender', None)
         if genere in ('M', 'F'):
-            queryset = queryset.filter(carica__politico__sesso=genere)
+            queryset = queryset.filter(charge__politician__gender=genere)
 
         return queryset
 
@@ -212,12 +220,12 @@ class ParlamentareDetailView(APILegislaturaMixin, generics.RetrieveAPIView):
 
 
 class SedutaListView(APILegislaturaMixin, generics.ListAPIView):
-    queryset = Seduta.objects.prefetch_related('votazione_set')
+    queryset = Seduta.objects.prefetch_related('votes')
     model = Seduta
     serializer_class = SedutaSerializer
     filter_backends = APILegislaturaMixin.filter_backends + (filters.OrderingFilter, )
-    filter_fields = ('ramo', 'data', 'numero', 'is_imported')
-    ordering = ('numero', 'data')
+    filter_fields = ('house', 'date', 'number', 'is_imported')
+    ordering = ('number', 'date')
 
 
 class SedutaDetailView(APILegislaturaMixin, generics.RetrieveAPIView):

@@ -9,7 +9,7 @@ class LegislaturaField(serializers.Field):
     """
     Field that returns a legislature.
     """
-    page_field = 'legislatura'
+    page_field = 'legislative_session'
 
     def to_native(self, value):
         request = self.context.get('request')
@@ -20,11 +20,11 @@ class UltimoAggiornamentoField(serializers.Field):
     """
     Field that returns a last update date of OpPoliticianHistoryCache.
     """
-    page_field = 'data'
+    page_field = 'update_date'
 
     def to_native(self, value):
         if 'data' in self.context['request'].QUERY_PARAMS:
-            return self.context['request'].QUERY_PARAMS.get('data')
+            return self.context['request'].QUERY_PARAMS.get('date')
 
         return get_last_update(value.object_list.db)
 
@@ -47,7 +47,7 @@ class CaricaField(serializers.CharField):
     """
 
     def to_native(self, value):
-        return value.nome
+        return value.name
 
 
 class HyperlinkedParlamentariField(serializers.HyperlinkedIdentityField):
