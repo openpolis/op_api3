@@ -3,6 +3,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
 from api.models import PrioritizedModel
+from popolo.behaviors.models import Dateframeable
 
 
 class PlaceType(PrioritizedModel):
@@ -29,7 +30,7 @@ class I18NName(PrioritizedModel):
     language_code = models.CharField(max_length=2, blank=True, null=True, help_text=_("ISO 639-1 language code (it, en, de, ...)"))
 
 
-class Place(PrioritizedModel, TimeStampedModel):
+class Place(PrioritizedModel, TimeStampedModel, Dateframeable):
     """
     Maps all types of places, from a Continent to a neighborhood.
 
@@ -47,13 +48,14 @@ class Place(PrioritizedModel, TimeStampedModel):
 
     **identifiers** are the different codes or handles the place is known at different institution (if any)
 
+
+
     a place may change the name, or end its status as autonomous place, for a variety of reasons
     this events are mapped through these fields:
 
-    - date_start,
-    - date_end,
     - reason_end
     - new_place_set, old_place_set
+    - popolo.behaviours.Dateframeable's start_date and end_date fields
 
     the location *hierarchy* maps the administrative divisions continent, nation, state, macroregions,
     regions, provinces, cities, entities, geographic organizations
@@ -68,11 +70,10 @@ class Place(PrioritizedModel, TimeStampedModel):
     place_type = models.ForeignKey('PlaceType')
     name = models.CharField(max_length=255, blank=True)
     slug = models.SlugField(max_length=255, null=True, blank=True)
+
     inhabitants_total = models.IntegerField(null=True, blank=True)
     area_total = models.FloatField(null=True, blank=True)
 
-    date_start = models.DateField(null=True, blank=True)
-    date_end = models.DateField(null=True, blank=True)
     reason_end = models.CharField(max_length=255, null=True, blank=True,
                                   help_text=_("The reason why the location has ended (rename, merge, split, ...)"))
     new_place_set = models.ManyToManyField('Place', blank=True, null=True,
@@ -80,11 +81,12 @@ class Place(PrioritizedModel, TimeStampedModel):
                                            help_text=_("Link to place(s) after date_end"))
 
     parent_place_set = models.ManyToManyField('Place', blank=True, null=True,
-                                              related_name='child_place_set', through='GeoMembership',
+                                              related_name='child_place_set', symmetrical=False,
+                                              through='Membership',
                                               help_text=_("Parent(s) in the hierarchy"))
 
 
-class PlaceGEOInfo(gis_models.Model):
+class GEOInfo(gis_models.Model):
     """
     GIS extension of the Location model
 
@@ -97,7 +99,7 @@ class PlaceGEOInfo(gis_models.Model):
     gps_lon = models.FloatField(null=True, blank=True)
 
 
-class PlaceContextInfo(models.Model):
+class ContextInfo(models.Model):
     """
     Context information related to a place.
     """
@@ -126,14 +128,12 @@ class Link(models.Model):
     note = models.CharField(_("note"), max_length=128, blank=True, help_text=_("A note, e.g. 'Wikipedia page'"))
 
 
-class GeoMembership(models.Model):
+class Membership(models.Model, Dateframeable):
     """
     Maps membership of a geographic place to another place.
     For example a province is a member of a Region.
     """
     parent = models.ForeignKey('Place')
     child = models.ForeignKey('Place')
-    date_start = models.DateField(null=True, blank=True)
-    date_end = models.DateField(null=True, blank=True)
     note = models.TextField(null=True, blank=True,
                             help_text=_("Some unstructured note about why the membership started, changed, or ended"))

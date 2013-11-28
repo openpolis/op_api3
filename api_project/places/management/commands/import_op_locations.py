@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from django.utils.text import slugify
+
 __author__ = 'guglielmo'
 
 from optparse import make_option
@@ -6,18 +8,18 @@ import logging
 
 from django.core.management.base import BaseCommand
 
-from locations_old.models import *
+from places.models import *
 from territori.models import *
 
 
 class Command(BaseCommand):
     """
-    Politici are imported from the old Openpolis database into the new one
+    Places are imported from the old Openpolis OpLocation table
 
     Old database connection is named 'politici' and is accessible as a read-only
     database in django orm.
     """
-    help = "Import locations data from old politici database"
+    help = "Import places data from old politici database"
 
     option_list = BaseCommand.option_list + (
         make_option('--limit',
@@ -60,10 +62,16 @@ class Command(BaseCommand):
         offset = int(options['offset'])
         limit = int(options['limit'])
 
+        self.logger.info("Inizio import da vecchio DB")
+        self.logger.info("Limit: %s" % limit)
+        self.logger.info("Offset: %s" % offset)
+
+
         if limit:
             op_locations = OpLocation.objects.using('politici').all()[offset:offset+limit]
         else:
             op_locations = OpLocation.objects.using('politici').all()[offset:]
+
 
         c = offset
         for op_location in op_locations:
@@ -72,115 +80,40 @@ class Command(BaseCommand):
             c += 1
 
             #
-            # Location Types
+            # Place Types
             #
 
             op_location_type = op_location.location_type
-            location_type, created = LocationType.objects.get_or_create(
+            place_type, created = PlaceType.objects.get_or_create(
                 name=op_location_type.name
             )
             if created:
-                self.logger.info(u"%s - Aggiunta nuova location type: %s" % (c, location_type))
+                self.logger.info(u"%s - New place type added: %s" % (c, place_type))
 
             #
-            # Location
+            # Place
             #
+            slug = slugify(u"{0}-{1}".format(op_location.name, place_type.name))
 
             created = False
-            location, created = Location.objects.get_or_create(
-                location_type=location_type,
-                name=op_location.name
-            )
-            if created:
-                self.logger.info(u"%s - Aggiunta nuova location: %s" % (c, location))
-            else:
-                self.logger.debug(u"%s - Trovata location: %s" % (c, location))
-
-
-
-            #
-            # Person
-            #
-
-            # create a new Person only if not already imported
-            created = False
-            person, created = Person.objects.get_or_create(
-                code__name='op_id',
-                code__code=op_person.content_id,
+            place, created = Place.objects.get_or_create(
+                slug=slug,
                 defaults={
-                    'first_name': op_person.first_name,
-                    'last_name': op_person.last_name,
-                    'birth_date': op_person.birth_date,
-                    'sex': op_person_sex if op_person_sex else None,
+                    'place_type': place_type,
+                    'name': op_location.name,
+                    'inhabitants': op_location.inhabitants,
+                    'start_date': op_location.date_start,
+                    'end_date': op_location.date_end,
                 }
             )
             if created:
-                code = Code.objects.create(name='op_id', code=op_person.content_id, person=person)
-                self.logger.info(u"%s - Aggiunta persona: %s" % (c, person))
-
-                # add related data
-                if contacts:
-                    for contact in contacts:
-                        person.contact_set.add(contact)
-                        self.logger.info(u"    |- aggiunto contatto %s alla persona" % contact)
-                if profession:
-                    pp = PersonHasProfession.objects.create(
-                        person=person, profession=profession,
-                    )
-                    pp.save()
-                    self.logger.info(u"    |- aggiunta professione %s alla persona" % profession)
-                if education_levels:
-                    for education_level in education_levels:
-                        pe = PersonHasEducationLevel.objects.create(
-                            person=person, education_level=education_level
-                        )
-                        pe.save()
-                        self.logger.info(u"    |- aggiunto livello educazione %s alla persona" % education_level)
+                self.logger.info(u"%s - New place added: %s" % (c, place))
             else:
-                self.logger.debug(u"%s - Trovata persona: %s" % (c, person))
-                # overwrite if required by the script
-                if overwrite:
-                    # overwrite main metadata
-                    person.first_name = op_person.first_name
-                    person.last_name = op_person.last_name
-                    person.birth_date = op_person.birth_date
-                    person.sex = op_person_sex if op_person_sex else None
-                    self.logger.debug(u"    |- dati anagrafici sovrascritti")
-
-                    # overwrite related data
-                    if contacts:
-                        person.contact_set.all().delete()
-                        self.logger.debug(u"    |- contatti rimossi")
-                        for contact in contacts:
-                            person.contact_set.add(contact)
-                            self.logger.info(u"    |- aggiunto contatto %s alla persona" % contact)
-
-                    if profession:
-                        person.personhasprofession_set.all().delete()
-                        self.logger.debug(u"    |- professioni rimosse")
-                        pp = PersonHasProfession.objects.create(
-                            person=person, profession=profession,
-                        )
-                        pp.save()
-                        self.logger.debug(u"    |- aggiunta professione %s" % profession)
-
-                    if education_levels:
-                        person.personhaseducationlevel_set.all().delete()
-                        self.logger.debug(u"    |- livelli educativi rimossi")
-                        for education_level in education_levels:
-                            pe = PersonHasEducationLevel.objects.create(
-                                person=person, education_level=education_level
-                            )
-                            pe.save()
-                            self.logger.debug(u"    |- aggiunto livello educazione %s alla persona" % education_level)
-
-                    # persiste changes to person
-                    person.save()
-
-
-        self.logger.info("Inizio import da vecchio DB")
-        self.logger.info("Limit: %s" % options['limit'])
-        self.logger.info("Offset: %s" % options['offset'])
+                place.place_type = place_type
+                place.name = op_location.name
+                place.inhabitants_total = op_location.inhabitants
+                place.save()
+                self.logger.debug(u"%s - Place found and modified: %s" % (c, place))
 
         self.logger.info("Fine")
 
