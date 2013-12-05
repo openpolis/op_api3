@@ -44,6 +44,48 @@ class Command(BaseCommand):
 
     logger = logging.getLogger('import')
 
+
+    def _create_or_update_identifier(self, place, **kwargs):
+        """
+        Associate an external identifier to a given place.
+        Needed parameters for kwargs:
+
+        - scheme
+        - name
+        - value
+
+        New identifiers are created, old ones overwritten.
+        """
+        if kwargs['name'] is None:
+            return
+
+        if kwargs['value'] is None:
+            return
+
+        identifier, created = Identifier.objects.get_or_create(
+            scheme=kwargs['scheme'],
+            name=kwargs['name'],
+        )
+
+        if created is True:
+            self.logger.info(u"  - New identifier added: %s" % (identifier))
+        else:
+            self.logger.debug(u"  - Identifier found: %s" % (identifier))
+
+        extid, created = place.placeidentifier_set.get_or_create(
+            identifier=identifier,
+            defaults={
+                'value': kwargs['value'],
+            }
+        )
+        if created is True:
+            self.logger.debug(u"External id {0} added".format(extid,))
+        else:
+            extid.value = kwargs['value']
+            extid.save()
+            self.logger.debug(u"External id {0} overwritten".format(extid,))
+
+
     def handle(self, *args, **options):
 
         verbosity = options['verbosity']
@@ -80,9 +122,11 @@ class Command(BaseCommand):
             c += 1
 
             #
-            # Place Types
+            # Place Type
             #
 
+            # TODO: map italian names into standard english names
+            # TODO: Europa => Continent, Italia => Nation/Country, ...
             op_location_type = op_location.location_type
             place_type, created = PlaceType.objects.get_or_create(
                 name=op_location_type.name
@@ -94,6 +138,7 @@ class Command(BaseCommand):
             # Place
             #
             slug = slugify(u"{0}-{1}".format(op_location.name, place_type.name))
+            self.logger.debug(u"slug built: {0}".format(slug))
 
             created = False
             place, created = Place.objects.get_or_create(
@@ -112,8 +157,53 @@ class Command(BaseCommand):
                 place.place_type = place_type
                 place.name = op_location.name
                 place.inhabitants_total = op_location.inhabitants
+                place.start_date = op_location.date_start
+                place.end_date = op_location.date_end
                 place.save()
                 self.logger.debug(u"%s - Place found and modified: %s" % (c, place))
+
+            # OP Identifiers associated with the place
+            self._create_or_update_identifier(
+                place, scheme='ISTAT', name='MACROREGION_ID',
+                value=op_location.macroregional_id
+            )
+            self._create_or_update_identifier(
+                place, scheme='ISTAT', name='REGION_ID',
+                value=op_location.regional_id
+            )
+            self._create_or_update_identifier(
+                place, scheme='ISTAT', name='PROVINCE_ID',
+                value=op_location.provincial_id
+            )
+            self._create_or_update_identifier(
+                place, scheme='ISTAT', name='CITY_ID',
+                value=op_location.city_id
+            )
+            self._create_or_update_identifier(
+                place, scheme='MININT', name='REGION_ID',
+                value=op_location.minint_regional_code
+            )
+            self._create_or_update_identifier(
+                place, scheme='MININT', name='PROVINCE_ID',
+                value=op_location.minint_provincial_code
+            )
+            self._create_or_update_identifier(
+                place, scheme='MININT', name='CITY_ID',
+                value=op_location.minint_city_code
+            )
+            self._create_or_update_identifier(
+                place, scheme='OP', name='LOCATION_ID',
+                value=op_location.pk
+            )
+
+            # lat and long
+            if op_location.gps_lat or op_location.gps_lon:
+                geoinfo, created = PlaceGEOInfo.objects.get_or_create(place=place)
+                geoinfo.gps_lat = op_location.gps_lat
+                geoinfo.gps_lon = op_location.gps_lon
+                geoinfo.save()
+                self.logger.debug(u"  lat and long added in geoinfo")
+
 
         self.logger.info("Fine")
 
