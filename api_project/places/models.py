@@ -1,5 +1,4 @@
 from django.contrib.gis.db import models as gis_models
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models.query import EmptyQuerySet
 from django.utils.translation import ugettext_lazy as _
@@ -103,20 +102,20 @@ class Place(PrioritizedModel, TimeStampedModel, Dateframeable):
         """
         Returns the set of nodes that reference the Place instance.
         Handles the situation where a Place is not referenced in the
-        SubdivisionTree identified by tree_slug, but in one of the
+        ClassificationTree identified by tree_slug, but in one of the
         trees specified in the used_trees link.
 
         Return a queryset or an EmptyQuerySet if no such nodes exist.
         """
         nodes = EmptyQuerySet()
-        treetag = SubdivisionTreeTag.objects.get(slug=tree_slug)
-        nodes = self.subdivision_nodes_set.filter(
+        treetag = ClassificationTreeTag.objects.get(slug=tree_slug)
+        nodes = self.classification_nodes_set.filter(
             tag=treetag
         )
         if not nodes:
             usedtrees =  treetag.used_trees.all()
             if usedtrees:
-                nodes = self.subdivision_nodes_set.filter(
+                nodes = self.classification_nodes_set.filter(
                     tag__in=usedtrees
                 )
 
@@ -146,10 +145,10 @@ class PlaceType(PrioritizedModel):
             "An extended description of the place type, when needed"
         )
     )
-    subdivision_tree = models.ForeignKey('SubdivisionTreeTag',
+    classification_tree = models.ForeignKey('ClassificationTreeTag',
         null=True, blank=True,
         help_text=_(
-            "A reference to the Subdivision Tree where the PlaceType is used"
+            "A reference to the Classification Tree where the PlaceType is used"
         )
     )
 
@@ -203,9 +202,9 @@ class Identifier(models.Model):
         help_text=_("An identifier scheme, e.g. ISTAT, OP, MININT, ..."))
     name = models.CharField(_("name"), max_length=128,
         help_text=_("The name of the identifier: CITY_ID, REGION_ID, ..."))
-    subdivision_tree = models.ForeignKey('SubdivisionTreeTag',
+    classification_tree = models.ForeignKey('ClassificationTreeTag',
         null=True, blank=True,
-        help_text=_("""A reference to the root node of the subdivision
+        help_text=_("""A reference to the root node of the classification
             where the PlaceType is used""")
     )
 
@@ -264,16 +263,16 @@ class PlaceGEOInfo(gis_models.Model):
         verbose_name = 'Geo-based information'
 
 
-class SubdivisionTreeNode(MPTTModel, Dateframeable, PrioritizedModel):
+class ClassificationTreeNode(MPTTModel, Dateframeable, PrioritizedModel):
     """
-    Maps places subdivisions as trees.
+    Maps places classifications as trees.
 
-    A subdivision may be an official administrative subdivision,
+    A classification may be an official administrative classification,
     a.k.a. categorization, or any other hierarchical grouping of
-    existing places, i.e. Electoral Constituencies, or official or unofficial
-    international organizations (OECD, BRICS, ...)
+    existing places, i.e. Electoral Constituencies, or official or
+    unofficial international organizations (OECD, BRICS, ...)
 
-    A common void tree may host many subdivision trees (level 1 nodes).
+    A common void tree may host many classification trees (level 1 nodes).
 
     A node may link back to just one existing Place instance
     (place attribute).
@@ -282,14 +281,14 @@ class SubdivisionTreeNode(MPTTModel, Dateframeable, PrioritizedModel):
     (it exists only as container of real places).
 
     A node may have an ``equivalent_to`` link to another node,
-    in a diferent subdivision tree.
+    in a diferent classification tree.
     The meaning of the ``equivalent_to`` is that from children
     and descendants of the original node, can be fetched from
     the destination node.
-    This is to avoid replication of the same nodes over subdivision
+    This is to avoid replication of the same nodes over classification
     trees that differ only in the upper nodes.
     """
-    tag = models.ForeignKey('SubdivisionTreeTag',
+    tag = models.ForeignKey('ClassificationTreeTag',
         related_name='node_set')
     parent = TreeForeignKey('self', null=True, blank=True,
         related_name='children')
@@ -297,7 +296,7 @@ class SubdivisionTreeNode(MPTTModel, Dateframeable, PrioritizedModel):
         help_text=_("""Some unstructured note about why the
         membership started, changed, or ended"""))
     place = models.ForeignKey('Place',
-        related_name='subdivision_nodes_set', blank=True, null=True)
+        related_name='classification_nodes_set', blank=True, null=True)
 
     equivalent_to = models.ForeignKey('self',
         null=True, blank=True,
@@ -305,8 +304,8 @@ class SubdivisionTreeNode(MPTTModel, Dateframeable, PrioritizedModel):
     )
 
     class MPTTMeta:
-        verbose_name = 'Subdivision tree'
-        verbose_name_plural = 'Subdivision trees'
+        verbose_name = 'Classification tree'
+        verbose_name_plural = 'Classification trees'
         unique_together= (('parent', 'tag', 'start_date'),)
 
     def __unicode__(self):
@@ -315,14 +314,14 @@ class SubdivisionTreeNode(MPTTModel, Dateframeable, PrioritizedModel):
         )
 
 
-class SubdivisionTreeTag(models.Model):
+class ClassificationTreeTag(models.Model):
     """
-    Tag used to identify different SubdivisionTrees, or categorizations.
+    Tag used to identify different ClassificationTrees, or categorizations.
 
-    A SubdivisionTreeTag identifies a Tree.
+    A ClassificationTreeTag identifies a Tree.
 
     A tag may be linked, by the ``used_trees`` relation to one or more
-    different subdivision tags.
+    different classification tags.
     The meaning of this is that the original tree (identified by
     the original tag), has some relations
     of type equivalent_to directed towards the destination trees.
@@ -352,11 +351,11 @@ class SubdivisionTreeTag(models.Model):
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-@receiver(post_save, sender=SubdivisionTreeNode)
+@receiver(post_save, sender=ClassificationTreeNode)
 def check_equivalent_nodes(sender, instance, created, **kwargs):
     """
     Check the currently active equivalent_to relations
-    for all nodes in the same tree (SubdivisionTreeTag)
+    for all nodes in the same tree (ClassificationTreeTag)
     belonging to the node just saved.
     Align the tree.used_trees with the current situation.
     """
@@ -364,11 +363,13 @@ def check_equivalent_nodes(sender, instance, created, **kwargs):
     # the node just saved
     node = instance
 
-    # the node's tree (SubdivisionTreeTag)
+    # the node's tree (ClassificationTreeTag)
     tree = node.tag
 
-    # list of node in the tree, having equivalents_to relations
-    tree_equivalents = SubdivisionTreeNode.objects.filter(
+    # TODO: I know there's a better way to do the following fetching
+
+    # list of nodes in the tree, having equivalent_to relations
+    tree_equivalents = ClassificationTreeNode.objects.filter(
        tag=tree, equivalent_to__isnull=False
     )
 

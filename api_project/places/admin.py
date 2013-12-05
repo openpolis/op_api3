@@ -1,7 +1,7 @@
 from django.contrib import admin
 from treeadmin.admin import TreeAdmin
 from places.models import Place, PlaceType, Identifier, PlaceLink, \
-    PlaceGEOInfo, SubdivisionTreeNode, SubdivisionTreeTag, Language, PlaceAcronym, PlaceI18Name, PlaceIdentifier
+    PlaceGEOInfo, ClassificationTreeNode, ClassificationTreeTag, Language, PlaceAcronym, PlaceI18Name, PlaceIdentifier
 
 
 class PlaceIdentifierInline(admin.TabularInline):
@@ -35,7 +35,7 @@ class PlaceI18NameAdmin(admin.ModelAdmin):
     list_display = ('name', 'language')
 
 
-class SubdivisionTreeNodeAdmin(TreeAdmin):
+class ClassificationTreeNodeAdmin(TreeAdmin):
     mptt_level_indent = 10
     mptt_indent_field = "id"
     list_display = ('id', 'place', 'tag', 'equivalent_to',)
@@ -52,5 +52,5 @@ admin.site.register(PlaceAcronym, AcronymAdmin)
 admin.site.register(PlaceI18Name, PlaceI18NameAdmin)
 admin.site.register(PlaceLink)
 admin.site.register(PlaceGEOInfo)
-admin.site.register(SubdivisionTreeNode, SubdivisionTreeNodeAdmin)
-admin.site.register(SubdivisionTreeTag)
+admin.site.register(ClassificationTreeNode, ClassificationTreeNodeAdmin)
+admin.site.register(ClassificationTreeTag)
