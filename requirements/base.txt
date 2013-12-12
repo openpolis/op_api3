@@ -4,7 +4,7 @@ psycopg2==2.5.1
 Markdown==2.3.1
 PyYAML==3.10
 django-filter==0.7
-djangorestframework==2.3.8
+djangorestframework==2.3.10
 django-extensions==1.2.2
 django-model-utils==1.5.0
 django-autoslug==1.7.1
@@ -17,3 +17,4 @@ django-cors-headers==0.11
 django-mptt==0.6.0
 django-treeadmin==0.4.1
 
+git+git@github.com:philipn/django-rest-framework-gis@2f49feba6b1c6aef82f5024f5e2b92a2c61615bf#egg=djangorestframework-gis
