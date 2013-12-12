@@ -24,6 +24,7 @@ DATABASES = {
     'parlamento17': env.db('DB_PARLAMENTO17_URL'),
 }
 
+
 MEDIA_ROOT = root('assets')
 MEDIA_URL = '/media/'
 STATIC_ROOT = root('static')
@@ -203,13 +204,12 @@ LOGGING = {
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
-        'rest_framework.renderers.YAMLRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
     ),
     'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAuthenticatedOrReadOnly',),
     'PAGINATE_BY': 25,
     'PAGINATE_BY_PARAM': 'page_size',  # Allow client to override, using `?page_size=xxx`.
-    'MAX_PAGINATE_BY': 1000            # Maximum limit allowed when using `?page_size=xxx`.
+    'MAX_PAGINATE_BY': 100             # Maximum limit allowed when using `?page_size=xxx`.
 }
 
 # CORS Headers configuration

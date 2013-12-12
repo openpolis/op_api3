@@ -133,12 +133,14 @@ class PlaceType(PrioritizedModel):
     Types can be specified with a *name* field, usually they are:
 
     - Continent,
-    - Region,
+    - Regione, Provincia, Comune
     - City,
     - ...
     """
     name = models.CharField(_("name"), max_length=255,
         help_text="English name of the place type")
+    slug = models.SlugField(_("slug"), max_length=255,
+        help_text="Slug of the place type. Must be unique.", unique=True,)
     description = models.TextField(_("description"),
         blank=True, null=True,
         help_text=_(
@@ -165,7 +167,7 @@ class PlaceAcronym(models.Model):
     - german city acronyms, still used as such,
     - so on ...
     """
-    place = models.ForeignKey('Place')
+    place = models.ForeignKey('Place', related_name="acronyms")
     acronym = models.CharField(_("acronym"), max_length=128,
         help_text=_("An acronym for the place, e.g. 'PV'")
     )
@@ -176,6 +178,7 @@ class PlaceAcronym(models.Model):
     class Meta:
         verbose_name = 'Acronym'
         verbose_name_plural = 'Acronyms'
+        unique_together = ('place', 'acronym')
 
 
 class PlaceI18Name(models.Model):
@@ -183,13 +186,15 @@ class PlaceI18Name(models.Model):
     Internationalized name for a Place.
     Contains the reference to the language.
     """
-    place = models.ForeignKey('Place')
+    place = models.ForeignKey('Place', related_name='names')
     language = models.ForeignKey('Language')
     name = models.CharField(_("name"), max_length=255)
 
     class Meta:
         verbose_name = 'I18N Name'
         verbose_name_plural = 'I18N Names'
+        unique_together = ('place', 'language', 'name')
+
 
 
 class Identifier(models.Model):
@@ -202,6 +207,8 @@ class Identifier(models.Model):
         help_text=_("An identifier scheme, e.g. ISTAT, OP, MININT, ..."))
     name = models.CharField(_("name"), max_length=128,
         help_text=_("The name of the identifier: CITY_ID, REGION_ID, ..."))
+    slug = models.SlugField(_("slug"), max_length=255,
+        help_text="Slug of the place type. Must be unique.", unique=True,)
     classification_tree = models.ForeignKey('ClassificationTreeTag',
         null=True, blank=True,
         help_text=_("""A reference to the root node of the classification
@@ -213,13 +220,16 @@ class Identifier(models.Model):
             self.scheme, self.name
         )
 
+    class Meta:
+        unique_together = ('scheme', 'name')
+
 
 class PlaceIdentifier(models.Model):
     """
     All issued identifiers (value) related to the place
     Regional ID, MinintID, ...
     """
-    place = models.ForeignKey('Place')
+    place = models.ForeignKey('Place', related_name='placeidentifiers')
     identifier = models.ForeignKey('Identifier')
     value = models.CharField(_("identifier"), max_length=128,
         help_text=_("An issued identifier, e.g. '012'")
@@ -233,18 +243,23 @@ class PlaceIdentifier(models.Model):
     class Meta:
         verbose_name = 'External identifier'
         verbose_name_plural = 'External identifiers'
+        unique_together = ('place', 'identifier')
 
 
 class PlaceLink(models.Model):
     """
     All URLs where info about the place can be found on the internet.
     """
-    place = models.ForeignKey('Place')
-    url = models.URLField(_("url"), help_text=_("A URL"))
+    place = models.ForeignKey('Place', related_name='links')
+    uri = models.URLField(_("url"),
+        help_text=_("The URI of a web page related to the Place"))
+    text = models.CharField(_("text"), max_length=255,
+        help_text=_("A descriptive text") )
 
     class Meta:
         verbose_name = 'Link'
         verbose_name_plural = 'Links'
+        unique_together = ('place', 'uri')
 
 
 class PlaceGEOInfo(gis_models.Model):
@@ -254,7 +269,7 @@ class PlaceGEOInfo(gis_models.Model):
     **geom** maps the GIS geometry
     **gps_lat**, **gps_lon** maps the centroid coordinates of the area
     """
-    place = models.OneToOneField('Place')
+    place = models.OneToOneField('Place', related_name='geoinfo')
     geom = gis_models.MultiPolygonField(srid=4326, null=True, blank=True)
     gps_lat = models.FloatField(null=True, blank=True)
     gps_lon = models.FloatField(null=True, blank=True)

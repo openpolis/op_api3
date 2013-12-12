@@ -12,6 +12,7 @@ class ApiRootView(APIView):
     def get(self, request, **kwargs):
         format = kwargs.get('format', None)
         data = SortedDict([
+            ('maps', reverse('maps:api-root', request=request, format=format)),
             ('politici', reverse('politici:api-root', request=request, format=format)),
             ('parlamento', reverse('parlamento:legislatura-list', request=request, format=format)),
             ('territori', reverse('territori:api-root', request=request, format=format)),            
