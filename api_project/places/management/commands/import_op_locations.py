@@ -26,6 +26,10 @@ class Command(BaseCommand):
                     dest='limit',
                     default=0,
                     help='Limit of records to import'),
+        make_option('--loc-type',
+                    dest='loctype',
+                    default='regione',
+                    help='Type of location to import'),
         make_option('--offset',
                     dest='offset',
                     default=0,
@@ -45,46 +49,6 @@ class Command(BaseCommand):
     logger = logging.getLogger('import')
 
 
-    def _create_or_update_identifier(self, place, **kwargs):
-        """
-        Associate an external identifier to a given place.
-        Needed parameters for kwargs:
-
-        - scheme
-        - name
-        - value
-
-        New identifiers are created, old ones overwritten.
-        """
-        if kwargs['name'] is None:
-            return
-
-        if kwargs['value'] is None:
-            return
-
-        identifier, created = Identifier.objects.get_or_create(
-            scheme=kwargs['scheme'],
-            name=kwargs['name'],
-        )
-
-        if created is True:
-            self.logger.info(u"  - New identifier added: %s" % (identifier))
-        else:
-            self.logger.debug(u"  - Identifier found: %s" % (identifier))
-
-        extid, created = place.placeidentifier_set.get_or_create(
-            identifier=identifier,
-            defaults={
-                'value': kwargs['value'],
-            }
-        )
-        if created is True:
-            self.logger.debug(u"External id {0} added".format(extid,))
-        else:
-            extid.value = kwargs['value']
-            extid.save()
-            self.logger.debug(u"External id {0} overwritten".format(extid,))
-
 
     def handle(self, *args, **options):
 
@@ -100,20 +64,28 @@ class Command(BaseCommand):
 
         dryrun = options['dryrun']
         overwrite = options['overwrite']
+        loctype = options['loctype']
 
         offset = int(options['offset'])
         limit = int(options['limit'])
 
         self.logger.info("Inizio import da vecchio DB")
+        self.logger.info("Tipo territorio: %s" % loctype)
         self.logger.info("Limit: %s" % limit)
         self.logger.info("Offset: %s" % offset)
 
 
         if limit:
-            op_locations = OpLocation.objects.using('politici').all()[offset:offset+limit]
+            op_locations = OpLocation.objects.using('politici').filter(
+                location_type__name__iexact=loctype
+            )[offset:offset+limit]
         else:
-            op_locations = OpLocation.objects.using('politici').all()[offset:]
+            op_locations = OpLocation.objects.using('politici').filter(
+                location_type__name__iexact=loctype
+            )[offset:]
 
+
+        self._prepare_classification()
 
         c = offset
         for op_location in op_locations:
@@ -125,11 +97,13 @@ class Command(BaseCommand):
             # Place Type
             #
 
-            # TODO: map italian names into standard english names
-            # TODO: Europa => Continent, Italia => Nation/Country, ...
-            op_location_type = op_location.location_type
+            op_location_type_name = op_location.location_type.name
+            if op_location_type_name == 'Europa':
+                op_location_type_name = 'Continent'
+            elif op_location_type_name == 'Italia':
+                op_location_type_name = 'Nation'
             place_type, created = PlaceType.objects.get_or_create(
-                name=op_location_type.name
+                name=op_location_type_name
             )
             if created:
                 self.logger.info(u"%s - New place type added: %s" % (c, place_type))
@@ -138,7 +112,6 @@ class Command(BaseCommand):
             # Place
             #
             slug = slugify(u"{0}-{1}".format(op_location.name, place_type.name))
-            self.logger.debug(u"slug built: {0}".format(slug))
 
             created = False
             place, created = Place.objects.get_or_create(
@@ -149,18 +122,48 @@ class Command(BaseCommand):
                     'inhabitants': op_location.inhabitants,
                     'start_date': op_location.date_start,
                     'end_date': op_location.date_end,
+                    'slug': slug,
                 }
             )
             if created:
-                self.logger.info(u"%s - New place added: %s" % (c, place))
+                self.logger.info(
+                    u"{0} - New place added: {1} ({2})".format(
+                        c, place, slug
+                    )
+                )
             else:
                 place.place_type = place_type
                 place.name = op_location.name
                 place.inhabitants_total = op_location.inhabitants
                 place.start_date = op_location.date_start
                 place.end_date = op_location.date_end
+                place.slug = slug
                 place.save()
-                self.logger.debug(u"%s - Place found and modified: %s" % (c, place))
+                self.logger.info(
+                    u"{0} - Place found and modified: {1} ({2})".format(
+                        c, place, slug
+                    )
+                )
+
+            # add external identifiers
+            self._add_external_identifiers(place, op_location)
+
+            # lat and long
+            if op_location.gps_lat or op_location.gps_lon:
+                geoinfo, created = PlaceGEOInfo.objects.get_or_create(place=place)
+                geoinfo.gps_lat = op_location.gps_lat
+                geoinfo.gps_lon = op_location.gps_lon
+                geoinfo.save()
+                self.logger.debug(u"  lat and long added in geoinfo")
+
+
+            # ISTAT_REG classification
+            self._add_istat_classification(place, op_location)
+
+        self.logger.info("Fine")
+
+
+    def _add_external_identifiers(self, place, op_location):
 
             # OP Identifiers associated with the place
             self._create_or_update_identifier(
@@ -196,19 +199,190 @@ class Command(BaseCommand):
                 value=op_location.pk
             )
 
-            # lat and long
-            if op_location.gps_lat or op_location.gps_lon:
-                geoinfo, created = PlaceGEOInfo.objects.get_or_create(place=place)
-                geoinfo.gps_lat = op_location.gps_lat
-                geoinfo.gps_lon = op_location.gps_lon
-                geoinfo.save()
-                self.logger.debug(u"  lat and long added in geoinfo")
 
 
-        self.logger.info("Fine")
+    def _prepare_classification(self):
+        # preparatory work
+        # get or create istat tag
+        tag, created = ClassificationTreeTag.objects.get_or_create(
+            slug='istat-reg',
+            defaults={
+                'label': 'ISTAT-REG',
+                'description': \
+                    "ISTAT classification for administrative " +\
+                    "entities in Italy: Regioni, Province, Comuni"
+            }
+        )
+        if created:
+            self.logger.info("Classification Tag created: {0}".format(
+                tag
+            ))
+        else:
+            self.logger.debug("Classification Tag found: {0}".format(
+                tag
+            ))
 
 
+        # get or create root node
+        root_tag, created = ClassificationTreeTag.objects.get_or_create(
+            slug='root',
+            defaults={
+                'label': 'ROOT',
+            }
+        )
+        root_node, created = ClassificationTreeNode.objects.get_or_create(
+            tag=root_tag,
+            place=None,
+            parent=None
+        )
+        if created:
+            self.logger.info("Root ClassificationNode created")
+        else:
+            self.logger.debug("Root ClassificationNode found")
+
+        self.tag = tag
+        self.root_tag = root_tag
+        self.root_node = root_node
 
 
+    def _add_istat_classification(self, place, op_location):
 
+        if op_location.location_type.pk == 2:
+
+            # get or create europe node
+            eu_node, created = ClassificationTreeNode.objects.get_or_create(
+                tag=self.tag,
+                place=place,
+                parent=self.root_node,
+            )
+            if created:
+                self.logger.info("Europe ClassificationNode created")
+            else:
+                self.logger.info("Europe ClassificationNode found")
+
+
+        if op_location.location_type.pk == 3:
+
+            # get or create italy node
+            parent_node = Place.objects.get(slug='europa-continent').referencing_nodes('istat-reg')[0]
+            it_node, created = ClassificationTreeNode.objects.get_or_create(
+                tag=self.tag,
+                place=place,
+                parent=parent_node,
+            )
+            if created:
+                self.logger.info("Italy ClassificationNode created")
+            else:
+                self.logger.info("Italy ClassificationNode found")
+
+
+        if op_location.location_type.pk == 4:
+
+            # get or create region node
+            parent_node = Place.objects.get(slug='italia-nation').referencing_nodes('istat-reg')[0]
+            node, created = ClassificationTreeNode.objects.get_or_create(
+                tag=self.tag,
+                place=place,
+                parent=parent_node,
+            )
+            if created:
+                self.logger.info(u"Region {0} ClassificationNode created".format(
+                    place.name
+                ))
+            else:
+                self.logger.info(u"Regione {0} ClassificationNode found".format(
+                    place.name
+                ))
+
+
+        if op_location.location_type.pk == 5:
+
+            # get or create province node
+            parent_place = Place.objects.get(
+                place_type__name='Regione',
+                placeidentifier__identifier__scheme='ISTAT',
+                placeidentifier__identifier__name='REGION_ID',
+                placeidentifier__value=op_location.regional_id,
+            )
+            parent_node = parent_place.referencing_nodes('istat-reg')[0]
+
+            prov_node, created = ClassificationTreeNode.objects.get_or_create(
+                tag=self.tag,
+                place=place,
+                parent=parent_node,
+            )
+            if created:
+                self.logger.info(u"Provincia di {0} ClassificationNode created".format(
+                    place.name
+                ))
+            else:
+                self.logger.info(u"Provincia di {0} ClassificationNode found".format(
+                    place.name
+                ))
+
+
+        if op_location.location_type.pk == 6:
+
+            # get or create city node
+            parent_place = Place.objects.get(
+                place_type__name='Provincia',
+                placeidentifier__identifier__scheme='ISTAT',
+                placeidentifier__identifier__name='PROVINCE_ID',
+                placeidentifier__value=op_location.provincial_id,
+            )
+            parent_node = parent_place.referencing_nodes('istat-reg')[0]
+
+            node, created = ClassificationTreeNode.objects.get_or_create(
+                tag=self.tag,
+                place=place,
+                parent=parent_node,
+            )
+            if created:
+                self.logger.info(u"Comune di {0} ClassificationNode created".format(
+                    place.name
+                ))
+            else:
+                self.logger.info(u"Comune di {0} ClassificationNode found".format(
+                    place.name
+                ))
+
+    def _create_or_update_identifier(self, place, **kwargs):
+        """
+        Associate an external identifier to a given place.
+        Needed parameters for kwargs:
+
+        - scheme
+        - name
+        - value
+
+        New identifiers are created, old ones overwritten.
+        """
+        if kwargs['name'] is None:
+            return
+
+        if kwargs['value'] is None:
+            return
+
+        identifier, created = Identifier.objects.get_or_create(
+            scheme=kwargs['scheme'],
+            name=kwargs['name'],
+        )
+
+        if created is True:
+            self.logger.info(u"   - New identifier added: %s" % (identifier))
+        else:
+            self.logger.debug(u"   - Identifier found: %s" % (identifier))
+
+        extid, created = place.placeidentifier_set.get_or_create(
+            identifier=identifier,
+            defaults={
+                'value': kwargs['value'],
+            }
+        )
+        if created is True:
+            self.logger.debug(u"   - Id {0} added".format(extid,))
+        else:
+            extid.value = kwargs['value']
+            extid.save()
+            self.logger.debug(u"   - Id {0} overwritten".format(extid,))
 
