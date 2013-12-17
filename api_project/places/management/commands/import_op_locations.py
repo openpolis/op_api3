@@ -84,6 +84,8 @@ class Command(BaseCommand):
                 location_type__name__iexact=loctype
             )[offset:]
 
+        if args:
+            op_locations = op_locations.filter(city_id__in=args)
 
         self._prepare_classification()
 
@@ -149,8 +151,8 @@ class Command(BaseCommand):
             self._add_external_identifiers(place, op_location)
 
             # lat and long
+            geoinfo, created = PlaceGEOInfo.objects.get_or_create(place=place)
             if op_location.gps_lat or op_location.gps_lon:
-                geoinfo, created = PlaceGEOInfo.objects.get_or_create(place=place)
                 geoinfo.gps_lat = op_location.gps_lat
                 geoinfo.gps_lon = op_location.gps_lon
                 geoinfo.save()
@@ -300,9 +302,9 @@ class Command(BaseCommand):
             # get or create province node
             parent_place = Place.objects.get(
                 place_type__name='Regione',
-                placeidentifier__identifier__scheme='ISTAT',
-                placeidentifier__identifier__name='REGION_ID',
-                placeidentifier__value=op_location.regional_id,
+                placeidentifiers__identifier__scheme='ISTAT',
+                placeidentifiers__identifier__name='REGION_ID',
+                placeidentifiers__value=op_location.regional_id,
             )
             parent_node = parent_place.referencing_nodes('istat-reg')[0]
 
@@ -326,9 +328,9 @@ class Command(BaseCommand):
             # get or create city node
             parent_place = Place.objects.get(
                 place_type__name='Provincia',
-                placeidentifier__identifier__scheme='ISTAT',
-                placeidentifier__identifier__name='PROVINCE_ID',
-                placeidentifier__value=op_location.provincial_id,
+                placeidentifiers__identifier__scheme='ISTAT',
+                placeidentifiers__identifier__name='PROVINCE_ID',
+                placeidentifiers__value=op_location.provincial_id,
             )
             parent_node = parent_place.referencing_nodes('istat-reg')[0]
 
@@ -373,7 +375,7 @@ class Command(BaseCommand):
         else:
             self.logger.debug(u"   - Identifier found: %s" % (identifier))
 
-        extid, created = place.placeidentifier_set.get_or_create(
+        extid, created = place.placeidentifiers.get_or_create(
             identifier=identifier,
             defaults={
                 'value': kwargs['value'],

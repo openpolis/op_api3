@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.contrib.gis import forms
+from django.contrib.gis.db import models
 from treeadmin.admin import TreeAdmin
 from places.models import Place, PlaceType, Identifier, PlaceLink, \
     PlaceGEOInfo, ClassificationTreeNode, ClassificationTreeTag, Language, PlaceAcronym, PlaceI18Name, PlaceIdentifier
@@ -7,7 +9,13 @@ from places.models import Place, PlaceType, Identifier, PlaceLink, \
 class PlaceGEOInfoInlineAdmin(admin.StackedInline):
     model = PlaceGEOInfo
     extra = 0
-
+    formfield_overrides = {
+        models.MultiPolygonField: {
+            'widget': forms.OSMWidget(
+                attrs={'map_width': 600, 'map_height': 400}
+            )
+        },
+    }
 class PlaceIdentifierInline(admin.TabularInline):
     model = PlaceIdentifier
     extra = 0

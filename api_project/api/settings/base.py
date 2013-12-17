@@ -138,6 +138,7 @@ INSTALLED_APPS = (
     'places',
     'popolo',
     'rest_framework',
+    'rest_framework_gis',
     'south',
     'corsheaders',
 )
@@ -168,7 +169,7 @@ LOGGING = {
             'formatter': 'standard'
         },
         'logfile': {
-            'level': 'INFO',
+            'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': REPO_ROOT + "/log/logfile",
             'maxBytes': 10000000,

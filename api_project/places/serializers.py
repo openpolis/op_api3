@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from rest_framework import serializers
 from rest_framework.reverse import reverse
+from rest_framework_gis.serializers import GeoModelSerializer
 from places.models import Place, PlaceType, PlaceIdentifier, Identifier, PlaceAcronym, PlaceLink, PlaceGEOInfo, \
     PlaceI18Name, Language
 
@@ -88,7 +89,7 @@ class LinkInlineSerializer(serializers.ModelSerializer):
         model = PlaceLink
         fields = ('uri', 'text')
 
-class GeoInfoInlinseSerializer(serializers.ModelSerializer):
+class GeoInfoInlinseSerializer(GeoModelSerializer):
     """
     Inline serializer for the geographic information related to the Place
     """

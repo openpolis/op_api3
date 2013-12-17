@@ -3,6 +3,7 @@ import json
 from optparse import make_option
 import logging
 from StringIO import StringIO
+import pprint
 from django.conf import settings
 import psycopg2
 import psycopg2.extras
@@ -66,7 +67,7 @@ class Command(BaseCommand):
         conn = psycopg2.connect("{0}".format(settings.OC_PG_CONN))
         conn.set_client_encoding('UTF8')
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        sql = "select cod_com, denominazione, ST_AsGeoJSON(geom, 12, 1) as geom" +\
+        sql = "select cod_com, denominazione, ST_AsGeoJSON(geom, 12, 0) as geom" +\
               "  from territori_territorio" +\
               "  where territorio ='C' "
 
@@ -74,17 +75,25 @@ class Command(BaseCommand):
             sql += " and cod_com in ({0})".format(",".join(args))
 
         if limit:
-            sql += " offset {0} limit {0}".format(limit)
+            sql += " offset {0} limit {1}".format(offset, limit)
         else:
-            sql += " offset {0}".format(limit)
+            sql += " offset {0}".format(offset)
 
         cursor.execute(sql)
+        print "********"
+        print "********"
+        print "********"
+        print "{0}".format(sql)
+        print "********"
+        print "********"
+        print "********"
+        print "********"
 
         oc_places = cursor.fetchall()
-        for oc_place in oc_places:
-            self.logger.info(u"cod_com: {cod_com}, it: {denominazione}".format(**oc_place))
+        for c, oc_place in enumerate(oc_places):
+            self.logger.info(u"{0} - cod_com: {cod_com}, it: {denominazione}".format(c, **oc_place))
             places_uri = "{0}/maps/places?external_id=istat-city-id:{1}".format(settings.OP_API_URI, oc_place['cod_com'])
-            self.logger.debug("GET {0}".format(places_uri))
+            self.logger.debug("{0}: GET {1}".format(c, places_uri))
 
             r = requests.get(places_uri)
             if r.status_code != 200:
@@ -101,15 +110,25 @@ class Command(BaseCommand):
                 continue
 
             place_uri = places_json['results'][0]['_self']
-            self.logger.debug("GET {0}".format(place_uri))
+            self.logger.debug("{0}: GET {1}".format(c,place_uri))
             r = requests.get(place_uri)
             if r.status_code != 200:
                 self.logger.error(u'Error parsing {0}. Skipping.'.format(place_uri))
                 continue
 
+            gps_lat = None
+            gps_lon = None
             place_json = r.json()
-            gps_lat = place_json['geoinfo']['gps_lat']
-            gps_lon = place_json['geoinfo']['gps_lon']
+
+            if 'geoinfo' in place_json and place_json['geoinfo']:
+                if 'geom' in place_json['geoinfo'] and  place_json['geoinfo'] is not None:
+                    self.logger.debug("  - geom already found. Skipping")
+                    continue
+
+                if 'gps_lat' in place_json['geoinfo']:
+                    gps_lat = place_json['geoinfo']['gps_lat']
+                if 'gps_lon' in place_json['geoinfo']:
+                    gps_lon = place_json['geoinfo']['gps_lon']
 
             geoinfo = {
                 "geoinfo": {
@@ -122,9 +141,8 @@ class Command(BaseCommand):
             io = StringIO()
             json.dump(geoinfo, io)
 
-            self.logger.debug("PATCH {0}".format(places_uri))
             patch_resp = requests.patch(place_uri, data=io,
                 auth=(settings.OP_API_USERNAME, settings.OP_API_PASSWORD),
                 headers={'content-type': 'application/json'}
             )
-            self.logger.debug(patch_resp.status_code)
+            self.logger.info("  - PATCH {0} - {1}".format(place_uri, patch_resp.status_code))

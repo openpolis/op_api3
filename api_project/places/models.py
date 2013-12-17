@@ -107,7 +107,7 @@ class Place(PrioritizedModel, TimeStampedModel, Dateframeable):
 
         Return a queryset or an EmptyQuerySet if no such nodes exist.
         """
-        nodes = EmptyQuerySet()
+        nodes = self.classification_nodes_set.none()
         treetag = ClassificationTreeTag.objects.get(slug=tree_slug)
         nodes = self.classification_nodes_set.filter(
             tag=treetag

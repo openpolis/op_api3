@@ -1,20 +1,20 @@
-Django<1.6
-MySQL-python==1.2.4
-psycopg2==2.5.1
-Markdown==2.3.1
-PyYAML==3.10
-django-filter==0.7
-djangorestframework==2.3.10
-django-extensions==1.2.2
-django-model-utils==1.5.0
-django-autoslug==1.7.1
-South==0.8.2
-Werkzeug==0.9.4
-docutils==0.11
+Django
+MySQL-python
+psycopg2
+Markdown
+PyYAML
+django-filter
+djangorestframework
+django-extensions
+django-model-utils
+django-autoslug
+South
+Werkzeug
+docutils
 django-environ
 
-django-cors-headers==0.11
-django-mptt==0.6.0
-django-treeadmin==0.4.1
+django-cors-headers
+django-mptt
+django-treeadmin
 
-git+git@github.com:philipn/django-rest-framework-gis@2f49feba6b1c6aef82f5024f5e2b92a2c61615bf#egg=djangorestframework-gis
+-e git+git://github.com/openpolis/django-rest-framework-gis.git#egg=djangorestframework-gis
