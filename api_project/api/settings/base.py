@@ -188,7 +188,7 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': True,
         },
-        'import': {
+        'management': {
             'handlers': ['console', 'logfile'],
             'level': 'DEBUG',
             'propagate': True,
