@@ -22,7 +22,7 @@ class Command(BaseCommand):
                     help='Set the dry-run command mode: no actual import is made'),
         )
 
-    logger = logging.getLogger('import')
+    logger = logging.getLogger('management')
 
 
     def handle(self, *args, **options):

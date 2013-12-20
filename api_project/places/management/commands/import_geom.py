@@ -42,7 +42,7 @@ class Command(BaseCommand):
                     help='Set the dry-run command mode: no actual import is made'),
     )
 
-    logger = logging.getLogger('import')
+    logger = logging.getLogger('management')
 
 
 
@@ -92,7 +92,10 @@ class Command(BaseCommand):
         oc_places = cursor.fetchall()
         for c, oc_place in enumerate(oc_places):
             self.logger.info(u"{0} - cod_com: {cod_com}, it: {denominazione}".format(c, **oc_place))
-            places_uri = "{0}/maps/places?external_id=istat-city-id:{1}".format(settings.OP_API_URI, oc_place['cod_com'])
+            places_uri = "{0}/maps/places?external_id=istat-city-id:{1}".format(
+                settings.OP_API_URI, oc_place['cod_com'],
+                auth=(settings.OP_API_USERNAME, settings.OP_API_PASSWORD)
+            )
             self.logger.debug("{0}: GET {1}".format(c, places_uri))
 
             r = requests.get(places_uri)
@@ -110,7 +113,8 @@ class Command(BaseCommand):
                 continue
 
             place_uri = places_json['results'][0]['_self']
-            self.logger.debug("{0}: GET {1}".format(c,place_uri))
+            self.logger.debug("{0}: GET {1}".format(
+                c,place_uri, auth=(settings.OP_API_USERNAME, settings.OP_API_PASSWORD)))
             r = requests.get(place_uri)
             if r.status_code != 200:
                 self.logger.error(u'Error parsing {0}. Skipping.'.format(place_uri))
@@ -121,7 +125,8 @@ class Command(BaseCommand):
             place_json = r.json()
 
             if 'geoinfo' in place_json and place_json['geoinfo']:
-                if 'geom' in place_json['geoinfo'] and  place_json['geoinfo'] is not None:
+                if 'geom' in place_json['geoinfo'] and \
+                        place_json['geoinfo']['geom']:
                     self.logger.debug("  - geom already found. Skipping")
                     continue
 

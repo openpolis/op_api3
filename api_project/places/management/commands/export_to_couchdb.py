@@ -34,7 +34,7 @@ class Command(BaseCommand):
                     help='Offset of records to start from'),
     )
 
-    logger = logging.getLogger('import')
+    logger = logging.getLogger('management')
     db = None
     counter = 0
 

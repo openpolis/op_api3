@@ -46,7 +46,7 @@ class Command(BaseCommand):
                     help='Always overwrite values in the new DB from values in the old one'),
         )
 
-    logger = logging.getLogger('import')
+    logger = logging.getLogger('management')
 
 
 
