@@ -155,8 +155,9 @@ class ClassificationListView(generics.ListCreateAPIView):
 
 class ClassificationDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
-    Represents the list of classifications
+    Represents the detail of a classification
     """
+    model = ClassificationTreeTag
     serializer_class = ClassificationTreeTagSerializer
 
 class ClassificationNodeDetailView(generics.RetrieveUpdateDestroyAPIView):

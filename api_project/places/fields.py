@@ -32,9 +32,13 @@ class HyperlinkedTreeNodeField(serializers.Field):
         format = self.context['format']
         if obj:
             slugs = {
-                'tag__slug': self.context['view'].kwargs['tag__slug'],
                 'place__slug': obj.place.slug
             }
+            if 'tag__slug' in self.context['view'].kwargs:
+                slugs['tag__slug'] = self.context['view'].kwargs['tag__slug']
+            else:
+                slugs['tag__slug'] = obj.tag.slug
+
             return reverse('maps:classificationnode-detail', kwargs=slugs, request=request, format=format)
         else:
             return None
