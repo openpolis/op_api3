@@ -289,15 +289,12 @@ class ClassificationTreeNode(MPTTModel, Dateframeable, PrioritizedModel):
 
     A common void tree may host many classification trees (level 1 nodes).
 
-    A node may link back to just one existing Place instance
-    (place attribute).
-
-    A node not linking to a Place, is a virtual place
-    (it exists only as container of real places).
+    A node may either link back to just one existing Place instance
+    (place attribute), or it may have an equivalent_to FK set.
 
     A node may have an ``equivalent_to`` link to another node,
     in a diferent classification tree.
-    The meaning of the ``equivalent_to`` is that from children
+    The meaning of the ``equivalent_to`` is that children
     and descendants of the original node, can be fetched from
     the destination node.
     This is to avoid replication of the same nodes over classification
@@ -305,13 +302,13 @@ class ClassificationTreeNode(MPTTModel, Dateframeable, PrioritizedModel):
     """
     tag = models.ForeignKey('ClassificationTreeTag',
         related_name='node_set')
+    place = models.ForeignKey('Place', blank=True, null=True,
+        related_name='classification_nodes_set')
     parent = TreeForeignKey('self', null=True, blank=True,
         related_name='children')
     note = models.TextField(null=True, blank=True,
         help_text=_("""Some unstructured note about why the
         membership started, changed, or ended"""))
-    place = models.ForeignKey('Place',
-        related_name='classification_nodes_set', blank=True, null=True)
 
     equivalent_to = models.ForeignKey('self',
         null=True, blank=True,
@@ -321,7 +318,24 @@ class ClassificationTreeNode(MPTTModel, Dateframeable, PrioritizedModel):
     class MPTTMeta:
         verbose_name = 'Classification tree'
         verbose_name_plural = 'Classification trees'
-        unique_together= (('parent', 'tag', 'start_date'),)
+        unique_together = (
+            ('place', 'tag',),
+            ('parent', 'tag', 'start_date',),
+        )
+
+    @property
+    def reference_place(self):
+        if self.place:
+            return self.place
+        else:
+            return self.equivalent_to.reference_place
+
+    @property
+    def children_slugs(self):
+        return self.children.all().values_list(
+            'place__slug', 'tag__slug',
+            'equivalent_to__place__slug'
+        )
 
     def __unicode__(self):
         return u"id: {0}, place: {1}, tag: {2}".format(
@@ -354,6 +368,14 @@ class ClassificationTreeTag(models.Model):
     description = models.TextField(blank=True, null=True)
     used_trees = models.ManyToManyField('self',
         null=True, blank=True, related_name='used_by_set')
+
+    def get_root_node(self):
+        nodes_qs = ClassificationTreeNode.objects.filter(tag=self)
+        n = nodes_qs.count()
+        if n:
+            return nodes_qs[0].get_root()
+        else:
+            return None
 
     def __unicode__(self):
         return self.label

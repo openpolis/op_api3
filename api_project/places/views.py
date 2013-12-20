@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
 from django.utils.datastructures import SortedDict
 from rest_framework import generics
+from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.views import APIView
-from places.models import Place, PlaceType, Identifier, Language
+from places.models import Place, PlaceType, Identifier, Language, ClassificationTreeTag, ClassificationTreeNode
 from places.serializers import PlaceSerializer, PlaceTypeSerializer, PlaceInlineSerializer, IdentifierSerializer, \
-    LanguageSerializer
+    LanguageSerializer, ClassificationTreeTagSerializer, \
+    ClassificationTreeNodeSerializer
 
 
-class PlacesView(APIView):
+class MapsView(APIView):
     """
     List of available resources' endpoints for the ``politici`` section of the API
     """
@@ -18,13 +20,14 @@ class PlacesView(APIView):
         data = SortedDict([
             ('places', reverse('maps:place-list', request=request, format=format)),
             ('placetypes', reverse('maps:placetype-list', request=request, format=format)),
+            ('classifications', reverse('maps:classification-list', request=request, format=format)),
             ('identifiers', reverse('maps:identifier-list', request=request, format=format)),
             ('languages', reverse('maps:language-list', request=request, format=format)),
         ])
         return Response(data)
 
 
-class PlaceList(generics.ListCreateAPIView):
+class PlaceListView(generics.ListCreateAPIView):
     """
     Represents the list of places
 
@@ -51,7 +54,7 @@ class PlaceList(generics.ListCreateAPIView):
         """
         Add filters to queryset provided in url querystring.
         """
-        queryset = super(PlaceList, self).get_queryset()
+        queryset = super(PlaceListView, self).get_queryset()
 
         # fetch all places whose PlaceType's slug matches the parameter
         place_type = self.request.QUERY_PARAMS.get('place_type', None)
@@ -86,7 +89,7 @@ class PlaceList(generics.ListCreateAPIView):
         return queryset
 
 
-class PlaceDetail(generics.RetrieveUpdateDestroyAPIView):
+class PlaceDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     API endpoint that represents a single politician.
     """
@@ -94,7 +97,7 @@ class PlaceDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PlaceSerializer
 
 
-class PlaceTypeList(generics.ListCreateAPIView):
+class PlaceTypeListView(generics.ListCreateAPIView):
     """
     Represents the list of place types
     """
@@ -102,7 +105,7 @@ class PlaceTypeList(generics.ListCreateAPIView):
     serializer_class = PlaceTypeSerializer
 
 
-class PlaceTypeDetail(generics.RetrieveUpdateDestroyAPIView):
+class PlaceTypeDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     Represents a single PlaceType
     """
@@ -140,3 +143,40 @@ class LanguageDetailView(generics.RetrieveUpdateDestroyAPIView):
     model = Language
     serializer_class = LanguageSerializer
     lookup_field = 'iso639_1_code'
+
+
+class ClassificationListView(generics.ListCreateAPIView):
+    """
+    Represents the list of classifications
+    """
+    model = ClassificationTreeTag
+    serializer_class = ClassificationTreeTagSerializer
+
+
+class ClassificationDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Represents the list of classifications
+    """
+    serializer_class = ClassificationTreeTagSerializer
+
+class ClassificationNodeDetailView(generics.RetrieveUpdateDestroyAPIView):
+    model = ClassificationTreeNode
+    serializer_class = ClassificationTreeNodeSerializer
+
+    def get_object(self, queryset=None):
+        # Perform the custom object lookup
+        # using both slugs passed in self.kwargs
+        # takes into consideration equivalent_to relations
+        pl = Place.objects.get(slug=self.kwargs['place__slug'])
+        nodes = pl.referencing_nodes(self.kwargs['tag__slug'])
+        if nodes.count() == 1:
+            obj = nodes[0]
+        else:
+            raise Exception("mode than one node found for {place__slug}, {tag__slug}".format(
+                **self.kwargs
+            ))
+
+        # May raise a permission denied
+        self.check_object_permissions(self.request, obj)
+
+        return obj

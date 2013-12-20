@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 from rest_framework import serializers
 from rest_framework.reverse import reverse
+from places.fields import HyperlinkedTreeNodeField, HyperlinkedTreeNodeChildrenField, ClassificationTreeTagFromURLField
 from rest_framework_gis.serializers import GeoModelSerializer
 from places.models import Place, PlaceType, PlaceIdentifier, Identifier, PlaceAcronym, PlaceLink, PlaceGEOInfo, \
-    PlaceI18Name, Language
+    PlaceI18Name, Language, ClassificationTreeTag, ClassificationTreeNode
 
 __author__ = 'guglielmo'
 
@@ -127,8 +128,8 @@ class PlaceIdentifierSerializer(serializers.ModelSerializer):
 
 
 class PlaceInlineSerializer(serializers.ModelSerializer):
-    place_type = serializers.HyperlinkedRelatedField(view_name='maps:placetype-detail')
     _self = serializers.HyperlinkedIdentityField(view_name='maps:place-detail')
+    place_type = serializers.HyperlinkedRelatedField(view_name='maps:placetype-detail')
 
     class Meta:
         model = Place
@@ -160,3 +161,53 @@ class PlaceSerializer(serializers.ModelSerializer):
             'acronyms', 'links', 'geoinfo',
             'placeidentifiers', 'names'
         )
+
+
+class ClassificationTreeTagSerializer(serializers.ModelSerializer):
+    _self = serializers.HyperlinkedIdentityField(view_name='maps:classification-detail')
+    root_node = HyperlinkedTreeNodeField(source='get_root_node')
+
+    class Meta:
+        model = ClassificationTreeTag
+        fields = (
+            '_self', 'slug', 'label', 'description', 'root_node'
+        )
+
+class ClassificationTreeTagFromURLSerializer(serializers.ModelSerializer):
+    _self = serializers.HyperlinkedIdentityField(view_name='maps:classification-detail')
+    root_node = HyperlinkedTreeNodeField(source='get_root_node')
+
+    def to_native(self, obj):
+        """
+        Serialize objects -> primitives.
+        """
+        # override the object, taking it from the url and not from the view
+        if 'tag__slug' in self.context['view'].kwargs:
+            tag_slug = self.context['view'].kwargs['tag__slug']
+            obj = ClassificationTreeTag.objects.get(slug=tag_slug)
+
+        return super(ClassificationTreeTagFromURLSerializer, self).to_native(obj)
+
+
+    class Meta:
+        model = ClassificationTreeTag
+        fields = (
+            '_self', 'slug', 'label', 'description', 'root_node'
+        )
+
+class ClassificationTreeNodeInlineSerializer(serializers.ModelSerializer):
+    place = serializers.HyperlinkedRelatedField(view_name='maps:place-detail')
+    tag = serializers.HyperlinkedRelatedField(view_name='maps:classification-detail')
+
+    class Meta:
+        model = ClassificationTreeNode
+        fields = (
+            'place',
+        )
+
+
+class ClassificationTreeNodeSerializer(serializers.Serializer):
+    place = PlaceInlineSerializer()
+    tag = ClassificationTreeTagFromURLSerializer()
+    parent = HyperlinkedTreeNodeField(source='parent')
+    children = HyperlinkedTreeNodeChildrenField(source='children_slugs')
