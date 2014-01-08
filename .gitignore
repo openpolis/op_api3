@@ -6,3 +6,4 @@
 /requirements/dev.txt
 *.py[cd]
 *.zip
+/api_project/*/migrations/*
