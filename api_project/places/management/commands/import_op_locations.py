@@ -113,7 +113,10 @@ class Command(BaseCommand):
             #
             # Place
             #
+
             slug = slugify(u"{0}-{1}".format(op_location.name, place_type.name))
+            if op_location_type_name.lower() == 'comune':
+                slug = "{0}-{1}".format(slug, op_location.prov.lower())
 
             created = False
             place, created = Place.objects.get_or_create(

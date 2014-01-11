@@ -3,7 +3,7 @@ from rest_framework.reverse import reverse
 
 __author__ = 'guglielmo'
 
-class HyperlinkedTreeNodeChildrenField(serializers.Field):
+class HyperlinkedTreeNodeManyField(serializers.Field):
     """
     Serialize all children's hyperlinks of a ClassificationTreeNode using an optimized values_list query,
     to minimize the number of queries.
