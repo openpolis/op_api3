@@ -45,7 +45,7 @@ MANAGERS = ADMINS
 
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -246,3 +246,8 @@ DEBUG_TOOLBAR_CONFIG = {
     'TAG': 'div',
     'ENABLE_STACKTRACES' : True,
 }
+
+OC_PG_CONN = env('OPEN_COESIONE_DB_CONN_STRING')
+OP_API_URI = env('OP_API_URI')
+OP_API_USERNAME = env('OP_API_USERNAME')
+OP_API_PASSWORD = env('OP_API_PASSWORD')
