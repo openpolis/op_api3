@@ -12,6 +12,7 @@ from rest_framework.views import APIView
 
 from politici.models import OpUser, OpPolitician, OpInstitution, OpChargeType, OpInstitutionCharge
 from politici.serializers import UserSerializer, PoliticianSerializer, OpInstitutionChargeSerializer
+from territori.models import OpLocation
 
 
 class PoliticiView(APIView):
@@ -206,3 +207,72 @@ class InstitutionChargeDetail(PoliticiDBSelectMixin, generics.RetrieveAPIView):
     model = OpInstitutionCharge
     queryset = model.objects.select_related('content')
     serializer_class = OpInstitutionChargeSerializer
+
+
+class HistoricalCityMayorsView(APIView):
+    """
+    List all top charges for a given city, during the years
+    """
+    def get(self, request, **kwargs):
+        location_id = kwargs['location_id']
+        try:
+            data = self.get_city_mayors_data(location_id)
+        except Exception, e:
+            data = { 'error': e }
+
+
+        return Response(data)
+
+    def get_location(self, city_id):
+        """
+        Return the Location object, given the location_id
+        """
+        location = OpLocation.objects.using('politici').get(id=city_id)
+        if location.location_type.name.lower() != 'comune':
+            raise  Exception('location is not a city. only cities are accepted')
+        return location
+
+    def get_city_mayors_data(self, city_id):
+        """get all top charges for a given city during the years"""
+        data = {}
+        try:
+            location = self.get_location(city_id)
+            data['location'] = "%s (%s)" % (location.name, location.prov)
+        except Exception, detail:
+            return { 'exception': 'Error retrieving location with location_id: %s. %s' % (city_id, detail) }
+
+        ics = OpInstitutionCharge.objects.db_manager('politici').filter(
+            Q(location__id=location.id),
+            Q(charge_type__name='Sindaco') | Q(charge_type__name='Commissario straordinario'),
+        ).order_by('-date_start')
+
+        data['sindaci'] = []
+        for ic in ics:
+            charge_id = ic.content_id
+            if ic.charge_type.name == 'Sindaco':
+                c = {
+                    'charge_type': 'Sindaco',
+                    'date_start': ic.date_start,
+                    'date_end': ic.date_end,
+                    'party': ic.party.getNormalizedAcronymOrName(),
+                    'first_name': ic.politician.first_name,
+                    'last_name': ic.politician.last_name,
+                    'birth_date': ic.politician.birth_date,
+                    'picture_url': 'http://politici.openpolis.it/politician/picture?content_id=%s' % ic.politician.content_id,
+                    'op_link': 'http://politici.openpolis.it/politico/%s' % ic.politician.content_id
+                }
+            else:
+                c = {
+                    'charge_type': 'Commissario',
+                    'date_start': ic.date_start,
+                    'date_end': ic.date_end,
+                    'first_name': ic.politician.first_name,
+                    'last_name': ic.politician.last_name,
+                    'birth_date': ic.politician.birth_date,
+                    'motivazione': ic.description,
+                    'op_link': 'http://politici.openpolis.it/politico/%s' % ic.politician.content_id
+                }
+
+            data['sindaci'].append(c)
+
+        return data

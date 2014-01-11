@@ -1,5 +1,6 @@
 from django.conf.urls import patterns, url, include
 from rest_framework.urlpatterns import format_suffix_patterns
+from politici.views import HistoricalCityMayorsView
 from politici.views import UserList, UserDetail, PoliticianList, PoliticianDetail, InstitutionList, ChargeTypeList, InstitutionChargeList, InstitutionChargeDetail, InstitutionDetail, ChargeTypeDetail, PoliticiView
 
 __author__ = 'guglielmo'
@@ -16,6 +17,8 @@ urlpatterns = patterns('politici.views',
    url(r'^institutions/(?P<pk>\d+)$', InstitutionDetail.as_view(), name='institution-detail'),
    url(r'^chargetypes$', ChargeTypeList.as_view(), name='chargetype-list'),
    url(r'^chargetypes/(?P<pk>\d+)$', ChargeTypeDetail.as_view(), name='chargetype-detail'),
+   url(r'^historical_city_mayors/(?P<location_id>[^/]+)/$',
+       HistoricalCityMayorsView.as_view(), name='historical-city-mayors'),
 
 )
 
