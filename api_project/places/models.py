@@ -107,7 +107,6 @@ class Place(PrioritizedModel, TimeStampedModel, Dateframeable):
 
         Return a queryset or an EmptyQuerySet if no such nodes exist.
         """
-        nodes = self.classification_nodes_set.none()
         treetag = ClassificationTreeTag.objects.get(slug=tree_slug)
         nodes = self.classification_nodes_set.filter(
             tag=treetag
@@ -333,6 +332,13 @@ class ClassificationTreeNode(MPTTModel, Dateframeable, PrioritizedModel):
     @property
     def children_slugs(self):
         return self.children.all().values_list(
+            'place__slug', 'tag__slug',
+            'equivalent_to__place__slug'
+        )
+
+    @property
+    def ancestors_slugs(self):
+        return self.get_ancestors().values_list(
             'place__slug', 'tag__slug',
             'equivalent_to__place__slug'
         )

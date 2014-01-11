@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from rest_framework import serializers
 from rest_framework.reverse import reverse
-from places.fields import HyperlinkedTreeNodeField, HyperlinkedTreeNodeChildrenField, ClassificationTreeTagFromURLField
+from places.fields import HyperlinkedTreeNodeField, HyperlinkedTreeNodeManyField, ClassificationTreeTagFromURLField
 from rest_framework_gis.serializers import GeoModelSerializer
 from places.models import Place, PlaceType, PlaceIdentifier, Identifier, PlaceAcronym, PlaceLink, PlaceGEOInfo, \
     PlaceI18Name, Language, ClassificationTreeTag, ClassificationTreeNode
@@ -210,4 +210,5 @@ class ClassificationTreeNodeSerializer(serializers.Serializer):
     place = PlaceInlineSerializer()
     tag = ClassificationTreeTagFromURLSerializer()
     parent = HyperlinkedTreeNodeField(source='parent')
-    children = HyperlinkedTreeNodeChildrenField(source='children_slugs')
+    ancestors = HyperlinkedTreeNodeManyField(source='ancestors_slugs')
+    children = HyperlinkedTreeNodeManyField(source='children_slugs')
