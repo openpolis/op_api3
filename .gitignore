@@ -7,3 +7,5 @@
 *.py[cd]
 *.zip
 /api_project/*/migrations/*
+dump.sql
+/static
