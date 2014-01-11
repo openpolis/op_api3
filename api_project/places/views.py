@@ -172,6 +172,10 @@ class ClassificationNodeDetailView(generics.RetrieveUpdateDestroyAPIView):
         nodes = pl.referencing_nodes(self.kwargs['tag__slug'])
         if nodes.count() == 1:
             obj = nodes[0]
+        elif nodes.count() == 0:
+            raise Exception("no node found for {place__slug}, {tag__slug}".format(
+                **self.kwargs
+            ))
         else:
             raise Exception("mode than one node found for {place__slug}, {tag__slug}".format(
                 **self.kwargs
@@ -181,3 +185,4 @@ class ClassificationNodeDetailView(generics.RetrieveUpdateDestroyAPIView):
         self.check_object_permissions(self.request, obj)
 
         return obj
+
