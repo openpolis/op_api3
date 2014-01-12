@@ -104,6 +104,7 @@ class Command(BaseCommand):
                 op_location_type_name = 'Continent'
             elif op_location_type_name == 'Italia':
                 op_location_type_name = 'Nation'
+
             place_type, created = PlaceType.objects.get_or_create(
                 name=op_location_type_name
             )
