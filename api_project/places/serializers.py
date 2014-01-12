@@ -143,7 +143,7 @@ class PlaceSerializer(serializers.ModelSerializer):
     _self = serializers.HyperlinkedIdentityField(view_name='maps:place-detail')
     place_type = serializers.HyperlinkedRelatedField(view_name='maps:placetype-detail')
 
-    acronyms = AcronymInlineSerializer(many=True, allow_add_remove=True)
+    acronym = AcronymInlineSerializer(allow_add_remove=True)
     links = LinkInlineSerializer(many=True, allow_add_remove=True)
     geoinfo = GeoInfoInlinseSerializer()
 
