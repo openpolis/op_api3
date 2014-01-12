@@ -20,7 +20,7 @@ class PlaceIdentifierInline(admin.TabularInline):
     model = PlaceIdentifier
     extra = 0
 
-class AcronymInlineAdmin(admin.TabularInline):
+class AcronymInlineAdmin(admin.StackedInline):
     model = PlaceAcronym
     extra = 0
 

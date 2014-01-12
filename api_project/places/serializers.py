@@ -65,16 +65,6 @@ class AcronymInlineSerializer(serializers.ModelSerializer):
 
     The from_native and to_native methods are overriden to the avail.
     """
-    def get_identity(self, data):
-        return data
-
-    def to_native(self, value):
-        return '%s' % (value.acronym, )
-
-    def from_native(self, data, files):
-        value =  super(AcronymInlineSerializer, self).from_native({'acronym': data}, files)
-        return value
-
     class Meta:
         model = PlaceAcronym
         fields = ('acronym',)
@@ -143,7 +133,6 @@ class PlaceSerializer(serializers.ModelSerializer):
     _self = serializers.HyperlinkedIdentityField(view_name='maps:place-detail')
     place_type = serializers.HyperlinkedRelatedField(view_name='maps:placetype-detail')
 
-    acronym = AcronymInlineSerializer(allow_add_remove=True)
     links = LinkInlineSerializer(many=True, allow_add_remove=True)
     geoinfo = GeoInfoInlinseSerializer()
 
@@ -158,7 +147,7 @@ class PlaceSerializer(serializers.ModelSerializer):
             '_self',
             'slug', 'name', 'inhabitants', 'start_date', 'end_date',
             'place_type',
-            'acronyms', 'links', 'geoinfo',
+            'acronym', 'links', 'geoinfo',
             'placeidentifiers', 'names'
         )
 

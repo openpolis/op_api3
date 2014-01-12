@@ -166,7 +166,7 @@ class PlaceAcronym(models.Model):
     - german city acronyms, still used as such,
     - so on ...
     """
-    place = models.OneToOneField('Place', related_name="acronyms")
+    place = models.OneToOneField('Place', related_name="acronym")
     acronym = models.CharField(_("acronym"), max_length=32,
         help_text=_("An acronym for the place, e.g. 'PV'")
     )
