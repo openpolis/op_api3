@@ -61,10 +61,11 @@ class IdentifierSerializer(serializers.ModelSerializer):
 class AcronymInlineSerializer(serializers.ModelSerializer):
     """
     Customize the serializer, allowing to specify acronyms for a place,
-    directly as a list of strings: ['RM', 'RM0', ...].
-
-    The from_native and to_native methods are overriden to the avail.
+    directly as a string.
     """
+    def to_native(self, obj):
+        return obj.acronym
+
     class Meta:
         model = PlaceAcronym
         fields = ('acronym',)
@@ -132,7 +133,7 @@ class PlaceInlineSerializer(serializers.ModelSerializer):
 class PlaceSerializer(serializers.ModelSerializer):
     _self = serializers.HyperlinkedIdentityField(view_name='maps:place-detail')
     place_type = serializers.HyperlinkedRelatedField(view_name='maps:placetype-detail')
-
+    acronym = AcronymInlineSerializer()
     links = LinkInlineSerializer(many=True, allow_add_remove=True)
     geoinfo = GeoInfoInlinseSerializer()
 
