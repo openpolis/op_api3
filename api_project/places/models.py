@@ -32,12 +32,12 @@ class Place(PrioritizedModel, TimeStampedModel, Dateframeable):
     in order to allow dynamic definitions, and flexibility with
     respect to different contexts.
 
-    **acronyms** may be:
+    **acronym** may be:
 
-    - nation acronyms (IT, US, UK, FRA),
-    - two-letters acronyms for the *Province*, once used in
+    - nation acronym (IT, US, UK, FRA),
+    - two-letters acronym for the *Province*, once used in
       italian vehicles registration numbers,
-    - german city acronyms, still used as such,
+    - german city acronym, still used as such,
     - so on ...
 
     **internationalized names** are  names used for the place
@@ -166,8 +166,8 @@ class PlaceAcronym(models.Model):
     - german city acronyms, still used as such,
     - so on ...
     """
-    place = models.ForeignKey('Place', related_name="acronyms")
-    acronym = models.CharField(_("acronym"), max_length=128,
+    place = models.OneToOneField('Place', related_name="acronyms")
+    acronym = models.CharField(_("acronym"), max_length=32,
         help_text=_("An acronym for the place, e.g. 'PV'")
     )
 
