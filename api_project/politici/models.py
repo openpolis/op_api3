@@ -233,6 +233,9 @@ class OpPolitician(models.Model):
 
         return charges
 
+    def get_image_uri(self):
+        return "http://politici.openpolis.it/politician/picture?content_id={}".format(self.content_id)
+
     def __unicode__(self):
         return u"{} {}".format(self.first_name, self.last_name).title()
 

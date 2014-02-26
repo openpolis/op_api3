@@ -17,6 +17,8 @@ class ContentSerializer(serializers.ModelSerializer):
 
 class PoliticianSerializer(serializers.ModelSerializer):
     content = ContentSerializer()
+    image_uri = serializers.CharField(source='get_image_uri', read_only=True)
+
     class Meta:
         model = OpPolitician
         view_name = 'politici:politician-detail'
@@ -24,7 +26,7 @@ class PoliticianSerializer(serializers.ModelSerializer):
             'first_name', 'last_name',
             'birth_date', 'death_date', 'birth_location',
             'last_charge_update',
-            'content',
+            'content', 'image_uri'
         )
 
 
@@ -40,15 +42,18 @@ class PartyInlineSerializer(serializers.ModelSerializer):
         model = OpParty
         fields = ("name", "acronym", "oname",)
 
+
+
 class PoliticianInlineSerializer(serializers.ModelSerializer):
     self = serializers.HyperlinkedIdentityField(view_name = 'politici:politician-detail')
+    image_uri = serializers.CharField(source='get_image_uri', read_only=True)
 
     class Meta:
         model = OpPolitician
         fields = (
             'first_name', 'last_name',
             'birth_date', 'death_date', 'birth_location',
-            'self',
+            'self', 'image_uri',
         )
 
 
