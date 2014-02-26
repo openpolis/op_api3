@@ -123,6 +123,14 @@ class InstitutionChargeList(PoliticiDBSelectMixin, generics.ListAPIView):
 
     Dates have the format: ``YYYY-MM-DD``
 
+    Results can be sorted by date, specifying the ``order_by=date``
+    query string parameter.
+    With this parameter, results are sorted by descending
+    values of ``date_end``.
+    Results with a null value of ``date_end`` are in the latest positions.
+    This is a quirck, since the *meaning* of a null ``date_end``
+    is that of a currently active charge.
+
     Results have a standard pagination, with 25 results per page.
 
     To get JSON format, specify ``format=json`` as a **GET** parameter,
@@ -197,6 +205,11 @@ class InstitutionChargeList(PoliticiDBSelectMixin, generics.ListAPIView):
         location_id = self.request.QUERY_PARAMS.get('location_id', None)
         if location_id:
             queryset = queryset.filter(location_id=location_id)
+
+        order_by = self.request.QUERY_PARAMS.get('order_by', None)
+        if order_by:
+            if order_by == 'date':
+                queryset = queryset.order_by('-date_end')
 
         return queryset
 
