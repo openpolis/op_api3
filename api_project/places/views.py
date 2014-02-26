@@ -177,7 +177,7 @@ class ClassificationNodeDetailView(generics.RetrieveUpdateDestroyAPIView):
                 **self.kwargs
             ))
         else:
-            raise Exception("mode than one node found for {place__slug}, {tag__slug}".format(
+            raise Exception("more than one node found for {place__slug}, {tag__slug}".format(
                 **self.kwargs
             ))
 
