@@ -3,8 +3,6 @@
 .env
 /public/*
 /deploy_config/uwsgi.ini
-/deploy_config/nginx.conf
-/deploy_config/supervisord.conf
 /requirements/dev.txt
 *.py[cd]
 *.zip
