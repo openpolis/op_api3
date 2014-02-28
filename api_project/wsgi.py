@@ -14,8 +14,15 @@ framework.
 
 """
 import os
+import environ
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "api.settings.production")
+root = environ.Path(__file__) - 2  # three folder back (/a/b/c/ - 3 = /)
+
+# set default values and casting
+env = environ.Env()
+env.read_env(root('.env'))
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", env('DJANGO_SETTINGS_MODULE'))
 
 # This application object is used by any WSGI server configured to use this
 # file. This includes Django's development server, if the WSGI_APPLICATION
