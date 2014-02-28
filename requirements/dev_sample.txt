@@ -1,0 +1,5 @@
+# Local development dependencies go here
+-r base.txt
+
+django-debug-toolbar
+-e /home/guest/Workspace/django-popolo

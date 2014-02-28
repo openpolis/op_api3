@@ -2,3 +2,7 @@
 -r base.txt
 
 django-debug-toolbar
+-e /Users/guglielmo/Workspace/django-popolo
+
+CouchDB==0.9
+SPARQLWrapper==1.5.2
