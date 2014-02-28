@@ -5,6 +5,7 @@ Markdown
 PyYAML
 django-filter
 djangorestframework
+djangorestframework-gis
 django-extensions
 django-model-utils
 django-autoslug
