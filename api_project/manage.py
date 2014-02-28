@@ -1,9 +1,16 @@
 #!/usr/bin/env python
 import os
 import sys
+import environ
 
 if __name__ == "__main__":
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "api.settings.local")
+    root = environ.Path(__file__) - 2  # three folder back (/a/b/c/ - 3 = /)
+
+    # set default values and casting
+    env = environ.Env()
+    env.read_env(root('.env'))
+
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", env('DJANGO_SETTINGS_MODULE'))
 
     from django.core.management import execute_from_command_line
 
