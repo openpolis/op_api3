@@ -5,7 +5,6 @@ Markdown
 PyYAML
 django-filter
 djangorestframework
-djangorestframework-gis
 django-extensions
 django-model-utils
 django-autoslug
@@ -18,4 +17,5 @@ django-cors-headers
 django-mptt
 django-treeadmin
 
--e git+git://github.com/openpolis/django-rest-framework-gis.git#egg=djangorestframework-gis
+-e /Users/guglielmo/Workspace/django-popolo
+-e git+git://github.com/openpolis/django-popolo.git#egg=django-popolo
