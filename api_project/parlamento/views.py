@@ -1,5 +1,4 @@
 from datetime import date
-from collections import OrderedDict as odict
 from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -17,6 +16,7 @@ from parlamento.utils import reverse_url, get_legislatura_from_request, get_last
 __author__ = 'daniele'
 
 
+from repubblica import Repubblica
 class DBSelectBackend(object):
 
     def filter_queryset(self, request, queryset, view):
@@ -32,10 +32,12 @@ class APILegislaturaMixin(object):
 
     @property
     def db_alias(self):
-        legislatura = lex.get_legislatura(self.legislatura)
-        if legislatura.database is None:
+        legislatura = Repubblica.get_legislatura(self.legislatura)
+        try:
+            return legislatura['database']
+        except KeyError:
             raise Http404("Legislatura {0} not found".format(legislatura))
-        return legislatura.database
+
 
     @property
     def legislatura(self):
@@ -43,24 +45,6 @@ class APILegislaturaMixin(object):
         APIView uses a custom Request that wraps django Request
         """
         return get_legislatura_from_request(self.request)
-
-    def prepare_legislatura(self, legislatura, request_format):
-        url_kwargs = {
-            'kwargs': {'legislatura': str(legislatura.number)},
-            'format': request_format,
-        }
-        return odict([
-            ('name', legislatura.name),
-            ('start_date', legislatura.start_date),
-            ('end_date', legislatura.end_date),
-            ('voting_date', legislatura.voting_date),
-            ('url', self.get_reverse_url('legislatura-detail', **url_kwargs)),
-            ('groups_url', self.get_reverse_url('gruppo-list', **url_kwargs)),
-            ('districts_url', self.get_reverse_url('circoscrizione-list', **url_kwargs)),
-            ('parliamentarians_url', self.get_reverse_url('parlamentare-list', **url_kwargs)),
-            ('sittings_url', self.get_reverse_url('seduta-list', **url_kwargs)),
-            ('votes_url', self.get_reverse_url('votazione-list', **url_kwargs)),
-        ])
 
     def get_reverse_url(self, name, format=None, legislatura=None, args=None, kwargs=None, filters=None):
 
@@ -80,10 +64,10 @@ class LegislaturaListView(APILegislaturaMixin, APIView):
     """
     def get(self, request, **kwargs):
         request_format = kwargs.get('format', None)
-        data = []
-        for legislatura in lex.get_legislature():
-            data.append(self.prepare_legislatura(legislatura, request_format))
-        data.reverse()
+        data = {
+            'XVI': self.get_reverse_url('legislatura-detail', kwargs={'legislatura': 'XVI'}, format=request_format),
+            'XVII': self.get_reverse_url('legislatura-detail', kwargs={'legislatura': 'XVII'}, format=request_format),
+        }
         return Response(data)
 
 
@@ -93,7 +77,13 @@ class LegislaturaDetailView(APILegislaturaMixin, APIView):
     """
     def get(self, request, **kwargs):
         request_format = kwargs.get('format', None)
-        data = self.prepare_legislatura(lex.get_legislatura(self.legislatura), request_format)
+        data = {
+            'gruppi': self.get_reverse_url('gruppo-list', format=request_format),
+            'circoscrizioni': self.get_reverse_url('circoscrizione-list', format=request_format),
+            'parlamentari': self.get_reverse_url('parlamentare-list', format=request_format),
+            'sedute': self.get_reverse_url('seduta-list', format=request_format),
+            'votazioni': self.get_reverse_url('votazione-list', format=request_format),
+        }
         return Response(data)
 
 
@@ -113,24 +103,24 @@ class CircoscrizioneListView(APILegislaturaMixin, APIView):
     """
     def get(self, request, *args, **kwargs):
         circoscrizioni = []
-        for c in Carica.objects.using(self.db_alias).values('district', 'charge_type_id').filter(
-            charge_type_id__in=[1, 4, 5],
-            district__isnull=False,
+        for c in Carica.objects.using(self.db_alias).values('circoscrizione', 'tipo_carica_id').filter(
+            tipo_carica_id__in=[1, 4, 5],
+            circoscrizione__isnull=False,
         ).distinct():
-            circoscrizione = dict(name=c['district'])
-            if c['charge_type_id'] == 1:
-                circoscrizione['house'] = 'camera'
-            elif c['charge_type_id'] in [4, 5]:
-                circoscrizione['house'] = 'senato'
+            circoscrizione = dict(nome=c['circoscrizione'])
+            if c['tipo_carica_id'] == 1:
+                circoscrizione['ramo'] = 'camera'
+            elif c['tipo_carica_id'] in [4, 5]:
+                circoscrizione['ramo'] = 'senato'
             else:
-                circoscrizione['house'] = 'ERROR:{}'.format(c['charge_type_id'])
-            circoscrizione['parliamentarians_url'] = self.get_reverse_url('parlamentare-list',
-                                                                      filters={'district': c['district']},
+                circoscrizione['ramo'] = 'ERROR:{}'.format(c['tipo_carica_id'])
+            circoscrizione['parlamentari_url'] = self.get_reverse_url('parlamentare-list',
+                                                                      filters={'circoscrizione': c['circoscrizione']},
                                                                       format=kwargs.get('format', None))
             circoscrizioni.append(circoscrizione)
 
         return Response({
-            'results': sorted(circoscrizioni, key=lambda c: c['house'] + c['name']),
+            'results': sorted(circoscrizioni, key=lambda c: c['ramo'] + c['nome']),
             'count': len(circoscrizioni),
             'next': None,
             'previous': None,
@@ -145,9 +135,9 @@ class ParlamentareListView(APILegislaturaMixin, generics.ListAPIView):
     serializer_class = ParlamentareSerializer
     pagination_serializer_class = CustomPaginationSerializer
     queryset = PoliticianHistoryCache.objects.filter(chi_tipo='P')\
-        .select_related('charge', 'group', 'charge__politician', 'charge__charge_type')
+        .select_related('carica', 'gruppo', 'carica__politico', 'carica__tipo_carica')
     filter_backends = APILegislaturaMixin.filter_backends + (filters.OrderingFilter,)
-    ordering = ('charge__politician__surname', 'charge__politician__name') + ParlamentareSerializer.Meta.statistic_fields
+    ordering = ('carica__politico__cognome', 'carica__politico__nome') + ParlamentareSerializer.Meta.statistic_fields
 
     def get_queryset(self):
         """
@@ -157,7 +147,7 @@ class ParlamentareListView(APILegislaturaMixin, generics.ListAPIView):
         queryset = super(ParlamentareListView, self).get_queryset()
 
         # filtro per data
-        data = self.request.QUERY_PARAMS.get('date', None)
+        data = self.request.QUERY_PARAMS.get('data', None)
         if data:
             data = parse_date(data)
             if data > date.today():
@@ -165,32 +155,32 @@ class ParlamentareListView(APILegislaturaMixin, generics.ListAPIView):
                 return queryset.none()
 
             queryset = queryset.filter(
-                charge__start_date__lt=data,
-            ).filter(Q(charge__end_date__isnull=True) | Q(charge__start_date__gt=data))
+                carica__data_inizio__lt=data,
+            ).filter(Q(carica__data_fine__isnull=True) | Q(carica__data_inizio__gt=data))
         else:
             # extract last update date to filter history cache results
             data = get_last_update(self.db_alias)
-            queryset = queryset.filter(update_date=data)
+            queryset = queryset.filter(data=data)
 
         # filtro per ramo
-        ramo = self.request.QUERY_PARAMS.get('house', '').upper()
+        ramo = self.request.QUERY_PARAMS.get('ramo', '').upper()
         if ramo in ('C', 'S'):
-            queryset = queryset.filter(house=ramo)
+            queryset = queryset.filter(ramo=ramo)
 
         # filtro per circoscrizione
-        circoscrizione = self.request.QUERY_PARAMS.get('district', None)
+        circoscrizione = self.request.QUERY_PARAMS.get('circoscrizione', None)
         if circoscrizione is not None:
-            queryset = queryset.filter(charge__district=circoscrizione)
+            queryset = queryset.filter(carica__circoscrizione=circoscrizione)
 
         # filtro per gruppo
-        gruppo = self.request.QUERY_PARAMS.get('group', None)
+        gruppo = self.request.QUERY_PARAMS.get('gruppo', None)
         if gruppo is not None:
-            queryset = queryset.filter(group=int(gruppo))
+            queryset = queryset.filter(gruppo=int(gruppo))
 
         # filtro per genere
-        genere = self.request.QUERY_PARAMS.get('gender', None)
+        genere = self.request.QUERY_PARAMS.get('genere', None)
         if genere in ('M', 'F'):
-            queryset = queryset.filter(charge__politician__gender=genere)
+            queryset = queryset.filter(carica__politico__sesso=genere)
 
         return queryset
 
@@ -219,12 +209,12 @@ class ParlamentareDetailView(APILegislaturaMixin, generics.RetrieveAPIView):
 
 
 class SedutaListView(APILegislaturaMixin, generics.ListAPIView):
-    queryset = Seduta.objects.prefetch_related('votes')
+    queryset = Seduta.objects.prefetch_related('votazione_set')
     model = Seduta
     serializer_class = SedutaSerializer
     filter_backends = APILegislaturaMixin.filter_backends + (filters.OrderingFilter, )
-    filter_fields = ('house', 'date', 'number', 'is_imported')
-    ordering = ('number', 'date')
+    filter_fields = ('ramo', 'data', 'numero', 'is_imported')
+    ordering = ('numero', 'data')
 
 
 class SedutaDetailView(APILegislaturaMixin, generics.RetrieveAPIView):

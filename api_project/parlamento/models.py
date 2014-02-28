@@ -4,17 +4,17 @@ from django.db import models
 
 
 class Carica(models.Model):
-    politician = models.ForeignKey('Politico', db_column='politico_id')
-    charge_type = models.ForeignKey('TipoCarica', db_column='tipo_carica_id')
-    charge = models.CharField(max_length=30L, blank=True, db_column='carica')
-    start_date = models.DateField(null=True, blank=True, db_column='data_inizio')
-    end_date = models.DateField(null=True, blank=True, db_column='data_fine')
-    #legislatura = models.IntegerField(null=True, blank=True)
-    district = models.CharField(max_length=60L, blank=True, db_column='circoscrizione')
+    politico = models.ForeignKey('Politico')
+    tipo_carica = models.ForeignKey('TipoCarica')
+    carica = models.CharField(max_length=30L, blank=True)
+    data_inizio = models.DateField(null=True, blank=True)
+    data_fine = models.DateField(null=True, blank=True)
+    legislatura = models.IntegerField(null=True, blank=True)
+    circoscrizione = models.CharField(max_length=60L, blank=True)
     presenze = models.IntegerField(null=True, blank=True)
     assenze = models.IntegerField(null=True, blank=True)
     missioni = models.IntegerField(null=True, blank=True)
-    #parliament_id = models.IntegerField(null=True, blank=True)
+    parliament_id = models.IntegerField(null=True, blank=True)
     indice = models.FloatField(null=True, blank=True)
     scaglione = models.IntegerField(null=True, blank=True)
     posizione = models.IntegerField(null=True, blank=True)
@@ -30,12 +30,11 @@ class Carica(models.Model):
         db_table = 'opp_carica'
         managed = False
 
-
 class CaricaHasGruppo(models.Model):
-    charge = models.ForeignKey(Carica, db_column='carica')
-    group = models.ForeignKey('Gruppo', db_column='gruppo')
-    start_date = models.DateField(db_column='data_inizio')
-    end_date = models.DateField(null=True, blank=True, db_column='data_fine')
+    carica = models.ForeignKey(Carica)
+    gruppo = models.ForeignKey('Gruppo')
+    data_inizio = models.DateField()
+    data_fine = models.DateField(null=True, blank=True)
     presenze = models.IntegerField(null=True, blank=True)
     ribelle = models.IntegerField(null=True, blank=True)
     created_at = models.DateTimeField(null=True, blank=True)
@@ -47,10 +46,10 @@ class CaricaHasGruppo(models.Model):
 
 class Gruppo(models.Model):
     
-    name = models.CharField(max_length=255L, blank=True, db_column='nome')
-    acronym = models.CharField(max_length=80L, blank=True, db_column='acronimo')
+    nome = models.CharField(max_length=255L, blank=True)
+    acronimo = models.CharField(max_length=80L, blank=True)
 
-    parliamentarians = models.ManyToManyField(Carica, through=CaricaHasGruppo, related_name='groups')
+    parlamentari = models.ManyToManyField(Carica, through=CaricaHasGruppo, related_name='gruppi')
 
     class Meta:
         db_table = 'opp_gruppo'
@@ -59,9 +58,9 @@ class Gruppo(models.Model):
 
 class GruppoIsMaggioranza(models.Model):
     
-    group = models.ForeignKey(Gruppo, db_column='group')
-    start_date = models.DateField(db_column='data_inizio')
-    end_date = models.DateField(null=True, blank=True, db_column='data_fine')
+    gruppo = models.ForeignKey(Gruppo)
+    data_inizio = models.DateField()
+    data_fine = models.DateField(null=True, blank=True)
     maggioranza = models.IntegerField(null=True, blank=True)
 
     class Meta:
@@ -71,11 +70,11 @@ class GruppoIsMaggioranza(models.Model):
 
 class GruppoRamo(models.Model):
     
-    group = models.ForeignKey(Gruppo, db_column='group')
-    house = models.CharField(max_length=1L, blank=True, db_column='ramo')
-    start_date = models.DateField(db_column='data_inizio')
-    end_date = models.DateField(null=True, blank=True, db_column='data_fine')
-    #parlamento_id = models.IntegerField(null=True, blank=True)
+    gruppo = models.ForeignKey(Gruppo)
+    ramo = models.CharField(max_length=1L, blank=True)
+    data_inizio = models.DateField()
+    data_fine = models.DateField(null=True, blank=True)
+    parlamento_id = models.IntegerField(null=True, blank=True)
 
     class Meta:
         db_table = 'opp_gruppo_ramo'
@@ -84,8 +83,8 @@ class GruppoRamo(models.Model):
 
 class PoliticianHistoryCache(models.Model):
     
-    #legislatura = models.IntegerField(null=True, blank=True)
-    update_date = models.DateField(db_column='data')
+    legislatura = models.IntegerField(null=True, blank=True)
+    data = models.DateField()
     assenze = models.FloatField(null=True, blank=True)
     assenze_pos = models.IntegerField(null=True, blank=True)
     assenze_delta = models.FloatField(null=True, blank=True)
@@ -103,14 +102,14 @@ class PoliticianHistoryCache(models.Model):
     ribellioni_delta = models.FloatField(null=True, blank=True)
     chi_tipo = models.CharField(max_length=1L)
     chi_id = models.IntegerField()
-    house = models.CharField(max_length=1L, db_column='ramo')
-    #gruppo_id = models.IntegerField(null=True, blank=True)
+    ramo = models.CharField(max_length=1L)
+    gruppo_id = models.IntegerField(null=True, blank=True)
     numero = models.IntegerField(null=True, blank=True)
     created_at = models.DateTimeField(null=True, blank=True)
     updated_at = models.DateTimeField(null=True, blank=True)
 
-    charge = models.ForeignKey(Carica, blank=True, null=True, db_column='chi_id', related_name='+')
-    group = models.ForeignKey(Gruppo, null=True, blank=True, db_column='gruppo_id', related_name='charges+')
+    carica = models.ForeignKey(Carica, blank=True, null=True, db_column='chi_id', related_name='+')
+    gruppo = models.ForeignKey(Gruppo, null=True, blank=True, db_column='gruppo_id', related_name='incarichi+')
 
     @property
     def politico(self):
@@ -118,15 +117,15 @@ class PoliticianHistoryCache(models.Model):
 
     class Meta:
         db_table = 'opp_politician_history_cache'
-        ordering = ('charge__politician__surname', 'charge__politician__name')
+        ordering = ('carica__politico__cognome', 'carica__politico__nome')
         managed = False
 
 
 class Politico(models.Model):
-    name = models.CharField(max_length=30L, blank=True, db_column='nome')
-    surname = models.CharField(max_length=30L, blank=True, db_column='cognome')
-    gender = models.CharField(max_length=1L, blank=True, db_column='sesso')
-    monitoring_users = models.IntegerField(db_column='n_monitoring_users')
+    nome = models.CharField(max_length=30L, blank=True)
+    cognome = models.CharField(max_length=30L, blank=True)
+    sesso = models.CharField(max_length=1L, blank=True)
+    n_monitoring_users = models.IntegerField()
 
     class Meta:
         db_table = 'opp_politico'
@@ -135,7 +134,7 @@ class Politico(models.Model):
 
 class TipoCarica(models.Model):
     
-    name = models.CharField(max_length=255L, blank=True, db_column='nome')
+    nome = models.CharField(max_length=255L, blank=True)
 
     class Meta:
         db_table = 'opp_tipo_carica'
@@ -143,11 +142,11 @@ class TipoCarica(models.Model):
 
 
 class Seduta(models.Model):
-    date = models.DateField(null=True, blank=True, db_column='data')
-    number = models.IntegerField(db_column='numero')
-    house = models.CharField(max_length=1L, db_column='ramo')
-    #legislatura = models.IntegerField()
-    reference_url = models.TextField(blank=True, db_column='url')
+    data = models.DateField(null=True, blank=True)
+    numero = models.IntegerField()
+    ramo = models.CharField(max_length=1L)
+    legislatura = models.IntegerField()
+    url = models.TextField(blank=True)
     is_imported = models.IntegerField()
 
     class Meta:
@@ -157,8 +156,8 @@ class Seduta(models.Model):
 
 class Votazione(models.Model):
 
-    sitting = models.ForeignKey(Seduta, db_column='seduta_id', related_name='votes')
-    charge_set = models.ManyToManyField(Carica, through='VotazioneHasCarica')
+    seduta = models.ForeignKey(Seduta)
+    carica_set = models.ManyToManyField(Carica, through='VotazioneHasCarica')
 
     numero_votazione = models.IntegerField()
     titolo = models.TextField(blank=True)
@@ -189,10 +188,10 @@ class Votazione(models.Model):
 
 
 class VotazioneHasCarica(models.Model):
-    vote = models.ForeignKey(Votazione, db_column='votazione_id')
-    charge = models.ForeignKey(Carica, db_column='carica_id')
-    voting = models.CharField(max_length=40L, blank=True, db_column='voto')
-    rebel = models.IntegerField(db_column='ribelle')
+    votazione = models.ForeignKey(Votazione)
+    carica = models.ForeignKey(Carica)
+    voto = models.CharField(max_length=40L, blank=True)
+    ribelle = models.IntegerField()
     maggioranza_sotto_salva = models.IntegerField()
 
     class Meta:

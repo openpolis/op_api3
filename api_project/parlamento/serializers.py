@@ -10,11 +10,11 @@ __author__ = 'daniele'
 
 class GruppoSerializer(serializers.ModelSerializer):
 
-    parliamentarians_url = fields.HyperlinkedParlamentariField(filter='group')
+    parlamentari_url = fields.HyperlinkedParlamentariField(filter='gruppo')
 
     class Meta:
         model = models.Gruppo
-        fields = ('id', 'name', 'acronym', 'parliamentarians_url', )
+        fields = ('id', 'nome', 'acronimo', 'parlamentari_url', )
 
 
 class PoliticoSerializer(serializers.ModelSerializer):
@@ -25,11 +25,16 @@ class PoliticoSerializer(serializers.ModelSerializer):
 
 class CaricaSerializer(serializers.ModelSerializer):
 
-    charge_type = fields.CaricaField()
+    tipo_carica = fields.CaricaField()
 
     class Meta:
         model = models.Carica
-        fields = ('id', 'charge_type', 'start_date', 'end_date', 'district', )
+        fields = (
+            'id', 'parliament_id',
+            'tipo_carica',
+            'data_inizio', 'data_fine',
+            'legislatura', 'circoscrizione',
+        )
 
 
 class ParlamentareHistorySerializer(serializers.ModelSerializer):
@@ -37,22 +42,22 @@ class ParlamentareHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.PoliticianHistoryCache
         fields = (
-            "update_date",
+            "legislatura", "data",
             "assenze", "assenze_pos", "assenze_delta",
             "presenze", "presenze_pos", "presenze_delta",
             "missioni", "missioni_pos", "missioni_delta",
             "indice", "indice_pos", "indice_delta",
             "ribellioni", "ribellioni_pos", "ribellioni_delta",
-            "house",
+            "ramo",
         )
 
 
 class ParlamentareSerializer(serializers.ModelSerializer):
 
-    charge = CaricaSerializer()
-    group = GruppoSerializer()
-    politician = PoliticoSerializer(source='charge.politician')
-    house = fields.RamoField()
+    carica = CaricaSerializer()
+    gruppo = GruppoSerializer()
+    anagrafica = PoliticoSerializer(source='carica.politico')
+    ramo = fields.RamoField()
 
     def to_native(self, obj):
         ret = super(ParlamentareSerializer, self).to_native(obj)
@@ -61,7 +66,7 @@ class ParlamentareSerializer(serializers.ModelSerializer):
         for field in self.Meta.statistic_fields:
             stats[field] = ret[field]
             del ret[field]
-        ret['statistics'] = stats
+        ret['statistiche'] = stats
         return ret
 
     class Meta:
@@ -75,14 +80,14 @@ class ParlamentareSerializer(serializers.ModelSerializer):
             "numero",
         )
         fields = (
-            "politician", "charge", "group"
+            "anagrafica", "carica", "gruppo"
         ) + statistic_fields
 
 
 class CustomPaginationSerializer(pagination.PaginationSerializer):
 
-    legislative_session = fields.LegislaturaField(source='*')
-    update_date = fields.UltimoAggiornamentoField(source='*')
+    legislatura = fields.LegislaturaField(source='*')
+    data = fields.UltimoAggiornamentoField(source='*')
 
     #class Meta:
     #    object_serializer_class = ParlamentareSerializer
@@ -90,12 +95,16 @@ class CustomPaginationSerializer(pagination.PaginationSerializer):
 
 class SedutaSerializer(serializers.ModelSerializer):
 
-    votes = fields.HyperlinkedVotazioneField(many=True)
+    votazione_set = fields.HyperlinkedVotazioneField(many=True)
 
     class Meta:
         model = models.Seduta
         depth = 0
-        fields = ('id', 'date', 'number', 'house', 'reference_url', 'is_imported', 'votes', )
+        fields = (
+            'id', 'data', 'numero', 'ramo',
+            'url', 'is_imported',
+            'votazione_set',
+        )
 
 
 class VotazioneSerializer(serializers.ModelSerializer):
@@ -106,7 +115,7 @@ class VotazioneSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Votazione
         fields = (
-            'id', 'sitting', 'votazione_url',
+            'id', 'seduta', 'votazione_url',
             'numero_votazione',
             'titolo', 'titolo_aggiuntivo', 'descrizione',
             'presenti', 'votanti', 'maggioranza', 'astenuti',
@@ -123,20 +132,20 @@ class VotoSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.VotazioneHasCarica
         fields = (
-            'charge', 'voting', 'rebel', 'maggioranza_sotto_salva',
+            'carica', 'voto', 'ribelle', 'maggioranza_sotto_salva',
         )
 
 
 class VotazioneDettagliataSerializer(serializers.ModelSerializer):
 
-    charge_votes = VotoSerializer(many=True, source='votazionehascarica_set')
-    vote_url = fields.HyperlinkedVotazioneIdentityField()
-    sitting = fields.HyperlinkedSedutaField(read_only=True)
+    votazionehascarica_set = VotoSerializer(many=True)
+    votazione_url = fields.HyperlinkedVotazioneIdentityField()
+    seduta = fields.HyperlinkedSedutaField(read_only=True)
 
     class Meta:
         model = models.Votazione
         fields = (
-            'id', 'sitting', 'vote_url',
+            'id', 'seduta', 'votazione_url',
             'numero_votazione',
             'titolo', 'titolo_aggiuntivo', 'descrizione',
             'presenti', 'votanti', 'maggioranza', 'astenuti',
@@ -144,7 +153,7 @@ class VotazioneDettagliataSerializer(serializers.ModelSerializer):
             'margine', 'tipologia',
             'finale', 'nb_commenti',
             'ut_fav', 'ut_contr', 'is_maggioranza_sotto_salva',
-            'is_imported', 'url', 'charge_votes',
+            'is_imported', 'url', 'votazionehascarica_set',
         )
 
 
