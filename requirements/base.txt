@@ -18,3 +18,4 @@ django-cors-headers
 django-mptt
 django-treeadmin
 
+-e git+git://github.com/openpolis/django-popolo.git#egg=django-popolo
