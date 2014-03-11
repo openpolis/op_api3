@@ -209,7 +209,7 @@ class InstitutionChargeList(PoliticiDBSelectMixin, generics.ListAPIView):
         order_by = self.request.QUERY_PARAMS.get('order_by', None)
         if order_by:
             if order_by == 'date':
-                queryset = queryset.order_by('-date_end')
+                queryset = queryset.order_by('-date_start')
 
         return queryset
 
