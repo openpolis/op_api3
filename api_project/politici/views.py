@@ -126,10 +126,7 @@ class InstitutionChargeList(PoliticiDBSelectMixin, generics.ListAPIView):
     Results can be sorted by date, specifying the ``order_by=date``
     query string parameter.
     With this parameter, results are sorted by descending
-    values of ``date_end``.
-    Results with a null value of ``date_end`` are in the latest positions.
-    This is a quirck, since the *meaning* of a null ``date_end``
-    is that of a currently active charge.
+    values of ``date_start``.
 
     Results have a standard pagination, with 25 results per page.
 
