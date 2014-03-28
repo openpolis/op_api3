@@ -114,8 +114,8 @@ class InstitutionChargeList(PoliticiDBSelectMixin, generics.ListAPIView):
 
     Accepts these filters through the following **GET** querystring parameters:
 
-    * ``date_start`` - charges started *exactly* on the date
-    * ``date_end`` - charges ended *exactly* on the date
+    * ``date_from`` - charges that end after this date
+    * ``date_to`` - charges that start before this date
     * ``date`` - charges **active** on the date
     * ``institution_id`` - ID of the institution
     * ``charge_type_id`` - ID of the charge_type
@@ -156,6 +156,9 @@ class InstitutionChargeList(PoliticiDBSelectMixin, generics.ListAPIView):
         # date filters
         # date format is YYYY-MM-DD
 
+        # exclude deleted content
+        queryset = queryset.exclude(content__deleted_at__isnull=False)
+
         # fetch all charges started exactly on a given date
         date_start = self.request.QUERY_PARAMS.get('date_start', None)
         if date_start:
@@ -164,17 +167,17 @@ class InstitutionChargeList(PoliticiDBSelectMixin, generics.ListAPIView):
                 # TODO: raise an Exception
                 return queryset.none()
 
-            queryset = queryset.filter(date_start=date_start)
+            queryset = queryset.filter(date_end__gte=date_start)
 
         # fetch all charges ended exactly on a given date
-        date_end = self.request.QUERY_PARAMS.get('date_end', None)
-        if date_end:
-            date_end = parse_date(date_end)
-            if not date_end or date_end > date.today():
+        date_to = self.request.QUERY_PARAMS.get('date_end', None)
+        if date_to:
+            date_to = parse_date(date_to)
+            if not date_to or date_to > date.today():
                 # TODO: raise an Exception
                 return queryset.none()
 
-            queryset = queryset.filter(date_end=date_end)
+            queryset = queryset.filter(date_start__lte=date_to)
 
         # fetch all charges active on a given date
         data = self.request.QUERY_PARAMS.get('date', None)
@@ -222,6 +225,30 @@ class InstitutionChargeDetail(PoliticiDBSelectMixin, generics.RetrieveAPIView):
 class HistoricalCityMayorsView(APIView):
     """
     List all top charges for a given city, during the years
+
+    Accepts these filters through the following **GET** querystring parameters:
+
+    * ``date_from`` - charges that end after this date
+    * ``date_to`` - charges that start after this date
+    * ``date`` - charges **active** on the date
+
+    Dates have the format: ``YYYY-MM-DD``
+
+    Results are sorted by descending ``date_start``.
+
+    Results have a standard pagination, with 25 results per page.
+
+    To get JSON format, specify ``format=json`` as a **GET** parameter,
+    or add ``.json`` to the URL.
+
+    Example usage::
+
+        All mayors in Rome, between 1/1/1990 and 31/12/1999
+        >> r = requests.get('http://api.openpolis.it/politici/city_mayors/5132?date_from=1990-01-01&date_to=1999-12-31')
+        >> res = r.json()
+        >> print res['count']
+        2
+
     """
     def get(self, request, **kwargs):
         location_id = kwargs['location_id']
@@ -229,7 +256,6 @@ class HistoricalCityMayorsView(APIView):
             data = self.get_city_mayors_data(location_id)
         except Exception, e:
             data = { 'error': e }
-
 
         return Response(data)
 
@@ -251,10 +277,40 @@ class HistoricalCityMayorsView(APIView):
         except Exception, detail:
             return { 'exception': 'Error retrieving location with location_id: %s. %s' % (city_id, detail) }
 
-        ics = OpInstitutionCharge.objects.db_manager('politici').filter(
+        ics = OpInstitutionCharge.objects.db_manager('politici').exclude(content__deleted_at__isnull=False).filter(
             Q(location__id=location.id),
             Q(charge_type__name='Sindaco') | Q(charge_type__name='Commissario straordinario'),
         ).order_by('-date_start')
+
+        # fetch all charges started exactly on a given date
+        date_from = self.request.QUERY_PARAMS.get('date_start', None)
+        if date_from:
+            date_from = parse_date(date_from)
+            if not date_from or date_from > date.today():
+                # TODO: raise an Exception
+                return {'sindaci': []}
+            ics = ics.filter(date_end__gte=date_from)
+
+        # fetch all charges ended exactly on a given date
+        date_to = self.request.QUERY_PARAMS.get('date_end', None)
+        if date_to:
+            date_to = parse_date(date_to)
+            if not date_to or date_to > date.today():
+                # TODO: raise an Exception
+                return {'sindaci': []}
+            ics = ics.filter(date_start__lte=date_to)
+
+        # fetch all charges active on a given date
+        given_date = self.request.QUERY_PARAMS.get('date', None)
+        if given_date:
+            given_date = parse_date(given_date)
+            if not given_date or given_date > date.today():
+                # TODO: raise an Exception
+                return {'sindaci': []}
+            ics = ics.filter(
+                date_start__lt=given_date,
+            ).filter(Q(date_end__isnull=True) | Q(date_end__gt=given_date))
+
 
         data['sindaci'] = []
         for ic in ics:
@@ -264,7 +320,8 @@ class HistoricalCityMayorsView(APIView):
                     'charge_type': 'Sindaco',
                     'date_start': ic.date_start,
                     'date_end': ic.date_end,
-                    'party': ic.party.getNormalizedAcronymOrName(),
+                    'party_acronym': ic.party.getNormalizedAcronymOrName(),
+                    'party_name': ic.party.getName(),
                     'first_name': ic.politician.first_name,
                     'last_name': ic.politician.last_name,
                     'birth_date': ic.politician.birth_date,
@@ -279,7 +336,7 @@ class HistoricalCityMayorsView(APIView):
                     'first_name': ic.politician.first_name,
                     'last_name': ic.politician.last_name,
                     'birth_date': ic.politician.birth_date,
-                    'motivazione': ic.description,
+                    'description': ic.description,
                     'op_link': 'http://politici.openpolis.it/politico/%s' % ic.politician.content_id
                 }
 
