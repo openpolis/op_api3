@@ -160,17 +160,17 @@ class InstitutionChargeList(PoliticiDBSelectMixin, generics.ListAPIView):
         queryset = queryset.exclude(content__deleted_at__isnull=False)
 
         # fetch all charges started exactly on a given date
-        date_start = self.request.QUERY_PARAMS.get('date_start', None)
-        if date_start:
-            date_start = parse_date(date_start)
-            if not date_start or date_start > date.today():
+        date_from = self.request.QUERY_PARAMS.get('date_from', None)
+        if date_from:
+            date_from = parse_date(date_from)
+            if not date_from or date_from > date.today():
                 # TODO: raise an Exception
                 return queryset.none()
 
-            queryset = queryset.filter(date_end__gte=date_start)
+            queryset = queryset.filter(date_end__gte=date_from)
 
         # fetch all charges ended exactly on a given date
-        date_to = self.request.QUERY_PARAMS.get('date_end', None)
+        date_to = self.request.QUERY_PARAMS.get('date_to', None)
         if date_to:
             date_to = parse_date(date_to)
             if not date_to or date_to > date.today():
@@ -283,7 +283,7 @@ class HistoricalCityMayorsView(APIView):
         ).order_by('-date_start')
 
         # fetch all charges started exactly on a given date
-        date_from = self.request.QUERY_PARAMS.get('date_start', None)
+        date_from = self.request.QUERY_PARAMS.get('date_from', None)
         if date_from:
             date_from = parse_date(date_from)
             if not date_from or date_from > date.today():
@@ -292,7 +292,7 @@ class HistoricalCityMayorsView(APIView):
             ics = ics.filter(date_end__gte=date_from)
 
         # fetch all charges ended exactly on a given date
-        date_to = self.request.QUERY_PARAMS.get('date_end', None)
+        date_to = self.request.QUERY_PARAMS.get('date_to', None)
         if date_to:
             date_to = parse_date(date_to)
             if not date_to or date_to > date.today():
