@@ -289,7 +289,7 @@ class HistoricalCityMayorsView(APIView):
             if not date_from or date_from > date.today():
                 # TODO: raise an Exception
                 return {'sindaci': []}
-            ics = ics.filter(date_end__gte=date_from)
+            ics = ics.filter(Q(date_end__isnull=True) | Q(date_end__gt=date_from))
 
         # fetch all charges ended exactly on a given date
         date_to = self.request.QUERY_PARAMS.get('date_to', None)
@@ -308,8 +308,8 @@ class HistoricalCityMayorsView(APIView):
                 # TODO: raise an Exception
                 return {'sindaci': []}
             ics = ics.filter(
-                date_start__lt=given_date,
-            ).filter(Q(date_end__isnull=True) | Q(date_end__gt=given_date))
+                date_start__lte=given_date,
+            ).filter(Q(date_end__isnull=True) | Q(date_end__gte=given_date))
 
 
         data['sindaci'] = []
