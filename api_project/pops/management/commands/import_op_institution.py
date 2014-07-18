@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-__author__ = 'guglielmo'
+__author__ = 'tommaso'
 
 from optparse import make_option
 import logging
 
 from django.core.management.base import BaseCommand
 
-from politici.models import *
+from op_api.politici.models import *
 from popolo.models import *
 
 
@@ -69,40 +69,69 @@ class Command(BaseCommand):
         i=0
         for op_institution in op_institutions:
 
+
             c += 1
 
 
 
 
-            o = Organization()
+
+            locations_ids = OpInstitutionCharge.objects.using('politici').filter(
+               # TODO: Remove limit
+                institution_id=op_institution.id).values_list("location_id", flat=True).distinct()[0:20]
+
+            for location_id in locations_ids:
+                locations_names = OpLocation.objects.using('politici').filter(id=location_id)
+                for location_name in locations_names:
+                # create a new Organization only if not already imported
+                    created = False
+                    organization, created = Organization.objects.get_or_create(
+                            identifiers__scheme='OPI',
+                            identifiers__identifier="{0}:{1}".format(op_institution.id, location_id),
+
+                            location_id = location_id,
+
+                            defaults={
+                                    'name' : op_institution.name,
+                                    'location_name': location_name.name,
+
+
+                                }
+                            )
+
+                    if created:
+                        identifier = Identifier(identifier="{0}:{1}".format(op_institution.id, location_id),scheme="OPI")
+                        organization.identifiers.add(identifier)
+                        print organization, "created"
+                    else:
+                        organization.name = op_institution.name
+                        organization.location_id = location_id
+                        organization.location_name = location_name.name
+                        organization.save()
+                        print organization, "updated"
+
+
+            op_posts = op_institution.charge_types.all()
+            for op_post in op_posts:
+                    post, created = Post.objects.get_or_create(
+                        organization_id =organization.id,
+                        label =op_post.name,
+                        defaults={
+
+
+                                    }
+                                )
 
 
 
-            # create a new Person only if not already imported
-            created = False
-            organization, created = Organization.objects.get_or_create(
-                identifiers__scheme='OPI',
-                identifiers__identifier=op_institution.id,
-                defaults={
-                    'name': op_institution.name,
-
-                }
-            )
-
-            if created:
-                identifier = Identifier(identifier=op_institution.id,scheme='OPI')
-                organization.identifiers.add(identifier)
-
-                print organization, "created"
-            else:
-                organization.name = op_institution.name
-
-                organization.save()
-                print organization, "updated"
 
 
-        self.logger.info("Inizio import da vecchio DB")
-        self.logger.info("Limit: %s" % options['limit'])
-        self.logger.info("Offset: %s" % options['offset'])
 
-        self.logger.info("Fine")
+
+
+
+
+
+
+
+

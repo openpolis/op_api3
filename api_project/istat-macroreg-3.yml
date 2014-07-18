@@ -1,0 +1,11 @@
+- europa-continent:
+  - italia-nation:
+    - nord-macroregione:
+      - piemonte-regione>istat-reg
+      - lombardia-regione>istat-reg
+    - centro-macroregione:
+      - toscana-regione>istat-reg
+      - lazio-regione>istat-reg
+    - sud-macroregione:
+      - campania-regione>istat-reg
+      - sicilia-regione>istat-reg

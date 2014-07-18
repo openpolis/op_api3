@@ -73,6 +73,10 @@ class Command(BaseCommand):
             5 : ContactDetail.CONTACT_TYPES.twitter,
             6 : ContactDetail.CONTACT_TYPES.facebook,
         }
+
+
+        contact_details = (1,2,5,6)
+        links = (3,4)
         for op_person in op_politicians:
 
             op_id = op_person.content_id
@@ -121,18 +125,76 @@ class Command(BaseCommand):
 
 
             op_person_resources = OpResources.objects.using('politici').filter(
-                politician_id=op_id,resources_type_id__in=(1,2,5,6))
+                politician_id=op_id,resources_type_id__in=contact_details)
 
             for op_resource in op_person_resources:
+                if op_resource.descrizione==None:
+                    descrizione=""
+                else:
+                    descrizione=op_resource.descrizione
+
+
                 contact, created = ContactDetail.objects.get_or_create(
                     contact_type=resources_type_map[op_resource.resources_type_id],
                     value=op_resource.valore,
                     content_type=ContentType.objects.get(model='person', app_label='popolo'),
                     object_id=person.id,
                     defaults={
-                        'label':op_resource.descrizione
+                        'label': descrizione
                     }
                 )
+
+
+            op_person_resources = OpResources.objects.using('politici').filter(
+                politician_id=op_id,resources_type_id__in=links)
+
+            for op_resource in op_person_resources:
+                if op_resource.descrizione==None:
+                    descrizione=""
+                else:
+                    descrizione=op_resource.descrizione
+
+                link, created = Link.objects.get_or_create(
+                    url=op_resource.valore,
+                    content_type=ContentType.objects.get(model='person', app_label='popolo'),
+                    object_id=person.id,
+                    defaults={
+                        'note':descrizione
+                    }
+                )
+
+            op_person_institution_charges = op_person.opinstitutioncharge_set.all()
+
+            for op_institution_charge in op_person_institution_charges:
+
+                id = "{0}:{1}".format(op_institution_charge.institution_id,op_institution_charge.location_id)
+
+                organizations = Organization.objects.filter(identifiers__identifier=id)
+                if organizations:
+                    charge_types= OpChargeType.objects.using('politici').filter(id=op_institution_charge.charge_type_id)
+                    postname = charge_types[0].name
+                    posts= Post.objects.filter(organization_id=organizations[0].id,label=postname)
+                    if posts:
+
+
+                        membership, created = Membership.objects.get_or_create(
+                            person_id=person.id,
+                            organization_id=organizations[0].id,
+                            start_date = op_institution_charge.date_start,
+                            end_date = op_institution_charge.date_end,
+                            post_id=posts[0].id,
+                            defaults={
+                                'start_date': op_institution_charge.date_start,
+                                'end_date': op_institution_charge.date_end,
+                                'label' :op_institution_charge.description,
+
+                            }
+                        )
+
+
+
+
+
 
 
         self.logger.info("Inizio import da vecchio DB")
