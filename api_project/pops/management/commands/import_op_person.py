@@ -76,39 +76,18 @@ class Command(BaseCommand):
         for op_person in op_politicians:
 
             op_id = op_person.content_id
-
-
-
-
-
-
             c += 1
-
-
-
-
-
-
-
-
             p = Person()
 
             gender = None
             if op_person.sex:
-                if op_person.sex == 'M':
-                    gender = Person.GENDERS.male
-
-                else:
-                    gender = Person.GENDERS.female
+                gender = op_person.sex
 
             birth_date = op_person.birth_date.strftime('%Y-%m-%d')
 
-            death_date = None
+            death_date = ''
             if op_person.death_date:
                 death_date = op_person.death_date.strftime('%Y-%m-%d')
-
-
-
 
             # create a new Person only if not already imported
             created = False
@@ -116,7 +95,8 @@ class Command(BaseCommand):
                 identifiers__scheme='OP',
                 identifiers__identifier=op_person.content_id,
                 defaults={
-                    'name': op_person.first_name,
+                    'name': u"{0} {1}".format(op_person.first_name.lower().capitalize(), op_person.last_name.lower().capitalize()),
+                    'first_name': op_person.first_name,
                     'family_name': op_person.last_name,
                     'birth_date': birth_date,
                     'death_date': death_date,
@@ -130,7 +110,8 @@ class Command(BaseCommand):
 
                 print person,  "created"
             else:
-                person.name = op_person.first_name
+                person.name = u"{0} {1}".format(op_person.first_name.lower().capitalize(), op_person.last_name.lower().capitalize())
+                person.first_name = op_person.first_name
                 person.family_name = op_person.last_name
                 person.birth_date = birth_date
                 person.death_date = death_date
@@ -146,7 +127,7 @@ class Command(BaseCommand):
                 contact, created = ContactDetail.objects.get_or_create(
                     contact_type=resources_type_map[op_resource.resources_type_id],
                     value=op_resource.valore,
-                    content_type=ContentType.objects.get(model='Person'),
+                    content_type=ContentType.objects.get(model='person', app_label='popolo'),
                     object_id=person.id,
                     defaults={
                         'label':op_resource.descrizione
