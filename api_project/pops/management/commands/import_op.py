@@ -5,7 +5,7 @@ import logging
 from django.core.management.base import BaseCommand
 from popolo.models import Membership
 
-from pops.importers import OpImporter
+from pops.importers import OpImporter, OpImporterException
 from politici.models import *
 
 __author__ = 'guglielmo'
@@ -46,6 +46,12 @@ class Command(BaseCommand):
         )
 
     logger = logging.getLogger('management')
+    NATIONAL_INSTITUTIONS = (
+        'governo nazionale',
+        'camera dei deputati', 'senato della repubblica',
+        'presidenza della repubblica',
+        'commissariamento'
+    )
 
     def handle(self, *args, **options):
 
@@ -85,24 +91,14 @@ class Command(BaseCommand):
 
             op_charges = op_loc.opinstitutioncharge_set.all()
             for op_charge in op_charges:
-                politician = op_importer.import_op_politician(op_charge.politician)
-
-                # institution = op_importer.import_op_organization(op_charge.institution)
-                # institution.area = area
-                # institution.save()
-
-                # post = op_importer.import_op_post(op_charge.charge_type)
+                politician = op_importer.import_op_person(op_charge.politician)
+                institution = op_importer.import_op_organization(op_charge.institution, area=area)
+                post = op_importer.import_op_post(op_charge.charge_type, institution, area=area)
 
                 # generate membership from post, person and organization
-                # membership, created = Membership.get_or_create(
-                #     post=post,
-                #     organization=institution,
-                #     person=politician
-                # )
-
-                # action = "found"
-                # if created:
-                #     action = "created"
-                # self.logger.info("Membership {0}: {1}.".format(
-                #     action, membership.label
-                # ))
+                membership = op_importer.import_op_membership(
+                    op_charge,
+                    post=post, organization=institution,
+                    person=politician,
+                    area=area
+                )
