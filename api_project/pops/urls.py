@@ -7,6 +7,7 @@ from .routers import DefaultPopsRouter
 router = DefaultPopsRouter()
 
 router.register(r'persons', PersonViewSet)
+
 router.register(r'organizations', OrganizationViewSet)
 router.register(r'memberships', MembershipViewSet)
 router.register(r'posts', PostViewSet)
