@@ -1,4 +1,4 @@
 # Pro-tip: Try not to put anything here. There should be no dependency in
 #	production that isn't in development.
 -r base.txt
-git+git://github.com/openpolis/django-popolo.git#egg=popolo
+-e git+https://github.com/openpolis/django-popolo.git@feature/slug-as-pk#egg=django-popolo
