@@ -11,7 +11,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
 from politici.models import OpUser, OpPolitician, OpInstitution, OpChargeType, OpInstitutionCharge
-from politici.serializers import UserSerializer, PoliticianSerializer, OpInstitutionChargeSerializer
+from politici.serializers import UserSerializer, PoliticianSerializer, OpInstitutionChargeSerializer, \
+    PoliticianInlineSerializer
 from territori.models import OpLocation
 
 
@@ -63,12 +64,76 @@ class UserDetail(PoliticiDBSelectMixin, generics.RetrieveAPIView):
 class PoliticianList(PoliticiDBSelectMixin, generics.ListAPIView):
     """
     Represents the list of politicians
+
+    Accepts these filters through the following **GET** querystring parameters:
+
+    * ``namestartswith`` - get all Politicians with names starting
+                           with the value (case insensitive)
+    * ``namecontains``   - get all Politicians with names containing
+                           the value (case insensitive)
+    * ``openpolis_id``   - get all Politicians with the openpolis_id value
+
+    Results can be sorted by date, specifying the ``order_by=date``
+    query string parameter.
+    With this parameter, results are sorted by descending
+    values of ``date_start``.
+
+    Results have a standard pagination, with 25 results per page.
+
+    To get JSON format, specify ``format=json`` as a **GET** parameter,
+    or add ``.json`` to the URL.
+
+    Example usage
+
+        >> r = requests.get('http://api.openpolis.it/politici/politicians.json?namestartswith=giulio')
+        >> res = r.json()
+        >> print res['count']
+        600
     """
     model = OpPolitician
     queryset = model.objects.select_related('content')
-    serializer_class = PoliticianSerializer
+    serializer_class = PoliticianInlineSerializer
     paginate_by = 25
     max_paginate_by = 100
+
+    def get_queryset(self):
+        """
+        Add filters to queryset provided in url querystring.
+        """
+
+        queryset = super(PoliticianList, self).get_queryset()
+
+        # exclude deleted content
+        # queryset = queryset.exclude(content__deleted_at__isnull=False)
+
+        # fetch all places whose name starts with the parameter
+        namestartswith = self.request.QUERY_PARAMS.get('namestartswith', None)
+        if namestartswith:
+            queryset = queryset.filter(
+                Q(first_name__istartswith=namestartswith) |
+                Q(last_name__istartswith=namestartswith)
+            )
+
+        # fetch all places whose name contains the parameter
+        namecontains = self.request.QUERY_PARAMS.get('namecontains', None)
+        if namecontains:
+            queryset = queryset.filter(
+                Q(first_name__icontains=namecontains) |
+                Q(last_name__icontains=namecontains)
+            )
+
+        # openpolis_id = self.request.QUERY_PARAMS.get('openpolis_id', None)
+        # if openpolis_id:
+        #     queryset = queryset.filter(identifiers__slug=slug,
+        #                                placeidentifiers__value=value)
+
+        order_by = self.request.QUERY_PARAMS.get('order_by', None)
+        if order_by:
+            if order_by == 'date':
+                queryset = queryset.order_by('-birth_date')
+
+        return queryset
+
 
 class PoliticianDetail(PoliticiDBSelectMixin, generics.RetrieveAPIView):
     """
