@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from politici.models import OpUser, OpPolitician, OpContent, OpInstitutionCharge, OpOpenContent, OpParty
+from politici.models import OpUser, OpResources, OpPolitician, OpContent, OpInstitutionCharge, OpOpenContent, OpParty
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -10,24 +10,19 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('url', 'first_name', 'last_name', 'nickname', 'is_active', 'email')
 
 
+class ResourceSerializer(serializers.ModelSerializer):
+    resource_type = serializers.CharField(source='resources_type_denominazione', read_only=True)
+    value = serializers.CharField(source='valore', read_only=True)
+    description = serializers.CharField(source='descrizione', read_only=True)
+    class Meta:
+        model = OpResources
+        fields = ('resource_type', 'value', 'description' )
+
 class ContentSerializer(serializers.ModelSerializer):
     class Meta:
         model = OpContent
         fields = ('id', 'created_at', 'updated_at' )
 
-class PoliticianSerializer(serializers.ModelSerializer):
-    content = ContentSerializer()
-    image_uri = serializers.CharField(source='get_image_uri', read_only=True)
-
-    class Meta:
-        model = OpPolitician
-        view_name = 'politici:politician-detail'
-        fields = (
-            'first_name', 'last_name',
-            'birth_date', 'death_date', 'birth_location',
-            'last_charge_update',
-            'content', 'image_uri'
-        )
 
 
 class OpenContentSerializer(serializers.ModelSerializer):
@@ -61,14 +56,47 @@ class OpInstitutionChargeSerializer(serializers.ModelSerializer):
     content = OpenContentSerializer()
     politician = PoliticianInlineSerializer()
     party = PartyInlineSerializer()
-    institution = serializers.HyperlinkedRelatedField(view_name='politici:institution-detail')
-    charge_type = serializers.HyperlinkedRelatedField(view_name='politici:chargetype-detail')
+    institution_descr = serializers.CharField(source='institution')
+    charge_type_descr = serializers.CharField(source='charge_type')
     location = serializers.HyperlinkedRelatedField(view_name='territori:location-detail')
+    location_descr = serializers.CharField(source='location')
     class Meta:
         model = OpInstitutionCharge
         view_name = 'politici:instcharge-detail'
         fields = (
-            'politician', 'institution', 'charge_type', 'location',
-            'date_start', 'date_end', 'description', 'content',
+            'date_start', 'date_end',
+            'politician',
+            'charge_type_descr', 'institution_descr',
+            'location_descr', 'location',
+            'description',
             'party',
+            'content',
         )
+
+class OpInstitutionChargeInlineSerializer(serializers.HyperlinkedModelSerializer):
+    self = serializers.HyperlinkedIdentityField(view_name = 'politici:instcharge-detail')
+    charge = serializers.CharField(source='getExtendedTextualRepresentation')
+    class Meta:
+        model = OpInstitutionCharge
+        view_name = 'politici:instcharge-detail'
+        fields = (
+            'charge',
+        )
+
+class PoliticianSerializer(serializers.HyperlinkedModelSerializer):
+    content = ContentSerializer()
+    image_uri = serializers.CharField(source='get_image_uri', read_only=True)
+    resources = ResourceSerializer(many=True)
+    institution_charges = OpInstitutionChargeInlineSerializer(many=True)
+    class Meta:
+        model = OpPolitician
+        view_name = 'politici:politician-detail'
+        fields = (
+            'first_name', 'last_name',
+            'birth_date', 'death_date', 'birth_location',
+            'last_charge_update',
+            'content', 'image_uri',
+            'resources',
+            'institution_charges'
+        )
+

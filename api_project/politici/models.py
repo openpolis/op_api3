@@ -236,6 +236,22 @@ class OpPolitician(models.Model):
     def get_image_uri(self):
         return "http://politici.openpolis.it/politician/picture?content_id={}".format(self.content_id)
 
+    @property
+    def resources(self):
+        return self.opresources_set.all()
+
+    @property
+    def institution_charges(self):
+        return self.opinstitutioncharge_set.all()
+
+    @property
+    def political_charges(self):
+        return self.oppoliticalcharge_set.all()
+
+    @property
+    def organization_charges(self):
+        return self.oporganizationcharge_set.all()
+
     def __unicode__(self):
         return u"{} {}".format(self.first_name, self.last_name).title()
 
@@ -282,6 +298,9 @@ class OpInstitution(models.Model):
     short_name = models.CharField(max_length=45, blank=True)
     priority = models.IntegerField(null=True, blank=True)
 
+    def __unicode__(self):
+        return self.name
+
     class Meta:
         db_table = u'op_institution'
         managed = False
@@ -294,6 +313,10 @@ class OpChargeType(models.Model):
     short_name = models.CharField(max_length=45, blank=True)
     priority = models.IntegerField(null=True, blank=True)
     category = models.CharField(max_length=1)
+
+    def __unicode__(self):
+        return self.name
+
     class Meta:
         db_table = u'op_charge_type'
         managed = False
@@ -968,6 +991,11 @@ class OpResources(models.Model):
     resources_type = models.ForeignKey(OpResourcesType)
     valore = models.CharField(max_length=255, blank=True)
     descrizione = models.TextField(blank=True)
+
+    @property
+    def resources_type_denominazione(self):
+        return self.resources_type.denominazione
+
     class Meta:
         db_table = u'op_resources'
         managed = False
