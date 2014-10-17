@@ -86,6 +86,8 @@ class OpInstitutionChargeInlineSerializer(serializers.HyperlinkedModelSerializer
 class PoliticianSerializer(serializers.HyperlinkedModelSerializer):
     content = ContentSerializer()
     image_uri = serializers.CharField(source='get_image_uri', read_only=True)
+    profession = serializers.CharField(source='profession', read_only=True)
+    education_levels = serializers.CharField(source='education_levels', read_only=True)
     resources = ResourceSerializer(many=True)
     institution_charges = OpInstitutionChargeInlineSerializer(many=True)
     class Meta:
@@ -96,6 +98,7 @@ class PoliticianSerializer(serializers.HyperlinkedModelSerializer):
             'birth_date', 'death_date', 'birth_location',
             'last_charge_update',
             'content', 'image_uri',
+            'profession', 'education_levels',
             'resources',
             'institution_charges'
         )

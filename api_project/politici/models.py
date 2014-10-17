@@ -100,6 +100,8 @@ class OpProfession(models.Model):
         else:
             return self.description
 
+    def __unicode__(self):
+        return self.getNormalizedDescription()
 
 
 class OpElectionType(models.Model):
@@ -241,6 +243,10 @@ class OpPolitician(models.Model):
         return self.opresources_set.filter(content__deleted_at__isnull=True)
 
     @property
+    def education_levels(self):
+        return self.oppoliticianhasopeducationlevel_set.all()
+
+    @property
     def institution_charges(self):
         return self.opinstitutioncharge_set.filter(content__deleted_at__isnull=True)
 
@@ -273,6 +279,9 @@ class OpEducationLevel(models.Model):
         db_table = u'op_education_level'
         managed = False
 
+    def __unicode__(self):
+        return self.getNormalizedDescription()
+
     def getNormalizedDescription(self):
         if self.oid is not None:
             norm = OpEducationLevel.objects.db_manager('politici').get(pk=self.oid)
@@ -285,6 +294,12 @@ class OpPoliticianHasOpEducationLevel(models.Model):
     politician = models.ForeignKey(OpPolitician, primary_key=True)
     education_level = models.ForeignKey(OpEducationLevel, primary_key=True)
     description = models.CharField(max_length=255, blank=True)
+
+    def __unicode__(self):
+        if self.description:
+            return u"{0} ({1})".format(self.education_level, self.description)
+        else:
+            return u"{0}".format(self.education_level)
 
     class Meta:
         db_table = u'op_politician_has_op_education_level'
