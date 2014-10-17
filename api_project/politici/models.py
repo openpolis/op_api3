@@ -238,19 +238,19 @@ class OpPolitician(models.Model):
 
     @property
     def resources(self):
-        return self.opresources_set.all()
+        return self.opresources_set.filter(content__deleted_at__isnull=True)
 
     @property
     def institution_charges(self):
-        return self.opinstitutioncharge_set.all()
+        return self.opinstitutioncharge_set.filter(content__deleted_at__isnull=True)
 
     @property
     def political_charges(self):
-        return self.oppoliticalcharge_set.all()
+        return self.oppoliticalcharge_set.filter(content__deleted_at__isnull=True)
 
     @property
     def organization_charges(self):
-        return self.oporganizationcharge_set.all()
+        return self.oporganizationcharge_set.filter(content__deleted_at__isnull=True)
 
     def __unicode__(self):
         return u"{} {}".format(self.first_name, self.last_name).title()
