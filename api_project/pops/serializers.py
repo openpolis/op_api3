@@ -88,6 +88,17 @@ class OrganizationInlineSerializer(OrganizationSerializer):
 
 class PersonSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.SlugField()
+
+    json_ld_context = serializers.CharField(
+        max_length=255,
+        source='json_ld_context',
+    )
+    json_ld_type = serializers.CharField(
+        max_length=255,
+        source='json_ld_type',
+    )
+    json_ld_id = serializers.HyperlinkedIdentityField(view_name='person-detail')
+
     identifiers = IdentifierSerializer(many=True)
     other_names = OtherNameSerializer(many=True)
     contact_details = ContactDetailSerializer(many=True)
@@ -100,6 +111,6 @@ class PersonSerializer(serializers.HyperlinkedModelSerializer):
         exclude = ('start_date', 'end_date') # duplicates of birth_date and death_date
 
 
-class PersonInlineSerializer(OrganizationSerializer):
+class PersonInlineSerializer(PersonSerializer):
     class Meta(PersonSerializer.Meta):
-        fields = ('name', 'url', 'gender', 'birth_date', 'death_date')
+        fields = ('json_ld_context', 'json_ld_type', 'json_ld_id', 'name', 'url', 'gender', 'birth_date', 'death_date')
