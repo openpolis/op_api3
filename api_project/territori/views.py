@@ -45,6 +45,14 @@ class LocationList(PoliticiDBSelectMixin, generics.ListAPIView):
     To get JSON format, specify ``format=json`` as a **GET** parameter,
     or add ``.json`` to the URL.
 
+    * ``nameiexact`` - get all Locations with names exactly equal
+                           to the value (case insensitive)
+    * ``namestartswith`` - get all Locations with names starting
+                           with the value (case insensitive)
+    * ``namecontains`` - get all Locations with names containing
+                         the value (case insensitive)
+    * ``prov``         - get all Locations having prov equal to the value
+
     """
 
     LOC_TYPES = {
@@ -73,6 +81,28 @@ class LocationList(PoliticiDBSelectMixin, generics.ListAPIView):
         if loc_type in self.LOC_TYPES.keys():
             lt = OpLocationType.objects.using('politici').get(name__iexact=self.LOC_TYPES[loc_type])
             queryset = queryset.filter(location_type=lt)
+
+        # fetch all places whose name starts with the parameter
+        namestartswith = self.request.QUERY_PARAMS.get('namestartswith', None)
+        if namestartswith:
+            queryset = queryset.filter(name__istartswith=namestartswith)
+
+        # fetch all places whose name contains the parameter
+        namecontains = self.request.QUERY_PARAMS.get('namecontains', None)
+        if namecontains:
+            queryset = queryset.filter(name__icontains=namecontains)
+
+        # fetch all places whose name is exactly equal to the parameter (case-insensitive)
+        nameiexact = self.request.QUERY_PARAMS.get('nameiexact', None)
+        if nameiexact:
+            queryset = queryset.filter(name__iexact=nameiexact)
+
+        # fetch all places whose prov is exactly equal to the parameter (case-insensitive)
+        prov = self.request.QUERY_PARAMS.get('prov', None)
+        if prov:
+            queryset = queryset.filter(prov__iexact=prov)
+
+
 
         return queryset
 
