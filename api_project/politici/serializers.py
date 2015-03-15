@@ -40,7 +40,7 @@ class PartyInlineSerializer(serializers.ModelSerializer):
 
 
 class PoliticianInlineSerializer(serializers.ModelSerializer):
-    self = serializers.HyperlinkedIdentityField(view_name = 'politici:politician-detail')
+    self_uri = serializers.HyperlinkedIdentityField(view_name = 'politici:politician-detail')
     image_uri = serializers.CharField(source='get_image_uri', read_only=True)
 
     class Meta:
@@ -48,7 +48,7 @@ class PoliticianInlineSerializer(serializers.ModelSerializer):
         fields = (
             'first_name', 'last_name',
             'birth_date', 'death_date', 'birth_location',
-            'self', 'image_uri',
+            'self_uri', 'image_uri',
         )
 
 
@@ -74,7 +74,7 @@ class OpInstitutionChargeSerializer(serializers.ModelSerializer):
         )
 
 class OpInstitutionChargeInlineSerializer(serializers.HyperlinkedModelSerializer):
-    self = serializers.HyperlinkedIdentityField(view_name = 'politici:instcharge-detail')
+    self_uri = serializers.HyperlinkedIdentityField(view_name = 'politici:instcharge-detail')
     charge = serializers.CharField(source='getExtendedTextualRepresentation')
     class Meta:
         model = OpInstitutionCharge
