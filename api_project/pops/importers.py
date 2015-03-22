@@ -129,7 +129,7 @@ class OpImporter(object):
     def import_op_area(self, op_loc, logger=None):
         """
         Imports a single Area from an openpolis location.
-        Imports province acronym and op_location_id as other_identifiers
+        Imports province acronym, op_location_id  and mapit urls as other_identifiers
 
         @param OpLocation op_loc  instance of territori.models.OpLocation
         @param Logger logger      optional logger object, uses console logger as default
@@ -156,7 +156,6 @@ class OpImporter(object):
                 name, classification, identifier
             ))
         else:
-            # modifica di tutti i campi del progetto, in base ai valori del CSV
             for key, value in area_defaults.items():
                 setattr(a, key, value)
             a.save()
@@ -176,6 +175,37 @@ class OpImporter(object):
         if created:
             self.logger.info(u"Identifier created: {0}".format(op_other_identifier))
         a.other_identifiers.add(op_other_identifier)
+
+        # mapit url
+        mapit_base_endpoint = "http://mapit.openpolis.it"
+
+        istat_code_type = "ISTAT_{0}".format(classification[0:3].upper())
+        istat_code_value = ''
+        if classification == 'Comune':
+            istat_code_value = "{:d}{:06d}".format(
+                op_loc.regional_id, op_loc.city_id
+            )
+        elif classification == 'Provincia':
+            istat_code_value = "{:d}{:d}".format(
+                op_loc.regional_id, op_loc.provincial_id
+            )
+        elif classification == 'Regione':
+            istat_code_value = "{:d}".format(op_loc.regional_id)
+        else:
+            pass
+
+        if istat_code_value:
+            mapit_url = "{0}/code/{1}/{2}.html".format(
+                mapit_base_endpoint,
+                istat_code_type, istat_code_value
+            )
+            op_other_identifier, created = Identifier.objects.get_or_create(
+                scheme=mapit_base_endpoint,
+                identifier=mapit_url
+            )
+            if created:
+                self.logger.info(u"Identifier created: {0}".format(op_other_identifier))
+            a.other_identifiers.add(op_other_identifier)
 
         # province acronym
         if classification == 'Provincia':

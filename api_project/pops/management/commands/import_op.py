@@ -16,7 +16,7 @@ class Command(BaseCommand):
     Data are imported from the Openpolis mysql database.
 
     If location ids are specified, then only those locations are imported.
-    For each location, all institution charges, institutions,
+    For each location, all institution charges, institutions and politicians are imported.
 
     OP database connection is named 'politici' and is accessible
     as a read-only database in django orm.
