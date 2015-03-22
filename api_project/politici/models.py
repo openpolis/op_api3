@@ -100,6 +100,10 @@ class OpProfession(models.Model):
         else:
             return self.description
 
+    @property
+    def normalized_description(self):
+        return self.getNormalizedDescription()
+
 
 
 class OpElectionType(models.Model):
@@ -252,6 +256,10 @@ class OpPolitician(models.Model):
     def organization_charges(self):
         return self.oporganizationcharge_set.all()
 
+    @property
+    def education_levels(self):
+        return self.oppoliticianhasopeducationlevel_set.all()
+
     def __unicode__(self):
         return u"{} {}".format(self.first_name, self.last_name).title()
 
@@ -280,6 +288,9 @@ class OpEducationLevel(models.Model):
         else:
             return self.description
 
+    @property
+    def normalized_description(self):
+        return self.getNormalizedDescription()
 
 class OpPoliticianHasOpEducationLevel(models.Model):
     politician = models.ForeignKey(OpPolitician, primary_key=True)

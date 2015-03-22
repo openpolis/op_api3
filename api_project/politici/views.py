@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from datetime import date
+from django.conf import settings
 from django.db.models import Q
 from django.utils.datastructures import SortedDict
 
@@ -50,7 +51,7 @@ class UserList(PoliticiDBSelectMixin, generics.ListAPIView):
     model = OpUser
     serializer_class = UserSerializer
     paginate_by = 25
-    max_paginate_by = 100
+    max_paginate_by = settings.REST_FRAMEWORK['MAX_PAGINATE_BY']
 
 class UserDetail(PoliticiDBSelectMixin, generics.RetrieveAPIView):
     """
@@ -94,7 +95,7 @@ class PoliticianList(PoliticiDBSelectMixin, generics.ListAPIView):
     queryset = model.objects.select_related('content')
     serializer_class = PoliticianInlineSerializer
     paginate_by = 25
-    max_paginate_by = 100
+    max_paginate_by = settings.REST_FRAMEWORK['MAX_PAGINATE_BY']
 
     def get_queryset(self):
         """
@@ -149,7 +150,7 @@ class InstitutionList(PoliticiDBSelectMixin, generics.ListAPIView):
     """
     model = OpInstitution
     paginate_by = 25
-    max_paginate_by = 100
+    max_paginate_by = settings.REST_FRAMEWORK['MAX_PAGINATE_BY']
 
 class InstitutionDetail(PoliticiDBSelectMixin, generics.RetrieveAPIView):
     """
@@ -164,7 +165,7 @@ class ChargeTypeList(PoliticiDBSelectMixin, generics.ListAPIView):
     """
     model = OpChargeType
     paginate_by = 25
-    max_paginate_by = 100
+    max_paginate_by = settings.REST_FRAMEWORK['MAX_PAGINATE_BY']
 
 class ChargeTypeDetail(PoliticiDBSelectMixin, generics.RetrieveAPIView):
     """
@@ -209,7 +210,7 @@ class InstitutionChargeList(PoliticiDBSelectMixin, generics.ListAPIView):
     queryset = model.objects.select_related('content')
     serializer_class = OpInstitutionChargeSerializer
     paginate_by = 25
-    max_paginate_by = 100
+    max_paginate_by = settings.REST_FRAMEWORK['MAX_PAGINATE_BY']
 
     def get_queryset(self):
         """
