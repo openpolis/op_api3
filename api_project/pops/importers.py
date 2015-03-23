@@ -281,7 +281,7 @@ class OpImporter(object):
             for key, value in person_defaults.items():
                 setattr(person, key, value)
             person.save()
-            self.logger.info(u"Person found and updated: {0} - {1}".format(
+            self.logger.debug(u"Person found and updated: {0} - {1}".format(
                 name, op_politician_identifier
             ))
 
@@ -372,16 +372,17 @@ class OpImporter(object):
         if created:
             self.logger.info(u"Institution {0} created.".format(institution_name))
         else:
-            institution.name = institution_name
-            institution.save()
-            self.logger.info(u"Institution {0} found.".format(institution_name))
-
+            # organization name is saved only if changed
+            if institution.name != institution_name:
+                institution.name = institution_name
+                institution.save()
+            self.logger.debug(u"Institution {0} found.".format(institution_name))
         return institution
 
 
     def import_op_post(self, op_charge_type, institution, area, logger=None):
         """
-        Imports a single Ppost from an openpolis op_charge_type (and an Area).
+        Imports a single Ppost from an openpolis op_charge_type (an Organization and an Area).
 
         @param OpChargeType op_charge_type  instance of territori.models.OpChargeType
         @param Organization institution     instance of Organization
@@ -413,7 +414,7 @@ class OpImporter(object):
         if created:
             self.logger.info(u"Post {0} created.".format(label))
         else:
-            self.logger.info(u"Post {0} found.".format(label))
+            self.logger.debug(u"Post {0} found.".format(label))
 
         return post
 
@@ -467,6 +468,6 @@ class OpImporter(object):
             for key, value in membership_defaults.items():
                 setattr(membership, key, value)
             membership.save()
-            self.logger.info(u"Membership {0} found and updated.".format(label))
+            self.logger.debug(u"Membership {0} found and updated.".format(label))
 
         return membership
