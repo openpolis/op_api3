@@ -1,4 +1,5 @@
 import logging
+from autoslug.utils import slugify
 from django.contrib.contenttypes.models import ContentType
 from politici.models import OpResources
 from popolo.models import Identifier, Area, ContactDetail, Person, Link, Source, Organization, Post, Membership
@@ -69,6 +70,23 @@ class OpImporter(object):
 
         return identifier
 
+
+    def get_istat_code_from_op_loc(self, op_loc):
+        istat_code = ''
+        classification = op_loc.location_type.name
+        if classification == 'Comune':
+            istat_code = "{:d}{:06d}".format(
+                op_loc.regional_id, op_loc.city_id
+            )
+        elif classification == 'Provincia':
+            istat_code = "{:d}{:d}".format(
+                op_loc.regional_id, op_loc.provincial_id
+            )
+        elif classification == 'Regione':
+            istat_code = "{:d}".format(op_loc.regional_id)
+        else:
+            pass
+        return istat_code
 
     def get_full_institution_name(self, classification, area_name):
         """
@@ -141,11 +159,16 @@ class OpImporter(object):
 
         classification = op_loc.location_type.name
         name = op_loc.name
-        identifier = self.get_identifier_string_from_op_loc(op_loc)
+        identifier = self.get_istat_code_from_op_loc(op_loc)
+        inhabitants = op_loc.inhabitants
+
 
         area_defaults = {
             'name': name,
             'classification': classification,
+            'inhabitants': inhabitants,
+            'start_date': op_loc.date_start,
+            'end_date': op_loc.date_end,
         }
         a, created = Area.objects.get_or_create(
             identifier=identifier,
@@ -176,23 +199,23 @@ class OpImporter(object):
             self.logger.info(u"Identifier created: {0}".format(op_other_identifier))
         a.other_identifiers.add(op_other_identifier)
 
+
+        # ISTAT code
+        istat_code_type = "ISTAT_{0}".format(classification[0:3].upper())
+        istat_code_value = a.identifier
+
+        if istat_code_value:
+            op_other_identifier, created = Identifier.objects.get_or_create(
+                scheme='http://www.istat.it/it/archivio/6789',
+                identifier=istat_code_value
+            )
+            if created:
+                self.logger.info(u"Identifier created: {0}".format(op_other_identifier))
+            a.other_identifiers.add(op_other_identifier)
+
+
         # mapit url
         mapit_base_endpoint = "http://mapit.openpolis.it"
-
-        istat_code_type = "ISTAT_{0}".format(classification[0:3].upper())
-        istat_code_value = ''
-        if classification == 'Comune':
-            istat_code_value = "{:d}{:06d}".format(
-                op_loc.regional_id, op_loc.city_id
-            )
-        elif classification == 'Provincia':
-            istat_code_value = "{:d}{:d}".format(
-                op_loc.regional_id, op_loc.provincial_id
-            )
-        elif classification == 'Regione':
-            istat_code_value = "{:d}".format(op_loc.regional_id)
-        else:
-            pass
 
         if istat_code_value:
             mapit_url = "{0}/code/{1}/{2}.html".format(
@@ -217,6 +240,19 @@ class OpImporter(object):
                 self.logger.info(u"Identifier created: {0}".format(prov_other_identifier))
 
             a.other_identifiers.add(prov_other_identifier)
+
+        # MinInt Electoral codes
+        op_other_identifier, created = Identifier.objects.get_or_create(
+            scheme='http://amministratori.interno.it/amministratori/AmmIndex7.htm',
+            identifier=op_loc.minint_id.strip('None')
+        )
+        if created:
+            self.logger.info(u"Identifier created: {0}".format(op_other_identifier))
+        a.other_identifiers.add(op_other_identifier)
+
+
+        a.identifier = self.get_identifier_string_from_op_loc(op_loc)
+        a.save()
 
         # return the imported Area
         return a

@@ -86,6 +86,7 @@ class PostInlineSerializer(PostSerializer):
 class OrganizationSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.SlugField()
     parent_id = serializers.SlugField(source='parent.id')
+    area_id = serializers.SlugField(source='area.id')
     identifiers = IdentifierSerializer(many=True)
     other_names = OtherNameSerializer(many=True)
     contact_details = ContactDetailSerializer(many=True)
@@ -98,6 +99,7 @@ class OrganizationSerializer(serializers.HyperlinkedModelSerializer):
             'name', 'other_names', 'identifiers',
             'classification',
             'parent_id', 'parent',
+            'area_id', 'area',
             'founding_date', 'dissolution_date',
             'image', 'contact_details',
             'links', 'sources',
@@ -109,6 +111,7 @@ class OrganizationInlineSerializer(OrganizationSerializer):
         fields = ('id',
             'name', 'other_names', 'identifiers',
             'classification', 'parent_id',
+            'area_id',
             'founding_date', 'dissolution_date',
             'image', 'contact_details',
             'links', 'sources',
@@ -150,15 +153,22 @@ class PersonSerializer(serializers.HyperlinkedModelSerializer):
                   'contact_details',
                   'links', 'sources')
 
+# only kept to study json_ld_* fields, to be used later
+class PersonInlineSerializer(PersonSerializer):
+    class Meta(PersonSerializer.Meta):
+        fields = ('json_ld_context', 'json_ld_type', 'json_ld_id', 'name', 'url', 'gender', 'birth_date', 'death_date')
+
+
 
 class AreaSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.SlugField(source='id')
     parent_id = serializers.IntegerField(source='parent.id')
     other_identifiers = IdentifierSerializer(many=True)
     sources = SourceSerializer(many=True)
 
-class PersonInlineSerializer(PersonSerializer):
-    class Meta(GenericRelatableSerializer.Meta):
+    class Meta:
         model = Area
         fields = ('id', 'name', 'classification', 'identifier',
+                  'inhabitants', 'start_date', 'end_date',
                   'parent_id', 'other_identifiers', 'sources',
                   'url')
