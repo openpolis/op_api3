@@ -129,7 +129,7 @@ class OpImporter(object):
     def import_op_area(self, op_loc, logger=None):
         """
         Imports a single Area from an openpolis location.
-        Imports province acronym and op_location_id as other_identifiers
+        Imports province acronym, op_location_id  and mapit urls as other_identifiers
 
         @param OpLocation op_loc  instance of territori.models.OpLocation
         @param Logger logger      optional logger object, uses console logger as default
@@ -156,7 +156,6 @@ class OpImporter(object):
                 name, classification, identifier
             ))
         else:
-            # modifica di tutti i campi del progetto, in base ai valori del CSV
             for key, value in area_defaults.items():
                 setattr(a, key, value)
             a.save()
@@ -176,6 +175,37 @@ class OpImporter(object):
         if created:
             self.logger.info(u"Identifier created: {0}".format(op_other_identifier))
         a.other_identifiers.add(op_other_identifier)
+
+        # mapit url
+        mapit_base_endpoint = "http://mapit.openpolis.it"
+
+        istat_code_type = "ISTAT_{0}".format(classification[0:3].upper())
+        istat_code_value = ''
+        if classification == 'Comune':
+            istat_code_value = "{:d}{:06d}".format(
+                op_loc.regional_id, op_loc.city_id
+            )
+        elif classification == 'Provincia':
+            istat_code_value = "{:d}{:d}".format(
+                op_loc.regional_id, op_loc.provincial_id
+            )
+        elif classification == 'Regione':
+            istat_code_value = "{:d}".format(op_loc.regional_id)
+        else:
+            pass
+
+        if istat_code_value:
+            mapit_url = "{0}/code/{1}/{2}.html".format(
+                mapit_base_endpoint,
+                istat_code_type, istat_code_value
+            )
+            op_other_identifier, created = Identifier.objects.get_or_create(
+                scheme=mapit_base_endpoint,
+                identifier=mapit_url
+            )
+            if created:
+                self.logger.info(u"Identifier created: {0}".format(op_other_identifier))
+            a.other_identifiers.add(op_other_identifier)
 
         # province acronym
         if classification == 'Provincia':
@@ -251,7 +281,7 @@ class OpImporter(object):
             for key, value in person_defaults.items():
                 setattr(person, key, value)
             person.save()
-            self.logger.info(u"Person found and updated: {0} - {1}".format(
+            self.logger.debug(u"Person found and updated: {0} - {1}".format(
                 name, op_politician_identifier
             ))
 
@@ -342,16 +372,17 @@ class OpImporter(object):
         if created:
             self.logger.info(u"Institution {0} created.".format(institution_name))
         else:
-            institution.name = institution_name
-            institution.save()
-            self.logger.info(u"Institution {0} found.".format(institution_name))
-
+            # organization name is saved only if changed
+            if institution.name != institution_name:
+                institution.name = institution_name
+                institution.save()
+            self.logger.debug(u"Institution {0} found.".format(institution_name))
         return institution
 
 
     def import_op_post(self, op_charge_type, institution, area, logger=None):
         """
-        Imports a single Ppost from an openpolis op_charge_type (and an Area).
+        Imports a single Ppost from an openpolis op_charge_type (an Organization and an Area).
 
         @param OpChargeType op_charge_type  instance of territori.models.OpChargeType
         @param Organization institution     instance of Organization
@@ -383,7 +414,7 @@ class OpImporter(object):
         if created:
             self.logger.info(u"Post {0} created.".format(label))
         else:
-            self.logger.info(u"Post {0} found.".format(label))
+            self.logger.debug(u"Post {0} found.".format(label))
 
         return post
 
@@ -437,6 +468,6 @@ class OpImporter(object):
             for key, value in membership_defaults.items():
                 setattr(membership, key, value)
             membership.save()
-            self.logger.info(u"Membership {0} found and updated.".format(label))
+            self.logger.debug(u"Membership {0} found and updated.".format(label))
 
         return membership

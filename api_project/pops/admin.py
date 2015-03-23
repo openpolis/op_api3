@@ -1,11 +1,22 @@
+from popolo.models import Area, Person, Organization, Membership, Post, ContactDetail, Identifier
 from django.contrib import admin
-from popolo.models import Person, Organization, Membership, Post, ContactDetail, Identifier
+from django.contrib.contenttypes import generic
 
+
+class OtherIdentifierInline(generic.GenericTabularInline):
+    model = Identifier
+    extra = 0
+
+class AreaAdmin(admin.ModelAdmin):
+    inlines = [
+        OtherIdentifierInline,
+    ]
 
 class PersonAdmin(admin.ModelAdmin):
     pass
 
-admin.site.register(Person)
+admin.site.register(Area, AreaAdmin)
+admin.site.register(Person, PersonAdmin)
 admin.site.register(Organization)
 admin.site.register(Membership)
 admin.site.register(Post)

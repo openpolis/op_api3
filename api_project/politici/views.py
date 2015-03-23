@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from datetime import date
+from django.conf import settings
 from django.db.models import Q
 from django.utils.datastructures import SortedDict
 
@@ -50,7 +51,7 @@ class UserList(PoliticiDBSelectMixin, generics.ListAPIView):
     model = OpUser
     serializer_class = UserSerializer
     paginate_by = 25
-    max_paginate_by = 100
+    max_paginate_by = settings.REST_FRAMEWORK['MAX_PAGINATE_BY']
 
 class UserDetail(PoliticiDBSelectMixin, generics.RetrieveAPIView):
     """
@@ -94,7 +95,7 @@ class PoliticianList(PoliticiDBSelectMixin, generics.ListAPIView):
     queryset = model.objects.select_related('content')
     serializer_class = PoliticianInlineSerializer
     paginate_by = 25
-    max_paginate_by = 100
+    max_paginate_by = settings.REST_FRAMEWORK['MAX_PAGINATE_BY']
 
     def get_queryset(self):
         """
@@ -149,7 +150,7 @@ class InstitutionList(PoliticiDBSelectMixin, generics.ListAPIView):
     """
     model = OpInstitution
     paginate_by = 25
-    max_paginate_by = 100
+    max_paginate_by = settings.REST_FRAMEWORK['MAX_PAGINATE_BY']
 
 class InstitutionDetail(PoliticiDBSelectMixin, generics.RetrieveAPIView):
     """
@@ -164,7 +165,7 @@ class ChargeTypeList(PoliticiDBSelectMixin, generics.ListAPIView):
     """
     model = OpChargeType
     paginate_by = 25
-    max_paginate_by = 100
+    max_paginate_by = settings.REST_FRAMEWORK['MAX_PAGINATE_BY']
 
 class ChargeTypeDetail(PoliticiDBSelectMixin, generics.RetrieveAPIView):
     """
@@ -209,7 +210,7 @@ class InstitutionChargeList(PoliticiDBSelectMixin, generics.ListAPIView):
     queryset = model.objects.select_related('content')
     serializer_class = OpInstitutionChargeSerializer
     paginate_by = 25
-    max_paginate_by = 100
+    max_paginate_by = settings.REST_FRAMEWORK['MAX_PAGINATE_BY']
 
     def get_queryset(self):
         """
@@ -344,7 +345,8 @@ class HistoricalCityMayorsView(APIView):
 
         ics = OpInstitutionCharge.objects.db_manager('politici').exclude(content__deleted_at__isnull=False).filter(
             Q(location__id=location.id),
-            Q(charge_type__name='Sindaco') | Q(charge_type__name='Commissario straordinario'),
+            Q(charge_type__name='Sindaco') | Q(charge_type__name='Commissario straordinario') |
+            Q(charge_type__name='Vicesindaco facente funzione sindaco'),
         ).order_by('-date_start')
 
         # fetch all charges started exactly on a given date
@@ -383,6 +385,19 @@ class HistoricalCityMayorsView(APIView):
             if ic.charge_type.name == 'Sindaco':
                 c = {
                     'charge_type': 'Sindaco',
+                    'date_start': ic.date_start,
+                    'date_end': ic.date_end,
+                    'party_acronym': ic.party.getNormalizedAcronymOrName(),
+                    'party_name': ic.party.getName(),
+                    'first_name': ic.politician.first_name,
+                    'last_name': ic.politician.last_name,
+                    'birth_date': ic.politician.birth_date,
+                    'picture_url': 'http://politici.openpolis.it/politician/picture?content_id=%s' % ic.politician.content_id,
+                    'op_link': 'http://politici.openpolis.it/politico/%s' % ic.politician.content_id
+                }
+            elif (ic.charge_type.name == 'Vicesindaco facente funzione sindaco'):
+                c = {
+                    'charge_type': 'Vicesindaco f.f.',
                     'date_start': ic.date_start,
                     'date_end': ic.date_end,
                     'party_acronym': ic.party.getNormalizedAcronymOrName(),
