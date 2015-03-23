@@ -36,6 +36,7 @@ class OtherNameSerializer(serializers.ModelSerializer):
 
 class MembershipSerializer(serializers.HyperlinkedModelSerializer):
     contact_details = ContactDetailSerializer(many=True)
+    area_id = serializers.SlugField(source='area.id')
     links = LinkSerializer(many=True)
     sources = SourceSerializer(many=True)
     organization_id = serializers.SlugField(source='organization.id')
@@ -49,6 +50,7 @@ class MembershipSerializer(serializers.HyperlinkedModelSerializer):
                   'person_id', 'person',
                   'post_id', 'post',
                   'organization_id', 'organization',
+                  'area_id', 'area',
                   'on_behalf_of',
                   'contact_details', 'links', 'sources',
                   'url')
@@ -57,13 +59,14 @@ class MembershipSerializer(serializers.HyperlinkedModelSerializer):
 class MembershipInlineSerializer(MembershipSerializer):
     class Meta(MembershipSerializer.Meta):
         fields = ('id', 'label', 'person_id', 'post_id', 'organization_id',
-                  'on_behalf_of',
+                  'area_id', 'on_behalf_of',
                   'contact_details', 'links', 'sources', 'url')
 
 
 class PostSerializer(serializers.HyperlinkedModelSerializer):
     contact_details = ContactDetailSerializer(many=True)
     organization_id = serializers.SlugField(source='organization.id')
+    area_id = serializers.SlugField(source='area.id')
     links = LinkSerializer(many=True)
     sources = SourceSerializer(many=True)
     memberships = MembershipInlineSerializer(many=True)
@@ -76,6 +79,7 @@ class PostSerializer(serializers.HyperlinkedModelSerializer):
 class PostInlineSerializer(PostSerializer):
     class Meta(PostSerializer.Meta):
         fields = ('id', 'role', 'organization_id',
+                  'area_id',
                   'label', 'other_label',
                   'contact_details', 'links', 'sources',
                   'url')

@@ -24,6 +24,7 @@ class OrganizationViewSet(viewsets.ModelViewSet):
 
     * ``namestartswith`` - get all Organizations with names starting
                            with the value (case insensitive)
+    * ``area_id`` - get all Organizations having area_id
 
     Results can be sorted by date, specifying the ``order_by=date``
     query string parameter.
@@ -51,19 +52,24 @@ class OrganizationViewSet(viewsets.ModelViewSet):
 
         queryset = super(OrganizationViewSet, self).get_queryset()
 
-        # fetch all organization whose name starts with the parameter
+        # fetch all organizations whose name starts with the parameter
         namestartswith = self.request.QUERY_PARAMS.get('namestartswith', None)
         if namestartswith:
             queryset = queryset.filter(
                 name__istartswith=namestartswith
             )
 
-        # fetch all organization for a given area
-        area_id = self.request.QUERY_PARAMS.get('area', None)
+        # fetch all organizations for a given area
+        area_id = self.request.QUERY_PARAMS.get('area_id', None)
         if area_id:
             queryset = queryset.filter(
                 area__id=area_id
             )
+
+        order_by = self.request.QUERY_PARAMS.get('order_by', None)
+        if order_by:
+            if order_by == 'date':
+                queryset = queryset.order_by('-birth_date')
 
         return queryset
 
@@ -77,6 +83,27 @@ class PostViewSet(viewsets.ModelViewSet):
     model = Post
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
+    def get_queryset(self):
+        """
+        Add filters to queryset provided in url querystring.
+        """
+
+        queryset = super(PostViewSet, self).get_queryset()
+
+        # fetch all posts for a given area
+        area_id = self.request.QUERY_PARAMS.get('area_id', None)
+        if area_id:
+            queryset = queryset.filter(
+                area__id=area_id
+            )
+
+        order_by = self.request.QUERY_PARAMS.get('order_by', None)
+        if order_by:
+            if order_by == 'date':
+                queryset = queryset.order_by('-birth_date')
+
+        return queryset
+
     def get_serializer_class(self):
         if self.action == 'list':
             return PostInlineSerializer
@@ -87,6 +114,27 @@ class PostViewSet(viewsets.ModelViewSet):
 class MembershipViewSet(viewsets.ModelViewSet):
     model = Membership
     permission_classes = (IsAuthenticatedOrReadOnly,)
+
+    def get_queryset(self):
+        """
+        Add filters to queryset provided in url querystring.
+        """
+
+        queryset = super(MembershipViewSet, self).get_queryset()
+
+        # fetch all memberships for a given area
+        area_id = self.request.QUERY_PARAMS.get('area_id', None)
+        if area_id:
+            queryset = queryset.filter(
+                area__id=area_id
+            )
+
+        order_by = self.request.QUERY_PARAMS.get('order_by', None)
+        if order_by:
+            if order_by == 'date':
+                queryset = queryset.order_by('-birth_date')
+
+        return queryset
 
     def get_serializer_class(self):
         if self.action == 'list':
