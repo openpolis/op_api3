@@ -15,6 +15,27 @@ class PersonViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         return PersonSerializer
 
+    def get_queryset(self):
+        """
+        Add filters to queryset provided in url querystring.
+        """
+
+        queryset = super(PersonViewSet, self).get_queryset()
+
+        # fetch all persons with memberships in the given area
+        area_id = self.request.QUERY_PARAMS.get('area_id', None)
+        if area_id:
+            queryset = queryset.filter(
+                memberships__area_id=area_id
+            )
+
+        order_by = self.request.QUERY_PARAMS.get('order_by', None)
+        if order_by:
+            if order_by == 'date':
+                queryset = queryset.order_by('-birth_date')
+
+        return queryset
+
 
 class OrganizationViewSet(viewsets.ModelViewSet):
     """
@@ -69,7 +90,7 @@ class OrganizationViewSet(viewsets.ModelViewSet):
         order_by = self.request.QUERY_PARAMS.get('order_by', None)
         if order_by:
             if order_by == 'date':
-                queryset = queryset.order_by('-birth_date')
+                queryset = queryset.order_by('-start_date')
 
         return queryset
 
@@ -100,7 +121,7 @@ class PostViewSet(viewsets.ModelViewSet):
         order_by = self.request.QUERY_PARAMS.get('order_by', None)
         if order_by:
             if order_by == 'date':
-                queryset = queryset.order_by('-birth_date')
+                queryset = queryset.order_by('-start_date')
 
         return queryset
 
@@ -132,7 +153,7 @@ class MembershipViewSet(viewsets.ModelViewSet):
         order_by = self.request.QUERY_PARAMS.get('order_by', None)
         if order_by:
             if order_by == 'date':
-                queryset = queryset.order_by('-birth_date')
+                queryset = queryset.order_by('-start_date')
 
         return queryset
 
