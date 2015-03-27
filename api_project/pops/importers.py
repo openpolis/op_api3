@@ -22,6 +22,16 @@ class OpImporter(object):
     RESOURCES_CONTACT_DETAILS = (1,2,5,6)
     RESOURCES_LINKS = (3,4)
 
+    REGIONS_ARTICLES = {
+      'della ': ("valle d'aosta", 'lombardia', 'liguria',
+                      'toscana', 'campania', 'puglia', 'basilicata',
+                      'calabria', 'sicilia', 'sardegna'),
+      'del ': ("piemonte", "trentino alto adige", "veneto", "friuli venezia giulia",
+              "lazio", "molise"),
+      'delle ': ('marche', ),
+      "dell'": ('abruzzo', 'umbria', 'emilia romagna')
+    }
+
     def __init__(self, logger=None):
         if logger:
             self.logger = logger
@@ -88,27 +98,64 @@ class OpImporter(object):
             pass
         return istat_code
 
-    def get_full_institution_name(self, classification, area_name):
+
+
+    def get_full_location_name(self, op_loc):
+        """
+        Returns the finest full name of an area, given the openpolis location object
+        Area object.
+
+        @param string classification  institution classification (e.g. Consiglio Comunale|Comune)
+        @param OpLocation object  op_loc
+        @return string  The full name
+        """
+
+        # perfezionare, prendendo i dati da http://it.wikipedia.org/wiki/Citt%C3%A0_d%27Italia
+        # attraverso dbpedia? (vedi places/management/commands/maps_import_languages)
+        classification = op_loc.location_type.name
+        area_name = op_loc.name
+        if 'comun' in classification.lower() or \
+           'provinc' in classification.lower():
+            if area_name == "L'Aquila":
+                full_name = u"{0} dell'Aquila".format(
+                    classification,
+                )
+            elif area_name == "La Spezia":
+                full_name = u"{0} della Spezia".format(
+                    classification,
+                )
+            else:
+                full_name = u"{0} di {1}".format(
+                    classification, area_name
+                )
+
+        elif 'region' in classification.lower():
+            article = [k for k,v in self.REGIONS_ARTICLES.items() if area_name.lower() in v][0]
+            full_name = u"{0} {1}{2}".format(
+                classification, article, area_name
+            )
+
+        else:
+            full_name = u"{0} {1}".format(
+                area_name
+            )
+
+        return full_name
+
+
+    def get_full_institution_name(self, classification, area_name, founding_date=None):
         """
         Returns the finest full name of an institution, given the openpolis
         institution name (classification) and the Area name.
+        If the founding datre is given, then the year is added to the name.
 
         Maps all exceptions, plurals, and various other things (in the future)
 
         @param string classification  institution classification (e.g. Consiglio Comunale|Comune)
         @param string area_name       The area name
+        @param date   founding_date
         @return string                The full name
         """
-        REGIONS_ARTICLES = {
-          'della ': ("valle d'aosta", 'lombardia', 'liguria',
-                          'toscana', 'campania', 'puglia', 'basilicata',
-                          'calabria', 'sicilia', 'sardegna'),
-          'del ': ("piemonte", "trentino alto adige", "veneto", "friuli venezia giulia",
-                  "lazio", "molise"),
-          'delle ': ('marche', ),
-          "dell'": ('abruzzo', 'umbria', 'emilia romagna')
-        }
-
         # perfezionare, prendendo i dati da http://it.wikipedia.org/wiki/Citt%C3%A0_d%27Italia
         # attraverso dbpedia? (vedi places/management/commands/maps_import_languages)
         if 'comun' in classification.lower() or \
@@ -127,7 +174,7 @@ class OpImporter(object):
                 )
 
         elif 'regionale' in classification.lower():
-            article = [k for k,v in REGIONS_ARTICLES.items() if area_name.lower() in v][0]
+            article = [k for k,v in self.REGIONS_ARTICLES.items() if area_name.lower() in v][0]
             institution_name = u"{0} {1}{2}".format(
                 classification, article, area_name
             )
@@ -137,6 +184,9 @@ class OpImporter(object):
                 classification,
                 area_name
             )
+
+        if founding_date:
+            institution_name = u"{0} - {1}".format(institution_name, founding_date.year)
 
         return institution_name
 
@@ -161,7 +211,6 @@ class OpImporter(object):
         name = op_loc.name
         identifier = self.get_istat_code_from_op_loc(op_loc)
         inhabitants = op_loc.inhabitants
-
 
         area_defaults = {
             'name': name,
@@ -204,16 +253,6 @@ class OpImporter(object):
         istat_code_type = "ISTAT_{0}".format(classification[0:3].upper())
         istat_code_value = a.identifier
 
-        if istat_code_value:
-            op_other_identifier, created = Identifier.objects.get_or_create(
-                scheme='http://www.istat.it/it/archivio/6789',
-                identifier=istat_code_value
-            )
-            if created:
-                self.logger.info(u"Identifier created: {0}".format(op_other_identifier))
-            a.other_identifiers.add(op_other_identifier)
-
-
         # mapit url
         mapit_base_endpoint = "http://mapit.openpolis.it"
 
@@ -249,10 +288,6 @@ class OpImporter(object):
         if created:
             self.logger.info(u"Identifier created: {0}".format(op_other_identifier))
         a.other_identifiers.add(op_other_identifier)
-
-
-        a.identifier = self.get_identifier_string_from_op_loc(op_loc)
-        a.save()
 
         # return the imported Area
         return a
@@ -385,23 +420,27 @@ class OpImporter(object):
         return person
 
 
-    def import_op_organization(self, op_inst, area, logger=None):
+    def import_op_organization(self, op_inst, area, founding_date, dissolution_date=None, logger=None):
         """
         Imports a single Organization from an openpolis institution (and an Area).
 
-        @param OpPolitician op_pol  instance of territori.models.OpPolitician
-        @param Area area            instance of Area
-        @param Logger logger        optional logger object, uses console logger as default
-        @return Person              instance of imported Person
+        @param OpInstitution op_inst    instance of territori.models.OpPolitician
+        @param Area area                instance of Area
+        @param date founding_date       the start date (needed)
+        @param date dissolution_date    the end date (optional)
+        @param Logger logger            optional logger object, uses console logger as default
+        @return Person                  instance of imported Person
         """
         classification = op_inst.name
-        institution_name = self.get_full_institution_name(classification, area.name)
+        institution_name = self.get_full_institution_name(classification, area.name, founding_date)
 
         institution, created = Organization.objects.get_or_create(
             classification=op_inst.name,
             area=area,
+            founding_date=founding_date,
             defaults={
                 'name' : institution_name,
+                'dissolution_date': dissolution_date,
             }
         )
 
@@ -454,13 +493,14 @@ class OpImporter(object):
 
         return post
 
-    def import_op_membership(self, op_charge, post, organization, person, area, logger=None):
+    def import_op_membership(self, op_charge, organization, person, area,
+                             post=None, logger=None):
         """
         Imports a single Membership from an openpolis op_charge, and
         a Post, an Organization, a Person and an Area
 
         @param OpCharge op_charge         instance of territori.models.OpChargeType
-        @param Post post                  instance of Post
+        @param Post post                  instance of Post (optional)
         @param Organization organization  instance of Organization
         @param Person person              instance of Person
         @param Area area                  instance of Area
@@ -481,15 +521,31 @@ class OpImporter(object):
         else:
             label_suffix = u"in carica"
 
-        label = u"{0} {1}".format(post.label, label_suffix)
+        if post:
+            role = post.label
+            label = u"{0} {1}".format(post.label, label_suffix)
+        else:
+            role = op_charge.charge_type.name
+            label = ""
+            if area.classification == 'Comune':
+                role = "{0} del comune".format(role)
+            elif area.classification == 'Provincia':
+                role = "{0} della provincia".format(role)
+            elif area.classification == 'Regione':
+                role = "{0} della regione".format(role)
+            label = u"{0} {1}".format(
+                self.get_full_institution_name(role, area.name),
+                label_suffix
+            )
 
         membership_defaults = {
-            'role': post.label,
+            'role': role,
             'label': label,
             'area': area,
             'start_date': start_date,
             'end_date': end_date
         }
+
         membership, created = Membership.objects.get_or_create(
             post=post,
             organization=organization,
@@ -500,7 +556,7 @@ class OpImporter(object):
         if created:
             self.logger.info(u"Membership {0} created.".format(label))
         else:
-            # modifica di tutti i campi del progetto, in base ai valori del CSV
+            # modifica di tutti i campi
             for key, value in membership_defaults.items():
                 setattr(membership, key, value)
             membership.save()
