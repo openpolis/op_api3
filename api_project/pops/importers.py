@@ -333,6 +333,7 @@ class OpImporter(object):
             'birth_date': birth_date,
             'death_date': death_date,
             'gender': gender,
+            'image': "http://politici.openpolis.it/politician/picture?content_id={0}".format(op_id)
         }
 
         # create a new Person only if not already imported
