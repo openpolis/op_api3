@@ -2,7 +2,8 @@ import logging
 from autoslug.utils import slugify
 from django.contrib.contenttypes.models import ContentType
 from politici.models import OpResources
-from popolo.models import Identifier, Area, ContactDetail, Person, Link, Source, Organization, Post, Membership
+from popolo.models import Identifier, Area, ContactDetail, Person, Link, Source, Organization, Post, Membership, \
+    OtherName
 from territori.models import OpLocation
 
 __author__ = 'guglielmo'
@@ -224,14 +225,14 @@ class OpImporter(object):
             defaults=area_defaults
         )
         if created:
-            self.logger.info(u"Area created: {0} ({1}) - {2}".format(
+            self.logger.debug(u"Area created: {0} ({1}) - {2}".format(
                 name, classification, identifier
             ))
         else:
             for key, value in area_defaults.items():
                 setattr(a, key, value)
             a.save()
-            self.logger.info(u"Area found and updated: {0} ({1}) - {2}".format(
+            self.logger.debug(u"Area found and updated: {0} ({1}) - {2}".format(
                 name, classification, identifier
             ))
 
@@ -245,7 +246,7 @@ class OpImporter(object):
             identifier=op_loc.id
         )
         if created:
-            self.logger.info(u"Identifier created: {0}".format(op_other_identifier))
+            self.logger.debug(u"Identifier created: {0}".format(op_other_identifier))
         a.other_identifiers.add(op_other_identifier)
 
 
@@ -266,7 +267,7 @@ class OpImporter(object):
                 identifier=mapit_url
             )
             if created:
-                self.logger.info(u"Identifier created: {0}".format(op_other_identifier))
+                self.logger.debug(u"Identifier created: {0}".format(op_other_identifier))
             a.other_identifiers.add(op_other_identifier)
 
         # province acronym
@@ -276,7 +277,7 @@ class OpImporter(object):
                 identifier=op_loc.prov
             )
             if created:
-                self.logger.info(u"Identifier created: {0}".format(prov_other_identifier))
+                self.logger.debug(u"Identifier created: {0}".format(prov_other_identifier))
 
             a.other_identifiers.add(prov_other_identifier)
 
@@ -286,7 +287,7 @@ class OpImporter(object):
             identifier=op_loc.minint_id.strip('None')
         )
         if created:
-            self.logger.info(u"Identifier created: {0}".format(op_other_identifier))
+            self.logger.debug(u"Identifier created: {0}".format(op_other_identifier))
         a.other_identifiers.add(op_other_identifier)
 
         # return the imported Area
@@ -322,7 +323,7 @@ class OpImporter(object):
             identifier=op_id
         )
         if created:
-            self.logger.info(u"Identifier created: {0}".format(op_politician_identifier))
+            self.logger.debug(u"Identifier created: {0}".format(op_politician_identifier))
 
         person_defaults = {
             'name': name,
@@ -343,7 +344,7 @@ class OpImporter(object):
         )
 
         if created:
-            self.logger.info(u"Person created: {0} - {1}".format(
+            self.logger.debug(u"Person created: {0} - {1}".format(
                 name, op_politician_identifier
             ))
             person.identifiers.add(op_politician_identifier)
@@ -445,7 +446,7 @@ class OpImporter(object):
         )
 
         if created:
-            self.logger.info(u"Institution {0} created.".format(institution_name))
+            self.logger.debug(u"Institution {0} created.".format(institution_name))
         else:
             # organization name is saved only if changed
             if institution.name != institution_name:
@@ -453,6 +454,35 @@ class OpImporter(object):
                 institution.save()
             self.logger.debug(u"Institution {0} found.".format(institution_name))
         return institution
+
+
+    def import_op_party(self, op_charge):
+        """
+        Imports a single Organization as a Party.
+
+        @param OpInstitutionCharge op_charge    instance of OpInstitutionCharge model (already normalized)
+        @return Organization       instance of imported Organization
+        """
+        if op_charge.party.name == 'Non specificato' or \
+           op_charge.party.name is None or \
+           op_charge.party.name.strip() == '':
+            return None
+
+        op_party = op_charge.party.getNormalized()
+        party, created = Organization.objects.get_or_create(
+            classification='Partito o lista di elezione',
+            name=op_party.name,
+        )
+
+        # party acronym
+        if op_party.acronym:
+            acronym, created = OtherName.objects.get_or_create(
+                note='Acronimo',
+                name=op_party.acronym
+            )
+            party.other_names.add(acronym)
+
+        return party
 
 
     def import_op_post(self, op_charge_type, institution, area, logger=None):
@@ -487,14 +517,14 @@ class OpImporter(object):
         )
 
         if created:
-            self.logger.info(u"Post {0} created.".format(label))
+            self.logger.debug(u"Post {0} created.".format(label))
         else:
             self.logger.debug(u"Post {0} found.".format(label))
 
         return post
 
     def import_op_membership(self, op_charge, organization, person, area,
-                             post=None, logger=None):
+                             post=None, role=None, on_behalf_of=None, logger=None):
         """
         Imports a single Membership from an openpolis op_charge, and
         a Post, an Organization, a Person and an Area
@@ -504,6 +534,9 @@ class OpImporter(object):
         @param Organization organization  instance of Organization
         @param Person person              instance of Person
         @param Area area                  instance of Area
+        @param Area post                  instance of Post
+        @param Area role                  instance of Role
+        @param Area on_behalf_of          instance of Organization
         @param Logger logger              optional logger object, uses console logger as default
         @return Membership                instance of imported Membership
         """
@@ -521,27 +554,31 @@ class OpImporter(object):
         else:
             label_suffix = u"in carica"
 
-        if post:
-            role = post.label
-            label = u"{0} {1}".format(post.label, label_suffix)
+        if role is not None:
+            label = u"{0} {1}".format(role, label_suffix)
         else:
-            role = op_charge.charge_type.name
-            label = ""
-            if area.classification == 'Comune':
-                role = "{0} del comune".format(role)
-            elif area.classification == 'Provincia':
-                role = "{0} della provincia".format(role)
-            elif area.classification == 'Regione':
-                role = "{0} della regione".format(role)
-            label = u"{0} {1}".format(
-                self.get_full_institution_name(role, area.name),
-                label_suffix
-            )
+            if post:
+                role = post.label
+                label = u"{0} {1}".format(post.label, label_suffix)
+            else:
+                role = op_charge.charge_type.name
+                label = ""
+                if area.classification == 'Comune':
+                    role = "{0} del comune".format(role)
+                elif area.classification == 'Provincia':
+                    role = "{0} della provincia".format(role)
+                elif area.classification == 'Regione':
+                    role = "{0} della regione".format(role)
+                label = u"{0} {1}".format(
+                    self.get_full_institution_name(role, area.name),
+                    label_suffix
+                )
 
         membership_defaults = {
             'role': role,
             'label': label,
             'area': area,
+            'on_behalf_of': on_behalf_of,
             'start_date': start_date,
             'end_date': end_date
         }
@@ -554,7 +591,7 @@ class OpImporter(object):
         )
 
         if created:
-            self.logger.info(u"Membership {0} created.".format(label))
+            self.logger.debug(u"Membership {0} created.".format(label))
         else:
             # modifica di tutti i campi
             for key, value in membership_defaults.items():

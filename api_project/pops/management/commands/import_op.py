@@ -2,11 +2,10 @@
 from optparse import make_option
 import logging
 from itertools import tee, islice, izip_longest
-from django.core.exceptions import ObjectDoesNotExist
 
 from django.core.management.base import BaseCommand
 from django.db.models import Q
-from popolo.models import Membership, Organization
+from popolo.models import Membership, Organization, OtherName
 
 from pops.importers import OpImporter, OpImporterException
 from politici.models import *
@@ -95,16 +94,16 @@ class Command(BaseCommand):
         op_importer = OpImporter(logger=self.logger)
 
         if args:
-            op_locs = OpLocation.objects.using('politici').filter(id__in=args)
+            op_locs = OpLocation.objects.using('politici').order_by('-inhabitants').filter(id__in=args)
         else:
             if limit:
-                op_locs = OpLocation.objects.using('politici').all()[offset:offset+limit]
+                op_locs = OpLocation.objects.using('politici').order_by('-inhabitants').all()[offset:offset+limit]
             else:
-                op_locs = OpLocation.objects.using('politici').all()[offset:]
+                op_locs = OpLocation.objects.using('politici').order_by('-inhabitants').all()[offset:]
 
         for c, op_loc in enumerate(op_locs, start=offset):
             self.logger.info(
-                "{0} - Processing {1} (op_location_id: {2})".format(
+                u"{0} - Processing {1} (op_location_id: {2})".format(
                     c, op_loc.name, op_loc.id
                 )
             )
@@ -126,6 +125,10 @@ class Command(BaseCommand):
                 # build institution hierarchy, with founding and dissolution dates
                 # corresponding to apical charge start and end dates
                 #
+
+                self.logger.debug(u"Importing: {c.politician} as {c.charge_type} of {c.institution} on behalf of {c.party.name}".format(
+                    c=op_charge
+                ))
 
                 # a generic time-independent organization for the institution
                 institution, created = Organization.objects.get_or_create(
@@ -170,24 +173,34 @@ class Command(BaseCommand):
                 )
 
 
+                # the party of election
+                party = op_importer.import_op_party(op_charge)
+
+                # the person
                 politician = op_importer.import_op_person(op_charge.politician)
+
+                # memberships creation
                 gov_membership = op_importer.import_op_membership(
                     op_charge,
                     organization=gov_institution,
                     person=politician,
-                    area=area
+                    area=area,
+                    on_behalf_of=party,
                 )
                 cou_membership = op_importer.import_op_membership(
                     op_charge,
+                    role='Membro del consiglio',
                     organization=cou_institution,
                     person=politician,
-                    area=area
+                    area=area,
+                    on_behalf_of=party,
                 )
+
 
 
             # the generic government institution (giunta), with no dates
             classification = op_charge.institution.name
-            institution_name = u"{0} - legislatura non specificata".format(
+            institution_name = u"{0} - ND".format(
                 op_importer.get_full_institution_name(classification, area.name)
             )
             gov_institution, created = Organization.objects.get_or_create(
@@ -200,9 +213,9 @@ class Command(BaseCommand):
                 }
             )
 
-            # the corresponding council institution
+            # the generic council institution
             classification = op_charge.institution.name.replace('Giunta', 'Consiglio')
-            institution_name = u"{0} - legislatura non specificata".format(
+            institution_name = u"{0} - ND".format(
                 op_importer.get_full_institution_name(classification, area.name)
             )
             cou_institution, created = Organization.objects.get_or_create(
@@ -217,11 +230,15 @@ class Command(BaseCommand):
 
             op_normal_charges = op_charges.exclude(apical_q)
             for op_charge in op_normal_charges:
+                self.logger.debug(u"Importing: {c.politician} as {c.charge_type} of {c.institution} on behalf of {c.party.name}".format(
+                    c=op_charge
+                ))
+
                 institutions = Organization.objects.filter(
                     area=area,
                     classification = op_charge.institution.name,
                     founding_date__lte=op_charge.date_start,
-                ).order_by('founding_date')
+                ).order_by('-founding_date')
                 if institutions.count() > 0:
                     institution = institutions[0]
                 else:
@@ -231,10 +248,13 @@ class Command(BaseCommand):
                         founding_date=None
                     )
 
+                party = op_importer.import_op_party(op_charge)
                 politician = op_importer.import_op_person(op_charge.politician)
                 membership = op_importer.import_op_membership(
                     op_charge,
                     organization=institution,
                     person=politician,
-                    area=area
+                    area=area,
+                    on_behalf_of=party,
                 )
+
