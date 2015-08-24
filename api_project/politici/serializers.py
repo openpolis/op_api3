@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
-from politici.models import OpUser, OpResources, OpPolitician, OpContent, OpInstitutionCharge, OpOpenContent, OpParty, \
+from politici.models import OpUser, OpResources, OpPolitician, OpContent, OpInstitutionCharge, OpOpenContent, \
+    OpParty, OpGroup, \
     OpEducationLevel, OpProfession, OpPoliticianHasOpEducationLevel
 
 
@@ -40,6 +41,10 @@ class PartyInlineSerializer(serializers.ModelSerializer):
         model = OpParty
         fields = ("name", "acronym", "oname",)
 
+class GroupInlineSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OpGroup
+        fields = ("name", "acronym", "oname",)
 
 class EducationLevelSerializer(serializers.ModelSerializer):
     description = serializers.CharField(source='normalized_description', read_only=True)
@@ -85,6 +90,7 @@ class OpInstitutionChargeSerializer(serializers.ModelSerializer):
     content = OpenContentSerializer()
     politician = PoliticianInlineSerializer()
     party = PartyInlineSerializer()
+    group = GroupInlineSerializer()
     institution_descr = serializers.CharField(source='institution')
     charge_type_descr = serializers.CharField(source='charge_type')
     location = serializers.HyperlinkedRelatedField(view_name='territori:location-detail')
@@ -98,7 +104,7 @@ class OpInstitutionChargeSerializer(serializers.ModelSerializer):
             'charge_type_descr', 'institution_descr',
             'location_descr', 'location',
             'description',
-            'party',
+            'party', 'group',
             'content',
         )
 
