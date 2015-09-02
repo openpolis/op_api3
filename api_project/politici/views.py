@@ -15,7 +15,6 @@ from territori.models import OpLocation
 from .models import OpUser, OpPolitician, OpInstitution, OpChargeType, OpInstitutionCharge
 from .serializers import UserSerializer, PoliticianSerializer, OpInstitutionChargeSerializer, \
     PoliticianInlineSerializer
-from .forms import InstitutionChargeFilter
 
 
 class PoliticiDBSelectMixin(object):
