@@ -4,17 +4,52 @@ from django.conf import settings
 from django.db.models import Q
 from django.utils.datastructures import SortedDict
 
-from rest_framework import generics, pagination
+from rest_framework import generics, pagination, authentication, permissions, filters
 from rest_framework.compat import parse_date
 from rest_framework.reverse import reverse
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
-from politici.models import OpUser, OpPolitician, OpInstitution, OpChargeType, OpInstitutionCharge
-from politici.serializers import UserSerializer, PoliticianSerializer, OpInstitutionChargeSerializer, \
-    PoliticianInlineSerializer
 from territori.models import OpLocation
+from .models import OpUser, OpPolitician, OpInstitution, OpChargeType, OpInstitutionCharge
+from .serializers import UserSerializer, PoliticianSerializer, OpInstitutionChargeSerializer, \
+    PoliticianInlineSerializer
+from .forms import InstitutionChargeFilter
+
+
+class PoliticiDBSelectMixin(object):
+    """
+    Defines a filter_queryset method,
+    to be added before all views that extend GenericAPIView,
+    in order to select correct DB source
+    """
+    def filter_queryset(self, queryset):
+        return queryset.using('politici')
+
+
+class DefaultsMixin(object):
+    """Default settings for view authentication, permissions, viewsets,
+    filtering and pagination"""
+
+    # authentication_classes = (
+    #    authentication.BasicAuthentication,
+    #    authentication.TokenAuthentication,
+    # )
+
+    # pemission_classes = (
+    #    permissions.IsAuthenticated,
+    # )
+
+    paginate_by = 25
+    paginate_by_param = 'page_size'
+    max_paginate_by = 100
+    filter_backends = (
+        filters.DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    )
+
 
 
 class PoliticiView(APIView):
@@ -33,21 +68,11 @@ class PoliticiView(APIView):
         return Response(data)
 
 
-class PoliticiDBSelectMixin(object):
-    """
-    Defines a filter_queryset method,
-    to be added before all views that extend GenericAPIView,
-    in order to select correct DB source
-    """
-    def filter_queryset(self, queryset):
-        return queryset.using('politici')
 
-
-class UserList(PoliticiDBSelectMixin, generics.ListAPIView):
+class UserList(DefaultsMixin, PoliticiDBSelectMixin, generics.ListAPIView):
     """
     Represents a paginated list of users of the politici application.
     """
-    permission_classes = (IsAuthenticated,)
     model = OpUser
     serializer_class = UserSerializer
     paginate_by = 25
@@ -57,12 +82,11 @@ class UserDetail(PoliticiDBSelectMixin, generics.RetrieveAPIView):
     """
     Represents a single politici user.
     """
-    permission_classes = (IsAuthenticated,) 
     model = OpUser
     serializer_class = UserSerializer
 
 
-class PoliticianList(PoliticiDBSelectMixin, generics.ListAPIView):
+class PoliticianList(DefaultsMixin, PoliticiDBSelectMixin, generics.ListAPIView):
     """
     Represents the list of politicians
 
@@ -174,18 +198,25 @@ class ChargeTypeDetail(PoliticiDBSelectMixin, generics.RetrieveAPIView):
     model = OpChargeType
 
 
-class InstitutionChargeList(PoliticiDBSelectMixin, generics.ListAPIView):
+class InstitutionChargeList(
+    DefaultsMixin,
+    PoliticiDBSelectMixin,
+    generics.ListAPIView
+):
     """
     Represents the list of institution charges
 
     Accepts these filters through the following **GET** querystring parameters:
 
-    * ``date_from`` - charges that end after this date
-    * ``date_to`` - charges that start before this date
-    * ``date`` - charges **active** on the date
+    * ``started_after``  - charges started after the given date
+    * ``closed_after``   - charges closed after given date
+    * ``status``         - active|inactive|not_specified (a|i|n)
+    * ``date_from``      - all charges starting exactly at the given date
+    * ``date_to``        - charges that start before this date
+    * ``date``           - charges **active** on the given date
     * ``institution_id`` - ID of the institution
     * ``charge_type_id`` - ID of the charge_type
-    * ``location_id`` - ID of the location
+    * ``location_id``    - ID of the location
 
     Dates have the format: ``YYYY-MM-DD``
 
@@ -207,10 +238,11 @@ class InstitutionChargeList(PoliticiDBSelectMixin, generics.ListAPIView):
         1539
     """
     model = OpInstitutionCharge
-    queryset = model.objects.select_related('content')
     serializer_class = OpInstitutionChargeSerializer
-    paginate_by = 25
-    max_paginate_by = settings.REST_FRAMEWORK['MAX_PAGINATE_BY']
+    queryset = model.objects.\
+        select_related('content').\
+        exclude(content__deleted_at__isnull=False)
+
 
     def get_queryset(self):
         """
@@ -225,6 +257,35 @@ class InstitutionChargeList(PoliticiDBSelectMixin, generics.ListAPIView):
         # exclude deleted content
         queryset = queryset.exclude(content__deleted_at__isnull=False)
 
+        # fetch all charges in a given status
+        charge_status = self.request.QUERY_PARAMS.get(
+            'status', 'n'
+        ).lower()[:1]
+        if charge_status == 'a':
+            queryset = queryset.filter(date_end__isnull=True)
+        elif charge_status == 'i':
+            queryset = queryset.filter(date_end__isnull=False)
+
+        # fetch charges started after given date
+        started_after = self.request.QUERY_PARAMS.get('started_after', None)
+        if started_after:
+            started_after = parse_date(started_after)
+            if not started_after or started_after > date.today():
+                # TODO: raise an Exception
+                return queryset.none()
+
+            queryset = queryset.filter(date_start__gte=started_after)
+
+        # fetch charges closed after given date
+        closed_after = self.request.QUERY_PARAMS.get('closed_after', None)
+        if closed_after:
+            closed_after = parse_date(closed_after)
+            if not closed_after or closed_after > date.today():
+                # TODO: raise an Exception
+                return queryset.none()
+
+            queryset = queryset.filter(date_end__gte=closed_after)
+
         # fetch all charges started exactly on a given date
         date_from = self.request.QUERY_PARAMS.get('date_from', None)
         if date_from:
@@ -233,7 +294,7 @@ class InstitutionChargeList(PoliticiDBSelectMixin, generics.ListAPIView):
                 # TODO: raise an Exception
                 return queryset.none()
 
-            queryset = queryset.filter(date_end__gte=date_from)
+            queryset = queryset.filter(date_start=date_from)
 
         # fetch all charges ended exactly on a given date
         date_to = self.request.QUERY_PARAMS.get('date_to', None)
@@ -243,7 +304,7 @@ class InstitutionChargeList(PoliticiDBSelectMixin, generics.ListAPIView):
                 # TODO: raise an Exception
                 return queryset.none()
 
-            queryset = queryset.filter(date_start__lte=date_to)
+            queryset = queryset.filter(date_end=date_to)
 
         # fetch all charges active on a given date
         data = self.request.QUERY_PARAMS.get('date', None)
