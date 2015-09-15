@@ -74,10 +74,12 @@ class PoliticianInlineSerializer(serializers.ModelSerializer):
     image_uri = serializers.CharField(source='get_image_uri', read_only=True)
     profession = ProfessionSerializer()
     education_levels = OpPoliticianHasOpEducationLevelSerializer(many=True)
+    content = ContentSerializer()
 
     class Meta:
         model = OpPolitician
         fields = (
+            'content',
             'first_name', 'last_name',
             'birth_date', 'death_date', 'birth_location',
             'self_uri', 'image_uri',
