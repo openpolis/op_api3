@@ -81,7 +81,7 @@ class PoliticianInlineSerializer(serializers.ModelSerializer):
         fields = (
             'content',
             'first_name', 'last_name',
-            'birth_date', 'death_date', 'birth_location',
+            'birth_date', 'death_date', 'birth_location', 'sex',
             'self_uri', 'image_uri',
             'profession',
             'education_levels',
@@ -133,7 +133,7 @@ class PoliticianSerializer(serializers.HyperlinkedModelSerializer):
         view_name = 'politici:politician-detail'
         fields = (
             'first_name', 'last_name',
-            'birth_date', 'death_date', 'birth_location',
+            'birth_date', 'death_date', 'birth_location', 'sex',
             'last_charge_update',
             'content', 'image_uri',
             'profession', 'education_levels',
