@@ -97,6 +97,8 @@ class OpInstitutionChargeSerializer(serializers.ModelSerializer):
     charge_type_descr = serializers.CharField(source='charge_type')
     location = serializers.HyperlinkedRelatedField(view_name='territori:location-detail')
     location_descr = serializers.CharField(source='location')
+    constituency_descr = serializers.CharField(source='constituency.name')
+    constituency_election_type = serializers.CharField(source='constituency.election_type.name')
     class Meta:
         model = OpInstitutionCharge
         view_name = 'politici:instcharge-detail'
@@ -104,7 +106,8 @@ class OpInstitutionChargeSerializer(serializers.ModelSerializer):
             'date_start', 'date_end',
             'politician',
             'charge_type_descr', 'institution_descr',
-            'location_descr', 'location',
+            'location_descr', 'location', 
+            'constituency_descr', 'constituency_election_type',
             'description',
             'party', 'group',
             'content',

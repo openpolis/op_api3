@@ -361,6 +361,10 @@ class OpConstituency(models.Model):
     name = models.CharField(max_length=255, blank=True)
     slug = models.CharField(max_length=128, blank=True)
     valid = models.IntegerField(null=True, blank=True)
+
+    def __unicode__(self):
+        return self.name
+
     class Meta:
         db_table = u'op_constituency'
         managed = False
