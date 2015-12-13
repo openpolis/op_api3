@@ -171,7 +171,7 @@ LOGGING = {
         'logfile': {
             'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': REPO_ROOT + "/log/logfile",
+            'filename': REPO_ROOT + "/logs/logfile",
             'maxBytes': 10000000,
             'backupCount': 10,
             'formatter': 'standard',

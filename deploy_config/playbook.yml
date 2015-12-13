@@ -1,0 +1,26 @@
+---
+
+- name: Prepare server
+  hosts: default
+  sudo: yes
+  tasks:
+      - name: Install packages used within project
+        apt: >
+          pkg={{item}}
+          state=installed
+          update-cache=yes
+        with_items:
+          - libmysqlclient-dev
+
+- name: Configure database server
+  hosts: default
+  sudo: yes
+  roles:
+    - { role: azavea.postgis }
+    - { role: geerlingguy.mysql, mysql_root_password: ""}
+
+- name: Configure web dev framework
+  hosts: default
+  roles:
+    - { role: django-dev, django: {requirements: "/vagrant/requirements/dev.txt", virtualenv: "/home/vagrant/virtualenvs/op-api3" }}
+
