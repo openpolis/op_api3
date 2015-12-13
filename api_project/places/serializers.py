@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from rest_framework import serializers
 from rest_framework.reverse import reverse
-from places.fields import HyperlinkedTreeNodeField, HyperlinkedTreeNodeManyField, ClassificationTreeTagFromURLField
+from .fields import HyperlinkedTreeNodeField, HyperlinkedTreeNodeManyField, ClassificationTreeTagFromURLField
 from rest_framework_gis.serializers import GeoModelSerializer
-from places.models import Place, PlaceType, PlaceIdentifier, Identifier, PlaceAcronym, PlaceLink, PlaceGEOInfo, \
+from .models import Place, PlaceType, PlaceIdentifier, Identifier, PlaceAcronym, PlaceLink, PlaceGEOInfo, \
     PlaceI18Name, Language, ClassificationTreeTag, ClassificationTreeNode
 
 __author__ = 'guglielmo'
@@ -97,7 +97,10 @@ class NameInlineSerializer(serializers.ModelSerializer):
     """
     Inline serializer for the I18N Names of the Place
     """
-    language = serializers.HyperlinkedRelatedField(view_name='maps:language-detail', lookup_field='iso639_1_code')
+    language = serializers.HyperlinkedRelatedField(
+        view_name='maps:language-detail', lookup_field='iso639_1_code',
+        queryset=PlaceI18Name.objects.all()
+    )
 
     def get_identity(self, data):
         return u"{0}".format(data['name'])
@@ -108,7 +111,10 @@ class NameInlineSerializer(serializers.ModelSerializer):
 
 
 class PlaceIdentifierSerializer(serializers.ModelSerializer):
-    identifier = serializers.HyperlinkedRelatedField(view_name='maps:identifier-detail', lookup_field='slug')
+    identifier = serializers.HyperlinkedRelatedField(
+        view_name='maps:identifier-detail', lookup_field='slug',
+        queryset=PlaceIdentifier.objects.all()
+    )
 
     def get_identity(self, data):
         return u"{0}".format(data['identifier'],)
@@ -120,7 +126,10 @@ class PlaceIdentifierSerializer(serializers.ModelSerializer):
 
 class PlaceInlineSerializer(serializers.ModelSerializer):
     _self = serializers.HyperlinkedIdentityField(view_name='maps:place-detail')
-    place_type = serializers.HyperlinkedRelatedField(view_name='maps:placetype-detail')
+    place_type = serializers.HyperlinkedRelatedField(
+        view_name='maps:placetype-detail',
+        queryset=Place.objects.all()
+    )
 
     class Meta:
         model = Place
@@ -132,13 +141,16 @@ class PlaceInlineSerializer(serializers.ModelSerializer):
 
 class PlaceSerializer(serializers.ModelSerializer):
     _self = serializers.HyperlinkedIdentityField(view_name='maps:place-detail')
-    place_type = serializers.HyperlinkedRelatedField(view_name='maps:placetype-detail')
+    place_type = serializers.HyperlinkedRelatedField(
+        view_name='maps:placetype-detail',
+        queryset=PlaceIdentifier.objects.all()
+    )
     acronym = AcronymInlineSerializer()
-    links = LinkInlineSerializer(many=True, allow_add_remove=True)
+    links = LinkInlineSerializer(many=True)
     geoinfo = GeoInfoInlinseSerializer()
 
-    placeidentifiers = PlaceIdentifierSerializer(many=True, allow_add_remove=True)
-    names = NameInlineSerializer(many=True, allow_add_remove=True)
+    placeidentifiers = PlaceIdentifierSerializer(many=True)
+    names = NameInlineSerializer(many=True)
 
     class Meta:
         model = Place
@@ -186,8 +198,14 @@ class ClassificationTreeTagFromURLSerializer(serializers.ModelSerializer):
         )
 
 class ClassificationTreeNodeInlineSerializer(serializers.ModelSerializer):
-    place = serializers.HyperlinkedRelatedField(view_name='maps:place-detail')
-    tag = serializers.HyperlinkedRelatedField(view_name='maps:classification-detail')
+    place = serializers.HyperlinkedRelatedField(
+        view_name='maps:place-detail',
+        queryset=ClassificationTreeNode.objects.all()
+    )
+    tag = serializers.HyperlinkedRelatedField(
+        view_name='maps:classification-detail',
+        queryset=ClassificationTreeNode.objects.all()
+    )
 
     class Meta:
         model = ClassificationTreeNode

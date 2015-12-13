@@ -6,11 +6,11 @@ from .routers import DefaultPopsRouter
 # Routers provide an easy way of automatically determining the URL conf
 router = DefaultPopsRouter()
 
-router.register(r'persons', PersonViewSet)
-router.register(r'organizations', OrganizationViewSet)
-router.register(r'memberships', MembershipViewSet)
-router.register(r'posts', PostViewSet)
-router.register(r'areas', AreaViewSet)
+router.register(r'persons', PersonViewSet, base_name='persons')
+router.register(r'organizations', OrganizationViewSet, base_name='organizations')
+router.register(r'memberships', MembershipViewSet, base_name='memberships')
+router.register(r'posts', PostViewSet, base_name='posts')
+router.register(r'areas', AreaViewSet, base_name='areas')
 
 
 urlpatterns = patterns('',

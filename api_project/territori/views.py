@@ -1,4 +1,4 @@
-from django.utils.datastructures import SortedDict
+from collections import OrderedDict
 from rest_framework import generics
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -18,7 +18,7 @@ class TerritoriView(APIView):
     """
     def get(self, request, **kwargs):
         format = kwargs.get('format', None)
-        data = SortedDict([
+        data = OrderedDict([
             ('locations', reverse('territori:location-list', request=request, format=format)),
             ('locationtypes', reverse('territori:locationtype-list', request=request, format=format)),
         ])

@@ -3,16 +3,16 @@ from collections import OrderedDict as odict
 from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404
-from rest_framework.compat import parse_date
+from isodate import parse_date
 from rest_framework.filters import DjangoFilterBackend
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
 from rest_framework import generics, filters
-from parlamento import lex
-from parlamento.models import Carica, Gruppo, PoliticianHistoryCache, Seduta, Votazione
-from parlamento.serializers import GruppoSerializer, CustomPaginationSerializer, ParlamentareSerializer, VotazioneSerializer, SedutaSerializer, VotazioneDettagliataSerializer
-from parlamento.utils import reverse_url, get_legislatura_from_request, get_last_update
+from . import lex
+from .models import Carica, Gruppo, PoliticianHistoryCache, Seduta, Votazione
+from .serializers import GruppoSerializer, CustomPaginationSerializer, ParlamentareSerializer, VotazioneSerializer, SedutaSerializer, VotazioneDettagliataSerializer
+from .utils import reverse_url, get_legislatura_from_request, get_last_update
 
 
 __author__ = 'daniele'

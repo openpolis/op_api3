@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
-from django.utils.datastructures import SortedDict
+from collections import OrderedDict
 from rest_framework import generics
-from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.views import APIView
-from places.models import Place, PlaceType, Identifier, Language, ClassificationTreeTag, ClassificationTreeNode
-from places.serializers import PlaceSerializer, PlaceTypeSerializer, PlaceInlineSerializer, IdentifierSerializer, \
+from .models import Place, PlaceType, Identifier, Language, ClassificationTreeTag, ClassificationTreeNode
+from .serializers import PlaceSerializer, PlaceTypeSerializer, PlaceInlineSerializer, IdentifierSerializer, \
     LanguageSerializer, ClassificationTreeTagSerializer, \
     ClassificationTreeNodeSerializer
 
@@ -17,7 +16,7 @@ class MapsView(APIView):
     """
     def get(self, request, **kwargs):
         format = kwargs.get('format', None)
-        data = SortedDict([
+        data = OrderedDict([
             ('places', reverse('maps:place-list', request=request, format=format)),
             ('placetypes', reverse('maps:placetype-list', request=request, format=format)),
             ('classifications', reverse('maps:classification-list', request=request, format=format)),

@@ -1,9 +1,9 @@
 from popolo.models import Area, Person, Organization, Membership, Post, ContactDetail, Identifier
 from django.contrib import admin
-from django.contrib.contenttypes import generic
+from django.contrib.contenttypes.admin import GenericTabularInline
 
 
-class OtherIdentifierInline(generic.GenericTabularInline):
+class OtherIdentifierInline(GenericTabularInline):
     model = Identifier
     extra = 0
 

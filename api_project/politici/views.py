@@ -2,10 +2,10 @@
 from datetime import date
 from django.conf import settings
 from django.db.models import Q
-from django.utils.datastructures import SortedDict
+from collections import OrderedDict
 
 from rest_framework import generics, pagination, authentication, permissions, filters
-from rest_framework.compat import parse_date
+from isodate import parse_date
 from rest_framework.reverse import reverse
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -57,7 +57,7 @@ class PoliticiView(APIView):
     """
     def get(self, request, **kwargs):
         format = kwargs.get('format', None)
-        data = SortedDict([
+        data = OrderedDict([
             ('users [protected]', reverse('politici:user-list', request=request, format=format)),
             ('politicians', reverse('politici:politician-list', request=request, format=format)),
             ('institutions', reverse('politici:institution-list', request=request, format=format)),

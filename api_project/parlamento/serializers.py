@@ -1,8 +1,8 @@
 from rest_framework import serializers
 from rest_framework import pagination
 
-from parlamento import models
-from parlamento import fields
+from . import models
+from . import fields
 
 
 __author__ = 'daniele'
@@ -79,7 +79,7 @@ class ParlamentareSerializer(serializers.ModelSerializer):
         ) + statistic_fields
 
 
-class CustomPaginationSerializer(pagination.PaginationSerializer):
+class CustomPaginationSerializer(pagination.PageNumberPagination):
 
     legislative_session = fields.LegislaturaField(source='*')
     update_date = fields.UltimoAggiornamentoField(source='*')
@@ -90,7 +90,10 @@ class CustomPaginationSerializer(pagination.PaginationSerializer):
 
 class SedutaSerializer(serializers.ModelSerializer):
 
-    votes = fields.HyperlinkedVotazioneField(many=True)
+    votes = fields.HyperlinkedVotazioneField(
+        many=True,
+        queryset=models.Seduta.objects.all()
+    )
 
     class Meta:
         model = models.Seduta

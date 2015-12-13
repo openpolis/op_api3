@@ -16,5 +16,5 @@ django-environ
 
 django-cors-headers
 django-mptt
-django-treeadmin
+-e git://github.com/openpolis/django-treeadmin.git#egg=django-treeadmin
 

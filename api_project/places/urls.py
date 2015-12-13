@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.conf.urls import patterns, url, include
 from rest_framework.urlpatterns import format_suffix_patterns
-from places.views import MapsView, PlaceListView, PlaceDetailView, PlaceTypeDetailView, PlaceTypeListView, IdentifierListView, \
+from .views import MapsView, PlaceListView, PlaceDetailView, PlaceTypeDetailView, PlaceTypeListView, IdentifierListView, \
     IdentifierDetailView, LanguageDetailView, LanguageListView, ClassificationListView, \
     ClassificationDetailView, ClassificationNodeDetailView
 

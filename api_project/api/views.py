@@ -1,4 +1,4 @@
-from django.utils.datastructures import SortedDict
+from collections import OrderedDict
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.views import APIView
@@ -17,7 +17,7 @@ class ApiRootView(APIView):
     """
     def get(self, request, **kwargs):
         format = kwargs.get('format', None)
-        data = SortedDict([
+        data = OrderedDict([
             ('politici', reverse('politici:api-root', request=request, format=format)),
             ('parlamento', reverse('parlamento:legislatura-list', request=request, format=format)),
             ('maps', reverse('maps:api-root', request=request, format=format)),
