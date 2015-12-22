@@ -1,7 +1,7 @@
 # Local development dependencies go here
 -r base.txt
 
-django-debug-toolbar
+django-debug-toolbar<1.1
 
 # django-popolo dev
 # a shared directory must be created
