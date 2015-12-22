@@ -1,7 +1,8 @@
 from django.db.models import Q
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from pops.serializers import PersonSerializer, OrganizationSerializer, PostSerializer, MembershipSerializer, \
-    OrganizationInlineSerializer, PostInlineSerializer, MembershipInlineSerializer, AreaSerializer
+    OrganizationInlineSerializer, PostInlineSerializer, MembershipInlineSerializer, AreaSerializer, \
+    MembershipListSerializer, PersonInlineSerializer
 
 __author__ = 'guglielmo'
 from popolo.models import Person, Organization, Membership, Post, Identifier, Area
@@ -13,7 +14,30 @@ class PersonViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def get_serializer_class(self):
+        if self.action == 'list':
+            return PersonInlineSerializer
         return PersonSerializer
+
+    def get_queryset(self):
+        """
+        Add filters to queryset provided in url querystring.
+        """
+
+        queryset = super(PersonViewSet, self).get_queryset()
+
+        # fetch all persons with memberships in the given area
+        area_id = self.request.QUERY_PARAMS.get('area_id', None)
+        if area_id:
+            queryset = queryset.filter(
+                memberships__area_id=area_id
+            )
+
+        order_by = self.request.QUERY_PARAMS.get('order_by', None)
+        if order_by:
+            if order_by == 'date':
+                queryset = queryset.order_by('-birth_date')
+
+        return queryset
 
 
 class OrganizationViewSet(viewsets.ModelViewSet):
@@ -66,10 +90,24 @@ class OrganizationViewSet(viewsets.ModelViewSet):
                 area__id=area_id
             )
 
+        # fetch all organizations for a given parent
+        parent_id = self.request.QUERY_PARAMS.get('parent_id', None)
+        if parent_id:
+            queryset = queryset.filter(
+                parent__id=parent_id
+            )
+
+        # fetch all organizations of a given classification
+        classification = self.request.QUERY_PARAMS.get('classification', None)
+        if classification:
+            queryset = queryset.filter(
+                classification=classification
+            )
+
         order_by = self.request.QUERY_PARAMS.get('order_by', None)
         if order_by:
             if order_by == 'date':
-                queryset = queryset.order_by('-birth_date')
+                queryset = queryset.order_by('-start_date')
 
         return queryset
 
@@ -100,7 +138,7 @@ class PostViewSet(viewsets.ModelViewSet):
         order_by = self.request.QUERY_PARAMS.get('order_by', None)
         if order_by:
             if order_by == 'date':
-                queryset = queryset.order_by('-birth_date')
+                queryset = queryset.order_by('-start_date')
 
         return queryset
 
@@ -132,13 +170,13 @@ class MembershipViewSet(viewsets.ModelViewSet):
         order_by = self.request.QUERY_PARAMS.get('order_by', None)
         if order_by:
             if order_by == 'date':
-                queryset = queryset.order_by('-birth_date')
+                queryset = queryset.order_by('-start_date')
 
         return queryset
 
     def get_serializer_class(self):
         if self.action == 'list':
-            return MembershipInlineSerializer
+            return MembershipListSerializer
         return MembershipSerializer
 
 

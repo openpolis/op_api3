@@ -45,13 +45,15 @@ class LocationList(PoliticiDBSelectMixin, generics.ListAPIView):
     To get JSON format, specify ``format=json`` as a **GET** parameter,
     or add ``.json`` to the URL.
 
-    * ``nameiexact`` - get all Locations with names exactly equal
+    * ``nameiexact``     - get all Locations with names exactly equal
                            to the value (case insensitive)
     * ``namestartswith`` - get all Locations with names starting
                            with the value (case insensitive)
-    * ``namecontains`` - get all Locations with names containing
-                         the value (case insensitive)
-    * ``prov``         - get all Locations having prov equal to the value
+    * ``namecontains``   - get all Locations with names containing
+                           the value (case insensitive)
+    * ``prov``           - get all Locations having prov equal to the value
+    * ``regional_id``    - get all locations having the specified regional_id
+    * ``provincial_id``  - get all locations having the specified provincial_id
 
     """
 
@@ -102,6 +104,14 @@ class LocationList(PoliticiDBSelectMixin, generics.ListAPIView):
         if prov:
             queryset = queryset.filter(prov__iexact=prov)
 
+
+        regional_id = self.request.QUERY_PARAMS.get('regional_id', None)
+        if regional_id:
+            queryset = queryset.filter(regional_id=regional_id)
+
+        provincial_id = self.request.QUERY_PARAMS.get('provincial_id', None)
+        if provincial_id:
+            queryset = queryset.filter(provincial_id=provincial_id)
 
 
         return queryset
