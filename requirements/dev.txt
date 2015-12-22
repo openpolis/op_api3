@@ -1,8 +1,14 @@
 # Local development dependencies go here
 -r base.txt
 
-django-debug-toolbar
--e /Users/guglielmo/Workspace/django-popolo
+django-debug-toolbar<1.1
 
-CouchDB==0.9
+# django-popolo dev
+# a shared directory must be created
+# in the vagrant dev. env
+-e /django-popolo
+
+# -e git://github.com/openpolis/django-popolo.git@develop#egg=popolo
+
+# CouchDB==0.9
 SPARQLWrapper==1.5.2

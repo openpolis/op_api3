@@ -1,5 +1,5 @@
 .idea
-/log/*
+/logs\/*
 .env
 /public/*
 /deploy_config/uwsgi.ini
@@ -9,3 +9,4 @@
 /api_project/*/migrations/*
 dump.sql
 /static
+.vagrant
