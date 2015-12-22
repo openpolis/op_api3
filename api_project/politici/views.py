@@ -325,7 +325,10 @@ class InstitutionChargeList(
         # fetch all charges of a given charge_type
         charge_type_id = self.request.QUERY_PARAMS.get('charge_type_id', None)
         if charge_type_id:
-            queryset = queryset.filter(charge_type_id=charge_type_id)
+            if ',' in charge_type_id:
+                queryset = queryset.filter(charge_type_id__in=charge_type_id.split(','))
+            else:
+                queryset = queryset.filter(charge_type_id=charge_type_id)
 
         # fetch all charges of a given location
         location_id = self.request.QUERY_PARAMS.get('location_id', None)
