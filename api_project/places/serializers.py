@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from rest_framework import serializers
 from rest_framework.reverse import reverse
-from places.fields import HyperlinkedTreeNodeField, HyperlinkedTreeNodeManyField, ClassificationTreeTagFromURLField
+from .fields import HyperlinkedTreeNodeField, HyperlinkedTreeNodeManyField, ClassificationTreeTagFromURLField
 from rest_framework_gis.serializers import GeoModelSerializer
-from places.models import Place, PlaceType, PlaceIdentifier, Identifier, PlaceAcronym, PlaceLink, PlaceGEOInfo, \
+from .models import Place, PlaceType, PlaceIdentifier, Identifier, PlaceAcronym, PlaceLink, PlaceGEOInfo, \
     PlaceI18Name, Language, ClassificationTreeTag, ClassificationTreeNode
 
 __author__ = 'guglielmo'

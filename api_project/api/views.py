@@ -20,7 +20,8 @@ class ApiRootView(APIView):
         data = SortedDict([
             ('politici', reverse('politici:api-root', request=request, format=format)),
             ('parlamento', reverse('parlamento:legislatura-list', request=request, format=format)),
-            ('maps', reverse('maps:api-root', request=request, format=format)),
+#            ('pops', reverse('pops:api-root', request=request, format=format)),
+#            ('maps', reverse('maps:api-root', request=request, format=format)),
             ('territori', reverse('territori:api-root', request=request, format=format)),
         ])
         return Response(data)
