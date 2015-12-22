@@ -11,7 +11,7 @@ root = environ.Path(__file__) - 4  # three folder back (/a/b/c/ - 3 = /)
 env = environ.Env(
     DEBUG=(bool, True),
 )
-env.read_env(root('deploy_config/.env'))
+env.read_env(root('config/.env'))
 
 
 DEBUG = env('DEBUG') # False if not in os.environ

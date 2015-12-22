@@ -10,7 +10,7 @@ if __name__ == "__main__":
     env = environ.Env(
         DEBUG=(bool, True),
     )
-    env.read_env(root('deploy_config/.env'))
+    env.read_env(root('config/.env'))
 
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", env('DJANGO_SETTINGS_MODULE'))
 

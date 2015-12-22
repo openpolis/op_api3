@@ -22,7 +22,7 @@ root = environ.Path(__file__) - 2  # three folder back (/a/b/c/ - 3 = /)
 env = environ.Env(
     DEBUG=(bool, True),
 )
-env.read_env(root('deploy_config/.env'))
+env.read_env(root('config/.env'))
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", env('DJANGO_SETTINGS_MODULE'))
 
