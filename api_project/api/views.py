@@ -11,7 +11,6 @@ class ApiRootView(APIView):
 
     * **politici** - italian politicians and their charges (from `http://politici.openpolis.it`)
     * **parlamento** - italian parliament acts and votations (16th and 17th legislature)
-    * **maps** - locations, and locations classifications, with contextual data and geometric information
     * **territori** - an old, simpler version of the locations API (deprecated)
 
     """
