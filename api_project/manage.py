@@ -7,8 +7,10 @@ if __name__ == "__main__":
     root = environ.Path(__file__) - 2  # three folder back (/a/b/c/ - 3 = /)
 
     # set default values and casting
-    env = environ.Env()
-    env.read_env(root('.env'))
+    env = environ.Env(
+        DEBUG=(bool, True),
+    )
+    env.read_env(root('config/.env'))
 
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", env('DJANGO_SETTINGS_MODULE'))
 
