@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from rest_framework import generics, filters
 from parlamento import lex
 from parlamento.models import Carica, Gruppo, PoliticianHistoryCache, Seduta, Votazione
-from parlamento.serializers import GruppoSerializer, CustomPaginationSerializer, ParlamentareSerializer, VotazioneSerializer, SedutaSerializer, VotazioneDettagliataSerializer
+from parlamento.serializers import CaricaSerializer, GruppoSerializer, CustomPaginationSerializer, ParlamentareSerializer, VotazioneSerializer, SedutaSerializer, VotazioneDettagliataSerializer
 from parlamento.utils import reverse_url, get_legislatura_from_request, get_last_update
 
 
@@ -192,6 +192,95 @@ class ParlamentareListView(APILegislaturaMixin, generics.ListAPIView):
         genere = self.request.QUERY_PARAMS.get('gender', None)
         if genere in ('M', 'F'):
             queryset = queryset.filter(charge__politician__gender=genere)
+
+        return queryset
+
+class CaricaListView(APILegislaturaMixin, generics.ListAPIView):
+    """
+    Represents the list of institution charges
+
+    Accepts these filters through the following **GET** querystring parameters:
+
+    * ``started_after``  - charges started after the given date
+    * ``closed_after``   - charges closed after given date
+    * ``status``         - active|inactive|not_specified (a|i|n)
+    * ``date``           - charges **active** on the given date
+    * ``charge_type_id`` - ID of the charge_type
+
+    Dates have the format: ``YYYY-MM-DD``
+
+    Results can be sorted by date, specifying the ``order_by=date``
+    query string parameter.
+    With this parameter, results are sorted by descending
+    values of ``date_start``.
+
+    Results have a standard pagination, with 25 results per page.
+
+    To get JSON format, specify ``format=json`` as a **GET** parameter,
+    or add ``.json`` to the URL.
+
+    Example usage
+
+        >> r = requests.get('http://api.openpolis.it/politici/instcharges.json?date=1990-01-01')
+        >> res = r.json()
+        >> print res['count']
+        1539
+
+    """
+
+    model = Carica
+    serializer_class = CaricaSerializer
+    pagination_serializer_class = CustomPaginationSerializer
+
+    def get_queryset(self):
+        queryset = super(CaricaListView, self).get_queryset()
+
+        # fetch all charges in a given status
+        charge_status = self.request.QUERY_PARAMS.get(
+            'status', 'n'
+        ).lower()[:1]
+        if charge_status == 'a':
+            queryset = queryset.filter(end_date__isnull=True)
+        elif charge_status == 'i':
+            queryset = queryset.filter(end_date__isnull=False)
+
+        # fetch charges started after given date
+        started_after = self.request.QUERY_PARAMS.get('started_after', None)
+        if started_after:
+            started_after = parse_date(started_after)
+            if not started_after or started_after > date.today():
+                # TODO: raise an Exception
+                return queryset.none()
+
+            queryset = queryset.filter(start_date__gte=started_after)
+
+        # fetch charges closed after given date
+        closed_after = self.request.QUERY_PARAMS.get('closed_after', None)
+        if closed_after:
+            closed_after = parse_date(closed_after)
+            if not closed_after or closed_after > date.today():
+                # TODO: raise an Exception
+                return queryset.none()
+
+            queryset = queryset.filter(end_date__gte=closed_after)
+
+        # fetch all charges of a given charge_type
+        charge_type_id = self.request.QUERY_PARAMS.get('charge_type', None)
+        if charge_type_id:
+            if ',' in charge_type_id:
+                queryset = queryset.filter(charge_type_id__in=charge_type_id.split(','))
+            else:
+                queryset = queryset.filter(charge_type_id=charge_type_id)
+
+        # fetch all charges of a given location
+        district = self.request.QUERY_PARAMS.get('district', None)
+        if district:
+            queryset = queryset.filter(district=district)
+
+        order_by = self.request.QUERY_PARAMS.get('order_by', None)
+        if order_by:
+            if order_by == 'date':
+                queryset = queryset.order_by('-date_start')
 
         return queryset
 
