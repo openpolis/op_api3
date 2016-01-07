@@ -59,6 +59,7 @@ class APILegislaturaMixin(object):
             ('groups_url', self.get_reverse_url('gruppo-list', **url_kwargs)),
             ('districts_url', self.get_reverse_url('circoscrizione-list', **url_kwargs)),
             ('parliamentarians_url', self.get_reverse_url('parlamentare-list', **url_kwargs)),
+            ('charges_url', self.get_reverse_url('carica-list', **url_kwargs)),
             ('sittings_url', self.get_reverse_url('seduta-list', **url_kwargs)),
             ('votes_url', self.get_reverse_url('votazione-list', **url_kwargs)),
         ])
