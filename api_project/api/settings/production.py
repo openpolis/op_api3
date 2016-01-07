@@ -1,2 +1,2 @@
 __author__ = 'guglielmo'
-from api.settings.base import *
+from .base import *

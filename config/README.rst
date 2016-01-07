@@ -51,11 +51,16 @@ in the virtual machines, leaving the app source code in the host.
 Data transfer
 #############
 
+DB dumps should be taken from all sources (production/S3 backups), and restored:
+
+  - op_openpolis (politici - mysql)
+  - opp17 (17. legislatura - mysql)
+  - op_openparlamento (16. legislatura - mysql)
+  - op_api3 (db applicativo, popolo - postgres)
 
 
 
-
-Now, open http://192.168.111.104:8000 in your browser!
+Now, open http://192.168.111.104:8004 in your browser!
 
 
 
