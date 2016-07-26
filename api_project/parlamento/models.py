@@ -82,6 +82,44 @@ class GruppoRamo(models.Model):
         managed = False
 
 
+
+
+
+class CaricaInterna(models.Model):
+    carica = models.ForeignKey(OppCarica)
+    tipo_carica = models.ForeignKey('OppTipoCarica')
+    sede = models.ForeignKey('OppSede')
+    data_inizio = models.DateField(blank=True, null=True)
+    data_fine = models.DateField(blank=True, null=True)
+    descrizione = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(blank=True, null=True)
+    class Meta:
+        db_table = 'opp_carica_interna'
+        managed = False
+
+
+class TipoCarica(models.Model):    
+    name = models.CharField(max_length=255L, blank=True, db_column='nome')
+
+    class Meta:
+        db_table = 'opp_tipo_carica'
+        managed = False
+
+
+class Sede(models.Model):
+    ramo = models.CharField(max_length=255, blank=True)
+    denominazione = models.CharField(max_length=255, blank=True)
+    legislatura = models.IntegerField(blank=True, null=True)
+    tipologia = models.CharField(max_length=255, blank=True)
+    codice = models.CharField(max_length=255, blank=True)
+    data_inizio = models.DateField(blank=True, null=True)
+    data_fine = models.DateField(blank=True, null=True)
+    parlamento_id = models.IntegerField(blank=True, null=True)
+    class Meta:
+        db_table = 'opp_sede'
+        managed = False
+
+
 class PoliticianHistoryCache(models.Model):
     
     #legislatura = models.IntegerField(null=True, blank=True)
@@ -132,14 +170,6 @@ class Politico(models.Model):
         db_table = 'opp_politico'
         managed = False
 
-
-class TipoCarica(models.Model):
-    
-    name = models.CharField(max_length=255L, blank=True, db_column='nome')
-
-    class Meta:
-        db_table = 'opp_tipo_carica'
-        managed = False
 
 
 class Seduta(models.Model):
