@@ -66,6 +66,7 @@ class ParlamentareHistorySerializer(serializers.ModelSerializer):
 
 class ParlamentareSerializer(serializers.ModelSerializer):
     charge = CaricaSerializer()
+    inner_charges = CaricaInternaSerializer(multiple=True)
     group = GruppoSerializer()
     politician = PoliticoSerializer(source='charge.politician')
     house = fields.RamoField()
@@ -91,7 +92,7 @@ class ParlamentareSerializer(serializers.ModelSerializer):
             "numero",
         )
         fields = (
-            "politician", "charge", "group"
+            "politician", "charge", "group", "inner_charges"
         ) + statistic_fields
 
 
