@@ -95,7 +95,7 @@ class CaricaInterna(models.Model):
     created_at = models.DateTimeField(blank=True, null=True)
 
     def __unicode__(self):
-	return "{0.carica} {0.sede} ({0.data_inizio} - {0.data_fine})".format(self)	
+	return "{0.carica} {0.sede} ({0.start_date} - {0.end_date})".format(self)	
 
     class Meta:
         db_table = 'opp_carica_interna'

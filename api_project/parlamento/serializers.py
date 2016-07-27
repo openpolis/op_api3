@@ -21,7 +21,7 @@ class SedeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Sede
-        fields = ('id', 'denominazione', 'tipologia', 'codice', 'start_date', 'end_date', 'parlamento_id')
+        fields = ('id', 'house', 'denominazione', 'tipologia', 'codice', 'start_date', 'end_date', 'parlamento_id')
 
 
 class PoliticoSerializer(serializers.ModelSerializer):

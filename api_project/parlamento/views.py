@@ -10,8 +10,8 @@ from rest_framework.response import Response
 
 from rest_framework import generics, filters
 from parlamento import lex
-from parlamento.models import Carica, Gruppo, PoliticianHistoryCache, Seduta, Votazione
-from parlamento.serializers import CaricaSerializer, GruppoSerializer, CustomPaginationSerializer, ParlamentareSerializer, VotazioneSerializer, SedutaSerializer, VotazioneDettagliataSerializer
+from parlamento.models import Carica, Gruppo, PoliticianHistoryCache, Seduta, Votazione, Sede
+from parlamento.serializers import CaricaSerializer, GruppoSerializer, CustomPaginationSerializer, ParlamentareSerializer, VotazioneSerializer, SedutaSerializer, VotazioneDettagliataSerializer, SedeSerializer
 from parlamento.utils import reverse_url, get_legislatura_from_request, get_last_update
 
 
@@ -58,6 +58,7 @@ class APILegislaturaMixin(object):
             ('url', self.get_reverse_url('legislatura-detail', **url_kwargs)),
             ('groups_url', self.get_reverse_url('gruppo-list', **url_kwargs)),
             ('districts_url', self.get_reverse_url('circoscrizione-list', **url_kwargs)),
+            ('sites_url', self.get_reverse_url('sede-list', **url_kwargs)),
             ('parliamentarians_url', self.get_reverse_url('parlamentare-list', **url_kwargs)),
             ('charges_url', self.get_reverse_url('carica-list', **url_kwargs)),
             ('sittings_url', self.get_reverse_url('seduta-list', **url_kwargs)),
@@ -152,7 +153,8 @@ class ParlamentareListView(APILegislaturaMixin, generics.ListAPIView):
     serializer_class = ParlamentareSerializer
     pagination_serializer_class = CustomPaginationSerializer
     queryset = PoliticianHistoryCache.objects.filter(chi_tipo='P')\
-        .select_related('charge', 'group', 'charge__politician', 'charge__charge_type')
+        .select_related('charge', 'group', 'charge__politician', 'charge__charge_type')\
+        .prefetch_related('charge__caricainterna_set__sede')
     filter_backends = APILegislaturaMixin.filter_backends + (filters.OrderingFilter,)
     ordering = ('charge__politician__surname', 'charge__politician__name') + ParlamentareSerializer.Meta.statistic_fields
 
