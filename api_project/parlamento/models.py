@@ -86,16 +86,16 @@ class GruppoRamo(models.Model):
 
 
 class CaricaInterna(models.Model):
-    carica = models.ForeignKey(Carica)
-    tipo_carica = models.ForeignKey('TipoCarica')
-    sede = models.ForeignKey('Sede')
+    charge = models.ForeignKey(Carica, db_column='carica_id')
+    charge_type = models.ForeignKey('TipoCarica', db_column='tipo_carica_id')
+    site = models.ForeignKey('Sede', db_column='sede_id')
     start_date = models.DateField(blank=True, null=True, db_column='data_inizio')
     end_date = models.DateField(blank=True, null=True, db_column='data_fine')
-    descrizione = models.CharField(max_length=255, blank=True)
+    description = models.CharField(max_length=255, blank=True, db_column='descrizione')
     created_at = models.DateTimeField(blank=True, null=True)
 
     def __unicode__(self):
-	return "{0.carica} {0.sede} ({0.start_date} - {0.end_date})".format(self)	
+	return "{0.charge} {0.site} ({0.start_date} - {0.end_date})".format(self)	
 
     class Meta:
         db_table = 'opp_carica_interna'

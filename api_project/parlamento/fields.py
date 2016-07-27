@@ -56,7 +56,10 @@ class SedeField(serializers.CharField):
     """
 
     def to_native(self, value):
-        return u"{0.tipologia} {0.denominazione} ({0.house})".format(value)
+        if value.tipologia.lower() == 'giunta':
+            return u"{0.denominazione} ({0.house})".format(value)
+        else:
+            return u"{0.tipologia} {0.denominazione} ({0.house})".format(value)
 
 
 
