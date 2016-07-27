@@ -11,6 +11,7 @@ urls = (
     url(r'^districts/(?P<circoscrizione>[\w_.-]+)/$', views.CircoscrizioneDetailView.as_view(), name='circoscrizione-detail'),
     url(r'^parliamentarians/$', views.ParlamentareListView.as_view(), name='parlamentare-list'),
     url(r'^parliamentarians/(?P<carica>[0-9]+)/$', views.ParlamentareDetailView.as_view(), name='parlamentare-detail'),
+    url(r'^charges/$', views.CaricaListView.as_view(), name='carica-list'),
     url(r'^sittings/$', views.SedutaListView.as_view(), name='seduta-list'),
     url(r'^sittings/(?P<seduta>[0-9]+)/$', views.SedutaDetailView.as_view(), name='seduta-detail'),
     url(r'^votes/$', views.VotazioneListView.as_view(), name='votazione-list'),

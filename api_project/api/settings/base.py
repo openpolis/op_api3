@@ -11,7 +11,7 @@ root = environ.Path(__file__) - 4  # three folder back (/a/b/c/ - 3 = /)
 env = environ.Env(
     DEBUG=(bool, True),
 )
-env.read_env(root('.env'))
+env.read_env(root('config/.env'))
 
 
 DEBUG = env('DEBUG') # False if not in os.environ
@@ -25,9 +25,9 @@ DATABASES = {
 }
 
 
-MEDIA_ROOT = root('public/assets')
+MEDIA_ROOT = root('../public/assets')
 MEDIA_URL = '/media/'
-STATIC_ROOT = root('public/static')
+STATIC_ROOT = root('../public/static')
 STATIC_URL = '/static/'
 
 SECRET_KEY = env('SECRET_KEY')  # Raises ImproperlyConfigured exception if SECRET_KEY not in os.environ
@@ -134,8 +134,8 @@ INSTALLED_APPS = (
     'politici',
     'territori',
     'parlamento',
-    'pops',
-    'places',
+ #   'pops',
+ #   'places',
     'popolo',
     'rest_framework',
     'rest_framework_gis',
@@ -241,3 +241,5 @@ OC_PG_CONN = env('OPEN_COESIONE_DB_CONN_STRING')
 OP_API_URI = env('OP_API_URI')
 OP_API_USERNAME = env('OP_API_USERNAME')
 OP_API_PASSWORD = env('OP_API_PASSWORD')
+
+POSTGIS_VERSION = env.tuple('POSTGIS_VERSION')

@@ -14,7 +14,7 @@ class Carica(models.Model):
     presenze = models.IntegerField(null=True, blank=True)
     assenze = models.IntegerField(null=True, blank=True)
     missioni = models.IntegerField(null=True, blank=True)
-    #parliament_id = models.IntegerField(null=True, blank=True)
+    parliament_id = models.IntegerField(null=True, blank=True)
     indice = models.FloatField(null=True, blank=True)
     scaglione = models.IntegerField(null=True, blank=True)
     posizione = models.IntegerField(null=True, blank=True)
@@ -130,7 +130,6 @@ class Sede(models.Model):
     class Meta:
         db_table = 'opp_sede'
         managed = False
-
 
 
 class PoliticianHistoryCache(models.Model):

@@ -9,4 +9,5 @@
 /api_project/*/migrations/*
 dump.sql
 /static
+/data
 .vagrant
