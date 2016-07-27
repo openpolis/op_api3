@@ -26,6 +26,9 @@ class Carica(models.Model):
     maggioranza_salva_assente = models.IntegerField()
     created_at = models.DateTimeField(null=True, blank=True)
 
+    def __unicode__(self):
+	return "{0.charge} ({0.start_date} - {0.end_date})".format(self)	
+
     class Meta:
         db_table = 'opp_carica'
         managed = False
@@ -82,17 +85,18 @@ class GruppoRamo(models.Model):
         managed = False
 
 
-
-
-
 class CaricaInterna(models.Model):
-    carica = models.ForeignKey(OppCarica)
-    tipo_carica = models.ForeignKey('OppTipoCarica')
-    sede = models.ForeignKey('OppSede')
-    data_inizio = models.DateField(blank=True, null=True)
-    data_fine = models.DateField(blank=True, null=True)
+    carica = models.ForeignKey(Carica)
+    tipo_carica = models.ForeignKey('TipoCarica')
+    sede = models.ForeignKey('Sede')
+    start_date = models.DateField(blank=True, null=True, db_column='data_inizio')
+    end_date = models.DateField(blank=True, null=True, db_column='data_fine')
     descrizione = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(blank=True, null=True)
+
+    def __unicode__(self):
+	return "{0.carica} {0.sede} ({0.start_date} - {0.end_date})".format(self)	
+
     class Meta:
         db_table = 'opp_carica_interna'
         managed = False
@@ -101,20 +105,28 @@ class CaricaInterna(models.Model):
 class TipoCarica(models.Model):    
     name = models.CharField(max_length=255L, blank=True, db_column='nome')
 
+    def __unicode__(self):
+	return "{0.name}".format(self)	
+
     class Meta:
         db_table = 'opp_tipo_carica'
         managed = False
 
-
 class Sede(models.Model):
-    ramo = models.CharField(max_length=255, blank=True)
+    house = models.CharField(max_length=255, blank=True, db_column='ramo')
     denominazione = models.CharField(max_length=255, blank=True)
 #    legislatura = models.IntegerField(blank=True, null=True)
     tipologia = models.CharField(max_length=255, blank=True)
     codice = models.CharField(max_length=255, blank=True)
-    data_inizio = models.DateField(blank=True, null=True)
-    data_fine = models.DateField(blank=True, null=True)
+    start_date = models.DateField(blank=True, null=True, db_column='data_inizio')
+    end_date = models.DateField(blank=True, null=True, db_column='data_fine')
     parlamento_id = models.IntegerField(blank=True, null=True)
+
+    parliamentarians = models.ManyToManyField(Carica, through=CaricaInterna, related_name='sedi')
+
+    def __unicode__(self):
+	return "{0.tipologia} {0.denominazione} ({0.house})".format(self)	
+
     class Meta:
         db_table = 'opp_sede'
         managed = False
@@ -169,7 +181,6 @@ class Politico(models.Model):
     class Meta:
         db_table = 'opp_politico'
         managed = False
-
 
 
 class Seduta(models.Model):

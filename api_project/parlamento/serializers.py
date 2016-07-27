@@ -21,7 +21,7 @@ class SedeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Sede
-        fields = ('id', 'denominazione', 'tipologia', 'codice', 'start_date', 'end_date', 'parlamento_id')
+        fields = ('id', 'house', 'denominazione', 'tipologia', 'codice', 'start_date', 'end_date', 'parlamento_id')
 
 
 class PoliticoSerializer(serializers.ModelSerializer):
@@ -40,12 +40,12 @@ class CaricaSerializer(serializers.ModelSerializer):
 
 
 class CaricaInternaSerializer(serializers.ModelSerializer):
-
+    sede = fields.SedeField()
     charge_type = fields.CaricaField()
 
     class Meta:
         model = models.Carica
-        fields = ('id', 'charge_type', 'start_date', 'end_date', 'district', 'parliament_id' )
+        fields = ('id', 'charge_type', 'descrizione', 'sede', 'start_date', 'end_date' )
 
 
 class ParlamentareHistorySerializer(serializers.ModelSerializer):
