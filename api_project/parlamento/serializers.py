@@ -39,6 +39,15 @@ class CaricaSerializer(serializers.ModelSerializer):
         fields = ('id', 'charge_type', 'start_date', 'end_date', 'district', 'parliament_id' )
 
 
+class CaricaInternaSerializer(serializers.ModelSerializer):
+
+    charge_type = fields.CaricaField()
+
+    class Meta:
+        model = models.Carica
+        fields = ('id', 'charge_type', 'start_date', 'end_date', 'district', 'parliament_id' )
+
+
 class ParlamentareHistorySerializer(serializers.ModelSerializer):
 
     class Meta:

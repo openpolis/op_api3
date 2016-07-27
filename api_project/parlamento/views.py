@@ -58,6 +58,7 @@ class APILegislaturaMixin(object):
             ('url', self.get_reverse_url('legislatura-detail', **url_kwargs)),
             ('groups_url', self.get_reverse_url('gruppo-list', **url_kwargs)),
             ('districts_url', self.get_reverse_url('circoscrizione-list', **url_kwargs)),
+            ('sites_url', self.get_reverse_url('sede-list', **url_kwargs)),
             ('parliamentarians_url', self.get_reverse_url('parlamentare-list', **url_kwargs)),
             ('charges_url', self.get_reverse_url('carica-list', **url_kwargs)),
             ('sittings_url', self.get_reverse_url('seduta-list', **url_kwargs)),
@@ -152,7 +153,8 @@ class ParlamentareListView(APILegislaturaMixin, generics.ListAPIView):
     serializer_class = ParlamentareSerializer
     pagination_serializer_class = CustomPaginationSerializer
     queryset = PoliticianHistoryCache.objects.filter(chi_tipo='P')\
-        .select_related('charge', 'group', 'charge__politician', 'charge__charge_type')
+        .select_related('group', 'charge__politician', 'charge__charge_type')
+        .prefetch_related('charge__caricainterna_set__sede')
     filter_backends = APILegislaturaMixin.filter_backends + (filters.OrderingFilter,)
     ordering = ('charge__politician__surname', 'charge__politician__name') + ParlamentareSerializer.Meta.statistic_fields
 
@@ -302,7 +304,7 @@ class ParlamentareDetailView(APILegislaturaMixin, generics.RetrieveAPIView):
             queryset = self.filter_queryset(self.get_queryset())
 
         last_update = get_last_update(self.db_alias)
-        queryset = queryset.select_related('carica', 'carica__gruppo', 'carica__politico').filter(data=last_update)
+        queryset = queryset.select_related('charge', 'carica__gruppo', 'carica__politico').filter(data=last_update)
 
         obj = get_object_or_404(queryset,
                                 chi_id=self.kwargs.get('carica'),

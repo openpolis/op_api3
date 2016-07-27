@@ -50,6 +50,16 @@ class CaricaField(serializers.CharField):
         return value.name
 
 
+class SedeField(serializers.CharField):
+    """
+    Resolve a site name
+    """
+
+    def to_native(self, value):
+        return u"{0.tipologia} {0.denominazione} ({0.house})".format(value)
+
+
+
 class HyperlinkedParlamentariField(serializers.HyperlinkedIdentityField):
 
     def __init__(self, *args, **kwargs):
