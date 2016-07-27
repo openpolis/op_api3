@@ -50,6 +50,16 @@ class CaricaField(serializers.CharField):
         return value.name
 
 
+class UnicodeField(serializers.CharField):
+    """
+    Delegates the serialisation of the field to the __unicode__ model 
+    method.
+    """
+    def to_native(self, value):
+        return value.__unicode__()
+
+
+
 class SedeField(serializers.CharField):
     """
     Resolve a site name

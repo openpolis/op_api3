@@ -27,7 +27,10 @@ class Carica(models.Model):
     created_at = models.DateTimeField(null=True, blank=True)
 
     def __unicode__(self):
-	return "{0.charge} ({0.start_date} - {0.end_date})".format(self)	
+        if self.end_date:
+	    return "{0.charge} - dal {0.start_date} al {0.end_date}".format(self)
+        else:
+	    return "{0.charge} - dal {0.start_date}".format(self)
 
     class Meta:
         db_table = 'opp_carica'
@@ -54,6 +57,9 @@ class Gruppo(models.Model):
     acronym = models.CharField(max_length=80L, blank=True, db_column='acronimo')
 
     parliamentarians = models.ManyToManyField(Carica, through=CaricaHasGruppo, related_name='groups')
+
+    def __unicode__(self):
+	return "{0.name} ({0.acronym})".format(self)	
 
     class Meta:
         db_table = 'opp_gruppo'
@@ -95,7 +101,10 @@ class CaricaInterna(models.Model):
     created_at = models.DateTimeField(blank=True, null=True)
 
     def __unicode__(self):
-	return "{0.charge_type} {0.site} ({0.start_date} - {0.end_date})".format(self)	
+        if self.end_date:
+            return "{0.charge_type} - dal {0.start_date} al {0.end_date}".format(self)
+        else:
+            return "{0.charge_type} - dal {0.start_date}".format(self)
 
     class Meta:
         db_table = 'opp_carica_interna'
@@ -180,6 +189,20 @@ class Politico(models.Model):
     surname = models.CharField(max_length=30L, blank=True, db_column='cognome')
     gender = models.CharField(max_length=1L, blank=True, db_column='sesso')
     monitoring_users = models.IntegerField(db_column='n_monitoring_users')
+
+    def __unicode__(self):
+        monitored_string = ""
+        if self.gender == 'M':
+            monitored_adj = "monitorato"
+        else:
+            monitored_adj = "monitorata"
+
+        if self.monitoring_users:
+            monitored_string= " - {1} da {0.monitoring_users} utenti".format(self, monitored_adj)
+            if self.monitoring_users == 1:
+                monitored_string = " - {0} da un utente".format(monitored_adj)
+
+	return "{0.name} {0.surname}{1}".format(self, monitored_string)	
 
     class Meta:
         db_table = 'opp_politico'

@@ -18,10 +18,11 @@ class GruppoSerializer(serializers.ModelSerializer):
 
 
 class SedeSerializer(serializers.ModelSerializer):
+    parliamentarians_url = fields.HyperlinkedParlamentariField(filter='site')
 
     class Meta:
         model = models.Sede
-        fields = ('id', 'house', 'name', 'site_type', 'code', 'start_date', 'end_date', 'parlamento_id')
+        fields = ('id', 'house', 'name', 'site_type', 'code', 'start_date', 'end_date', 'parliamentarians_url')
 
 
 class PoliticoSerializer(serializers.ModelSerializer):
@@ -40,7 +41,7 @@ class CaricaSerializer(serializers.ModelSerializer):
 
 
 class CaricaInternaSerializer(serializers.ModelSerializer):
-    site = fields.SedeField()
+    site = fields.UnicodeField()
     charge_type = fields.CaricaField()
 
     class Meta:
@@ -63,6 +64,22 @@ class ParlamentareHistorySerializer(serializers.ModelSerializer):
         )
 
 
+class ParlamentareInlineSerializer(serializers.HyperlinkedModelSerializer):
+    url = serializers.HyperlinkedIdentityField(
+        view_name='parlamento:parlamentare-detail', 
+        lookup_field='chi_id'
+    )
+    charge = fields.UnicodeField()
+    group = fields.UnicodeField()
+    politician = fields.UnicodeField(source='charge.politician')
+    house = fields.RamoField()
+
+    class Meta:
+        model = models.PoliticianHistoryCache
+        fields = (
+            "politician", "charge", "group", "house", "url"
+        )
+
 
 class ParlamentareSerializer(serializers.ModelSerializer):
     charge = CaricaSerializer()
@@ -83,6 +100,7 @@ class ParlamentareSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.PoliticianHistoryCache
+        view_name = 'parlamento:parlamentare-detail'
         statistic_fields = (
             "assenze", "assenze_pos", "assenze_delta",
             "presenze", "presenze_pos", "presenze_delta",

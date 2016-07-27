@@ -11,7 +11,8 @@ from rest_framework.response import Response
 from rest_framework import generics, filters
 from parlamento import lex
 from parlamento.models import Carica, Gruppo, PoliticianHistoryCache, Seduta, Votazione, Sede
-from parlamento.serializers import CaricaSerializer, GruppoSerializer, CustomPaginationSerializer, ParlamentareSerializer, VotazioneSerializer, SedutaSerializer, VotazioneDettagliataSerializer, SedeSerializer
+from parlamento.serializers import CaricaSerializer, GruppoSerializer, CustomPaginationSerializer, ParlamentareSerializer, \
+       ParlamentareInlineSerializer, VotazioneSerializer, SedutaSerializer, VotazioneDettagliataSerializer, SedeSerializer
 from parlamento.utils import reverse_url, get_legislatura_from_request, get_last_update
 
 
@@ -150,7 +151,35 @@ class CircoscrizioneDetailView(APILegislaturaMixin, APIView):
 
 
 class ParlamentareListView(APILegislaturaMixin, generics.ListAPIView):
-    serializer_class = ParlamentareSerializer
+    """
+    Represents a list of parliamentarians
+
+    Accepts these filters through the following **GET** querystring parameters:
+
+    * ``house``      - C for Camera, S for Senato
+    * ``district``   - Name of the district (electoral councail)
+                       see: http://api3.openpolis.it/parlamento/17/districts/
+    * ``group``      - id of the group
+                       see: http://api3.openpolis.it/parlamento/17/groups/
+    * ``site``       - id of the site (commission, or other organ)
+                       see: http://api3.openpolis.it/parlamento/17/sites/
+    * ``gender``     - M for Male, F for Femalw
+
+    Results are filtered by surname, name of the parliamentarian.
+
+    Results have a standard pagination, with 25 results per page.
+
+    To get JSON format, specify ``format=json`` as a **GET** parameter
+
+    Example usage (extract all members of the 
+        Commissione permanente I Affari Costituzionali at il Senato)
+
+        >> r = requests.get('http://api3.openpolis.it/parlamento/17/parliamentarians/?site=1&format=json')
+        >> res = r.json()
+        >> print res['count']
+        59
+    """
+    serializer_class = ParlamentareInlineSerializer
     pagination_serializer_class = CustomPaginationSerializer
     queryset = PoliticianHistoryCache.objects.filter(chi_tipo='P')\
         .select_related('charge', 'group', 'charge__politician', 'charge__charge_type')\
@@ -165,21 +194,9 @@ class ParlamentareListView(APILegislaturaMixin, generics.ListAPIView):
 
         queryset = super(ParlamentareListView, self).get_queryset()
 
-        # filtro per data
-        data = self.request.QUERY_PARAMS.get('date', None)
-        if data:
-            data = parse_date(data)
-            if data > date.today():
-                # TODO: raise an Exception
-                return queryset.none()
-
-            queryset = queryset.filter(
-                charge__start_date__lt=data,
-            ).filter(Q(charge__end_date__isnull=True) | Q(charge__start_date__gt=data))
-        else:
-            # extract last update date to filter history cache results
-            data = get_last_update(self.db_alias)
-            queryset = queryset.filter(update_date=data)
+        # the last update from the index is taken
+        last_update = get_last_update(self.db_alias)
+        queryset = queryset.filter(update_date=last_update)
 
         # filtro per ramo
         ramo = self.request.QUERY_PARAMS.get('house', '').upper()
@@ -196,12 +213,39 @@ class ParlamentareListView(APILegislaturaMixin, generics.ListAPIView):
         if gruppo is not None:
             queryset = queryset.filter(group=int(gruppo))
 
+        # filtro per sede
+        sede = self.request.QUERY_PARAMS.get('site', None)
+        if sede is not None:
+            queryset = queryset.filter(charge__innercharges__site=int(sede))
+
         # filtro per genere
         genere = self.request.QUERY_PARAMS.get('gender', None)
         if genere in ('M', 'F'):
             queryset = queryset.filter(charge__politician__gender=genere)
 
         return queryset
+
+
+class ParlamentareDetailView(APILegislaturaMixin, generics.RetrieveAPIView):
+    serializer_class = ParlamentareSerializer
+    queryset = PoliticianHistoryCache.objects.filter(chi_tipo='P')
+
+    def get_object(self, queryset=None):
+        # Determine the base queryset to use.
+        if queryset is None:
+            queryset = self.filter_queryset(self.get_queryset())
+
+        last_update = get_last_update(self.db_alias)
+        queryset = queryset.select_related('charge', 'group', 'charge__politician', 'charge__charge_type')\
+            .filter(update_date=last_update)
+
+        obj = get_object_or_404(queryset, chi_id=self.kwargs.get('carica'))
+
+        # May raise a permission denied
+        self.check_object_permissions(self.request, obj)
+
+        return obj
+
 
 class CaricaListView(APILegislaturaMixin, generics.ListAPIView):
     """
@@ -292,28 +336,6 @@ class CaricaListView(APILegislaturaMixin, generics.ListAPIView):
 
         return queryset
 
-
-class ParlamentareDetailView(APILegislaturaMixin, generics.RetrieveAPIView):
-    serializer_class = ParlamentareSerializer
-    pagination_serializer_class = CustomPaginationSerializer
-    queryset = PoliticianHistoryCache.objects.filter(chi_tipo='P')
-
-    def get_object(self, queryset=None):
-        # Determine the base queryset to use.
-        if queryset is None:
-            queryset = self.filter_queryset(self.get_queryset())
-
-        last_update = get_last_update(self.db_alias)
-        queryset = queryset.select_related('charge', 'carica__gruppo', 'carica__politico').filter(data=last_update)
-
-        obj = get_object_or_404(queryset,
-                                chi_id=self.kwargs.get('carica'),
-                                )
-
-        # May raise a permission denied
-        self.check_object_permissions(self.request, obj)
-
-        return obj
 
 
 class SedutaListView(APILegislaturaMixin, generics.ListAPIView):
