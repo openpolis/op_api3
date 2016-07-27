@@ -16,6 +16,7 @@ urls = (
     url(r'^sittings/(?P<seduta>[0-9]+)/$', views.SedutaDetailView.as_view(), name='seduta-detail'),
     url(r'^votes/$', views.VotazioneListView.as_view(), name='votazione-list'),
     url(r'^votes/(?P<votazione>[0-9]+)/$', views.VotazioneDetailView.as_view(), name='votazione-detail'),
+    url(r'^sites/$', views.SedeListView.as_view(), name='sede-list'),
 )
 
 urlpatterns = patterns('',

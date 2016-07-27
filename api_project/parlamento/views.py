@@ -108,6 +108,11 @@ class GruppoDetail(APILegislaturaMixin, APIView):
     pass
 
 
+class SedeListView(APILegislaturaMixin, generics.ListAPIView):
+    queryset = Sede.objects.all()
+    serializer_class = SedeSerializer
+
+
 class CircoscrizioneListView(APILegislaturaMixin, APIView):
     """
     Computa la lista delle circoscrizioni,
