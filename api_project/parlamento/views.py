@@ -154,7 +154,7 @@ class ParlamentareListView(APILegislaturaMixin, generics.ListAPIView):
     pagination_serializer_class = CustomPaginationSerializer
     queryset = PoliticianHistoryCache.objects.filter(chi_tipo='P')\
         .select_related('charge', 'group', 'charge__politician', 'charge__charge_type')\
-        .prefetch_related('charge__caricainterna_set__site')
+        .prefetch_related('charge__innercharges__site')
     filter_backends = APILegislaturaMixin.filter_backends + (filters.OrderingFilter,)
     ordering = ('charge__politician__surname', 'charge__politician__name') + ParlamentareSerializer.Meta.statistic_fields
 

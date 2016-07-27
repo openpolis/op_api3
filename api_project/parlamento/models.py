@@ -86,16 +86,16 @@ class GruppoRamo(models.Model):
 
 
 class CaricaInterna(models.Model):
-    charge = models.ForeignKey(Carica, db_column='carica_id')
+    charge = models.ForeignKey(Carica, db_column='carica_id', related_name='innercharges')
     charge_type = models.ForeignKey('TipoCarica', db_column='tipo_carica_id')
     site = models.ForeignKey('Sede', db_column='sede_id')
     start_date = models.DateField(blank=True, null=True, db_column='data_inizio')
     end_date = models.DateField(blank=True, null=True, db_column='data_fine')
-    description = models.CharField(max_length=255, blank=True, db_column='descrizione')
+#    description = models.CharField(max_length=255, blank=True, db_column='descrizione')
     created_at = models.DateTimeField(blank=True, null=True)
 
     def __unicode__(self):
-	return "{0.charge} {0.site} ({0.start_date} - {0.end_date})".format(self)	
+	return "{0.charge_type} {0.site} ({0.start_date} - {0.end_date})".format(self)	
 
     class Meta:
         db_table = 'opp_carica_interna'
@@ -114,18 +114,21 @@ class TipoCarica(models.Model):
 
 class Sede(models.Model):
     house = models.CharField(max_length=255, blank=True, db_column='ramo')
-    denominazione = models.CharField(max_length=255, blank=True)
+    name = models.CharField(max_length=255, blank=True, db_column='denominazione')
 #    legislatura = models.IntegerField(blank=True, null=True)
-    tipologia = models.CharField(max_length=255, blank=True)
-    codice = models.CharField(max_length=255, blank=True)
+    site_type = models.CharField(max_length=255, blank=True, db_column='tipologia')
+    code = models.CharField(max_length=255, blank=True, db_column='codice')
     start_date = models.DateField(blank=True, null=True, db_column='data_inizio')
     end_date = models.DateField(blank=True, null=True, db_column='data_fine')
     parlamento_id = models.IntegerField(blank=True, null=True)
 
-    parliamentarians = models.ManyToManyField(Carica, through=CaricaInterna, related_name='sedi')
+    parliamentarians = models.ManyToManyField(Carica, through=CaricaInterna, related_name='sites')
 
     def __unicode__(self):
-	return "{0.tipologia} {0.denominazione} ({0.house})".format(self)	
+        if self.site_type.lower() in ['giunta', 'presidenza']:
+            return u"{0.name} ({0.house})".format(self)
+        else:
+	    return "{0.site_type} {0.name} ({0.house})".format(self)	
 
     class Meta:
         db_table = 'opp_sede'
@@ -134,7 +137,7 @@ class Sede(models.Model):
 
 class PoliticianHistoryCache(models.Model):
     
-    #legislatura = models.IntegerField(null=True, blank=True)
+#   legislatura = models.IntegerField(null=True, blank=True)
     update_date = models.DateField(db_column='data')
     assenze = models.FloatField(null=True, blank=True)
     assenze_pos = models.IntegerField(null=True, blank=True)
