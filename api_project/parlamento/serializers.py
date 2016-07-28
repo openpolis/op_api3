@@ -10,19 +10,20 @@ __author__ = 'daniele'
 
 class GruppoSerializer(serializers.ModelSerializer):
 
-    parliamentarians_url = fields.HyperlinkedParlamentariField(filter='group')
+    parliamentarians_uri = fields.HyperlinkedParlamentariField(filter='group')
 
     class Meta:
         model = models.Gruppo
-        fields = ('id', 'name', 'acronym', 'parliamentarians_url', )
+        fields = ('id', 'name', 'acronym', 'parliamentarians_uri', )
 
 
 class SedeSerializer(serializers.ModelSerializer):
-    parliamentarians_url = fields.HyperlinkedParlamentariField(filter='site')
+    parliamentarians_uri = fields.HyperlinkedParlamentariField(filter='site')
 
     class Meta:
         model = models.Sede
-        fields = ('id', 'house', 'name', 'site_type', 'code', 'start_date', 'end_date', 'parliamentarians_url')
+        fields = ('id', 'house', 'name', 'site_type', 'code', 'start_date',
+                  'end_date', 'parliamentarians_uri')
 
 
 class PoliticoSerializer(serializers.ModelSerializer):
@@ -42,20 +43,20 @@ class CaricaSerializer(serializers.ModelSerializer):
 
 class CaricaInternaSerializer(serializers.ModelSerializer):
     site = fields.UnicodeField()
-    site_parliamentarians_url = fields.HyperlinkedParlamentariField(
+    site_parliamentarians_uri = fields.HyperlinkedParlamentariField(
         filter='site', field_name='site_id'
     )
     charge_type = fields.CaricaField()
 
     class Meta:
         model = models.CaricaInterna
-        fields = ('charge_type', 'site', 'site_parliamentarians_url',
+        fields = ('charge_type', 'site', 'site_parliamentarians_uri',
                   'start_date',
                   'end_date' )
 
 
 class ParlamentareInlineSerializer(serializers.HyperlinkedModelSerializer):
-    self_url = fields.HyperlinkedParlamentareIdentityField()
+    self_uri = fields.HyperlinkedParlamentareIdentityField()
 
     charge = fields.UnicodeField()
     group = fields.UnicodeField()
@@ -65,7 +66,7 @@ class ParlamentareInlineSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = models.PoliticianHistoryCache
         fields = (
-            "politician", "charge", "group", "house", "self_url"
+            "politician", "charge", "group", "house", "self_uri"
         )
 
 
@@ -122,13 +123,13 @@ class SedutaSerializer(serializers.ModelSerializer):
 
 class VotazioneSerializer(serializers.ModelSerializer):
 
-    votazione_url = fields.HyperlinkedVotazioneIdentityField()
+    votazione_uri = fields.HyperlinkedVotazioneIdentityField()
     seduta = fields.HyperlinkedSedutaField(read_only=True)
 
     class Meta:
         model = models.Votazione
         fields = (
-            'id', 'sitting', 'votazione_url',
+            'id', 'sitting', 'votazione_uri',
             'numero_votazione',
             'titolo', 'titolo_aggiuntivo', 'descrizione',
             'presenti', 'votanti', 'maggioranza', 'astenuti',
@@ -152,13 +153,13 @@ class VotoSerializer(serializers.ModelSerializer):
 class VotazioneDettagliataSerializer(serializers.ModelSerializer):
 
     charge_votes = VotoSerializer(many=True, source='votazionehascarica_set')
-    vote_url = fields.HyperlinkedVotazioneIdentityField()
+    vote_uri = fields.HyperlinkedVotazioneIdentityField()
     sitting = fields.HyperlinkedSedutaField(read_only=True)
 
     class Meta:
         model = models.Votazione
         fields = (
-            'id', 'sitting', 'vote_url',
+            'id', 'sitting', 'vote_uri',
             'numero_votazione',
             'titolo', 'titolo_aggiuntivo', 'descrizione',
             'presenti', 'votanti', 'maggioranza', 'astenuti',
