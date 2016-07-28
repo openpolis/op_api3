@@ -1,90 +1,60 @@
-This procedure describes how to install a development environment,
-using Vagrant + Ansible, on your laptop (or desktop) PC.
+This procedure describes how to install a development environment on your laptop (or desktop) PC.
 
-Prerequisites
-=============
+Get the development branch from github::
 
-As a prerequisite, you need to have ansible installed as a global package,
-and correctly configured on your machine, in order to locate the
-depp-ansible roles.
-
-.. code::
-
-    # clone depp-ansible repository from gitlab
-    pushd ~/Workspace
-    git clone ssh://git@gitlab.equi.openpolis.it:9822/eraclitux/ansible.git depp-ansible
-
-    # configure ansible, to use depp-ansible repository
-    cat > ~/.ansible.cfg < EOF
-    [defaults]
-    roles_path = ~/Workspace/depp-ansible/playbooks/roles
-    nocows = 1
-    remote_user = vagrant
-    private_key_file = ~/.vagrant.d/insecure_private_key
-    host_key_checking = False
-    EOF
-
-
-Code download
-=============
-
-Download source code, from github to your host.
-
-.. code::
-    cd ~/workspace/op-api3
-    git clone https://github.com/openpolis/op_api3/ op-api3
+    git clone git@github.com:openpolis/op_api3.git op-api3
     
 
-VM Installation
-===============
+Create a virtualenv, the project is tested under python 2.7::
 
-A vagrant machine is launched and provisioned with all OS packages and
-python packages needed to properly run the django app and all needed services
-in the virtual machines, leaving the app source code in the host.
-
-.. code::
-
-    cd ~/workspace/op-api3/config
-    vagrant up
+    mkvirtualenv op-api3
 
 
-Data transfer
-#############
+Install development requirements::
 
-DB dumps should be taken from all sources (production/S3 backups), and restored:
+    pip install -r requirements/dev.txt
+    
 
-  - op_openpolis (politici - mysql)
-  - opp17 (17. legislatura - mysql)
-  - op_openparlamento (16. legislatura - mysql)
-  - op_api3 (db applicativo, popolo - postgres)
+Downgrade ``sqlparse``, as versions reater than 0.1, cause bugs in django-debug-toolbar::
 
-
-
-Now, open http://192.168.111.104:8004 in your browser!
+    pip remove sqlparse
+    pip install sqlparse==0.1.19
 
 
-
-   
-
-VM Operations
-=============
-
-This describes how to have the prepared environment start and begin work.
-
-.. code::
-
-    cd deploy-config
-    vagrant up
-    vagrant ssh -c "source virtualenvs/op-api3/bin/activate; cd /vagrant/op-api4; python api_project/manage.py runserver 0.0.0.0:8000"
+Dump postgresql DB in production, and restore it in localhost.
 
 
-Now, open http://192.168.111.104:8000 in your browser,
-start modifying code and see the changes in the browser.
+In order to avoid dumping and restoring legacy mysql databases with open_politici and open_parlamento data, you can access the production databases through tunneling::
 
-(Debugging in pycharm has yet to be configured correctly)
+    ssh -L 3307:localhost:3306 -Nv root@api3.openpolis.it
+    
+    
+Then, create or modify ``config/.env`` as follows, it is of paramount importance that ``127.0.0.1`` be used, instead of ``localhost`` in order for the tunneling into mysql to work::
 
-Libraries and packages updates can be checked (optionally) with:
+    DEBUG=True
+    DJANGO_SETTINGS_MODULE=api.settings.local
+    SECRET_KEY=d5!5k+yk(+m3bi-d8htob2n-8064c)-wzh=n8u1pe@him!fx6v
+    DB_DEFAULT_URL=postgis://postgres:@localhost/op_api3
+    DB_POLITICI_URL=mysql://root:@127.0.0.1:3307/op_openpolis
+    DB_PARLAMENTO16_URL=mysql://root:@127.0.0.1:3307/op_openparlamento
+    DB_PARLAMENTO17_URL=mysql://root:@127.0.0.1:3307/opp17
 
-.. code::
+    OPEN_COESIONE_DB_CONN_STRING=host='localhost' dbname='open_coesione' user='guglielmo' password=''
+    OP_API_URI=http://localhost:8003
+    OP_API_USERNAME=op
+    OP_API_PASSWORD=op
 
-    vagrant provision
+    MAPIT_AREA_SRID=32632
+    MAPIT_COUNTRY=GB
+    MAPIT_RATE_LIMIT=[]
+
+    POSTGIS_VERSION=(2,1,8)
+
+
+Execute the ``runserver`` management command::
+
+    python api_project/manage.py runserver
+    
+    
+Connect to http://localhost:8000
+
