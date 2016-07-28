@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from parlamento.utils import reverse_url
+from politici.fields import HyperlinkedParlamentareIdentityField
 from politici.models import OpUser, OpResources, OpPolitician, OpContent, OpInstitutionCharge, OpOpenContent, \
     OpParty, OpGroup, \
     OpEducationLevel, OpProfession, OpPoliticianHasOpEducationLevel
@@ -67,26 +67,6 @@ class ProfessionSerializer(serializers.ModelSerializer):
         model = OpProfession
         fields = ("description",)
 
-
-class HyperlinkedParlamentareIdentityField(serializers.HyperlinkedIdentityField):
-
-    def __init__(self, *args, **kwargs):
-        kwargs = kwargs.copy()
-        kwargs.update({
-            'view_name': 'parlamentare-detail',
-        })
-        super(
-            HyperlinkedParlamentareIdentityField, self
-        ).__init__(*args, **kwargs)
-
-    def get_url(self, obj, view_name, request, format):
-        return reverse_url(
-            view_name, request, format=format,
-            kwargs={
-                'politician_id': obj.pk,
-                'legislatura': 17, # only 17 legislature can work
-            }
-        )
 
 class PoliticianInlineSerializer(serializers.ModelSerializer):
     self_uri = serializers.HyperlinkedIdentityField(view_name = 'politici:politician-detail')

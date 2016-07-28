@@ -42,14 +42,14 @@ class CaricaSerializer(serializers.ModelSerializer):
 
 class CaricaInternaSerializer(serializers.ModelSerializer):
     site = fields.UnicodeField()
-    site_parlamentarians_url = fields.HyperlinkedParlamentariField(
+    site_parliamentarians_url = fields.HyperlinkedParlamentariField(
         filter='site', field_name='site_id'
     )
     charge_type = fields.CaricaField()
 
     class Meta:
         model = models.CaricaInterna
-        fields = ('charge_type', 'site', 'site_parlamentarians_url',
+        fields = ('charge_type', 'site', 'site_parliamentarians_url',
                   'start_date',
                   'end_date' )
 
