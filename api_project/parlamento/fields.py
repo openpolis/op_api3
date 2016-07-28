@@ -70,34 +70,40 @@ class SedeField(serializers.CharField):
         return value.__unicode__()
 
 
-
 class HyperlinkedParlamentariField(serializers.HyperlinkedIdentityField):
+    """
 
+    """
     def __init__(self, *args, **kwargs):
         kwargs = kwargs.copy()
         kwargs.update({
             'view_name': 'parlamentare-list',
         })
         self.filter = kwargs.pop('filter', None)
+        self.field_name = kwargs.pop('field_name', 'pk')
         super(HyperlinkedParlamentariField, self).__init__(*args, **kwargs)
 
     def get_url(self, obj, view_name, request, format):
         return reverse_url(
-            view_name, request, format=format, filters={self.filter: obj.pk}
+            view_name, request, format=format,
+            filters={self.filter: getattr(obj, self.field_name, None)}
         )
 
 
-class HyperlinkedParlamentareField(serializers.HyperlinkedRelatedField):
+class HyperlinkedParlamentareIdentityField(
+    serializers.HyperlinkedIdentityField):
 
     def __init__(self, *args, **kwargs):
         kwargs = kwargs.copy()
         kwargs.update({
             'view_name': 'parlamentare-detail',
         })
-        super(HyperlinkedParlamentareField, self).__init__(*args, **kwargs)
+        super(HyperlinkedParlamentareIdentityField, self).__init__(*args,
+                                                                 **kwargs)
 
     def get_url(self, obj, view_name, request, format):
-        return reverse_url(view_name, request, format=format, kwargs={'carica': obj.pk})
+        return reverse_url(view_name, request, format=format, kwargs={
+            'politician_id': obj.charge.politician_id})
 
 
 class HyperlinkedSedutaField(serializers.HyperlinkedRelatedField):

@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from parlamento.utils import reverse_url
 from politici.models import OpUser, OpResources, OpPolitician, OpContent, OpInstitutionCharge, OpOpenContent, \
     OpParty, OpGroup, \
     OpEducationLevel, OpProfession, OpPoliticianHasOpEducationLevel
@@ -67,7 +68,25 @@ class ProfessionSerializer(serializers.ModelSerializer):
         fields = ("description",)
 
 
+class HyperlinkedParlamentareIdentityField(serializers.HyperlinkedIdentityField):
 
+    def __init__(self, *args, **kwargs):
+        kwargs = kwargs.copy()
+        kwargs.update({
+            'view_name': 'parlamentare-detail',
+        })
+        super(
+            HyperlinkedParlamentareIdentityField, self
+        ).__init__(*args, **kwargs)
+
+    def get_url(self, obj, view_name, request, format):
+        return reverse_url(
+            view_name, request, format=format,
+            kwargs={
+                'politician_id': obj.pk,
+                'legislatura': 17, # only 17 legislature can work
+            }
+        )
 
 class PoliticianInlineSerializer(serializers.ModelSerializer):
     self_uri = serializers.HyperlinkedIdentityField(view_name = 'politici:politician-detail')
@@ -88,6 +107,7 @@ class PoliticianInlineSerializer(serializers.ModelSerializer):
         )
 
 
+
 class OpInstitutionChargeSerializer(serializers.ModelSerializer):
     content = OpenContentSerializer()
     politician = PoliticianInlineSerializer()
@@ -106,7 +126,7 @@ class OpInstitutionChargeSerializer(serializers.ModelSerializer):
             'date_start', 'date_end',
             'politician',
             'charge_type_descr', 'institution_descr',
-            'location_descr', 'location', 
+            'location_descr', 'location',
             'constituency_descr', 'constituency_election_type',
             'description',
             'party', 'group',
@@ -127,6 +147,7 @@ class OpInstitutionChargeInlineSerializer(serializers.HyperlinkedModelSerializer
 class PoliticianSerializer(serializers.HyperlinkedModelSerializer):
     content = ContentSerializer()
     image_uri = serializers.CharField(source='get_image_uri', read_only=True)
+    openparlamento_uri = HyperlinkedParlamentareIdentityField()
     profession = ProfessionSerializer()
     resources = ResourceSerializer(many=True)
     education_levels = OpPoliticianHasOpEducationLevelSerializer(many=True)
@@ -138,7 +159,7 @@ class PoliticianSerializer(serializers.HyperlinkedModelSerializer):
             'first_name', 'last_name',
             'birth_date', 'death_date', 'birth_location', 'sex',
             'last_charge_update',
-            'content', 'image_uri',
+            'content', 'image_uri', 'openparlamento_uri',
             'profession', 'education_levels',
             'resources',
             'institution_charges',

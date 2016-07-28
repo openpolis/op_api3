@@ -28,9 +28,9 @@ class Carica(models.Model):
 
     def __unicode__(self):
         if self.end_date:
-	    return "{0.charge} - dal {0.start_date} al {0.end_date}".format(self)
+            return "{0.charge} - dal {0.start_date} al {0.end_date}".format(self)
         else:
-	    return "{0.charge} - dal {0.start_date}".format(self)
+            return "{0.charge} - dal {0.start_date}".format(self)
 
     class Meta:
         db_table = 'opp_carica'
@@ -59,7 +59,7 @@ class Gruppo(models.Model):
     parliamentarians = models.ManyToManyField(Carica, through=CaricaHasGruppo, related_name='groups')
 
     def __unicode__(self):
-	return "{0.name} ({0.acronym})".format(self)	
+        return "{0.name} ({0.acronym})".format(self)
 
     class Meta:
         db_table = 'opp_gruppo'
@@ -115,7 +115,7 @@ class TipoCarica(models.Model):
     name = models.CharField(max_length=255L, blank=True, db_column='nome')
 
     def __unicode__(self):
-	return "{0.name}".format(self)	
+        return "{0.name}".format(self)
 
     class Meta:
         db_table = 'opp_tipo_carica'
@@ -137,7 +137,7 @@ class Sede(models.Model):
         if self.site_type.lower() in ['giunta', 'presidenza']:
             return u"{0.name} ({0.house})".format(self)
         else:
-	    return "{0.site_type} {0.name} ({0.house})".format(self)	
+            return "{0.site_type} {0.name} ({0.house})".format(self)
 
     class Meta:
         db_table = 'opp_sede'
@@ -164,19 +164,26 @@ class PoliticianHistoryCache(models.Model):
     ribellioni_pos = models.IntegerField(null=True, blank=True)
     ribellioni_delta = models.FloatField(null=True, blank=True)
     chi_tipo = models.CharField(max_length=1L)
-    chi_id = models.IntegerField()
+#    chi_id = models.IntegerField()
+    charge = models.ForeignKey(Carica, blank=True, null=True,
+                               db_column='chi_id',
+                               related_name='+')
+#    gruppo_id = models.IntegerField(null=True, blank=True)
+    group = models.ForeignKey(Gruppo, null=True, blank=True,
+                              db_column='gruppo_id',
+                              related_name='charges+')
     house = models.CharField(max_length=1L, db_column='ramo')
-    #gruppo_id = models.IntegerField(null=True, blank=True)
     numero = models.IntegerField(null=True, blank=True)
     created_at = models.DateTimeField(null=True, blank=True)
     updated_at = models.DateTimeField(null=True, blank=True)
 
-    charge = models.ForeignKey(Carica, blank=True, null=True, db_column='chi_id', related_name='+')
-    group = models.ForeignKey(Gruppo, null=True, blank=True, db_column='gruppo_id', related_name='charges+')
-
     @property
     def politico(self):
-        return self.carica.politico
+        return self.charge.politician
+
+
+    def __unicode__(self):
+        return self.politico.__unicode__()
 
     class Meta:
         db_table = 'opp_politician_history_cache'
@@ -202,7 +209,7 @@ class Politico(models.Model):
             if self.monitoring_users == 1:
                 monitored_string = " - {0} da un utente".format(monitored_adj)
 
-	return "{0.name} {0.surname}{1}".format(self, monitored_string)	
+        return "{0.name} {0.surname}{1}".format(self, monitored_string)
 
     class Meta:
         db_table = 'opp_politico'

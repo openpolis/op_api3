@@ -42,33 +42,21 @@ class CaricaSerializer(serializers.ModelSerializer):
 
 class CaricaInternaSerializer(serializers.ModelSerializer):
     site = fields.UnicodeField()
+    site_parlamentarians_url = fields.HyperlinkedParlamentariField(
+        filter='site', field_name='site_id'
+    )
     charge_type = fields.CaricaField()
 
     class Meta:
         model = models.CaricaInterna
-        fields = ('charge_type', 'site', 'start_date', 'end_date' )
-
-
-class ParlamentareHistorySerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = models.PoliticianHistoryCache
-        fields = (
-            "update_date",
-            "assenze", "assenze_pos", "assenze_delta",
-            "presenze", "presenze_pos", "presenze_delta",
-            "missioni", "missioni_pos", "missioni_delta",
-            "indice", "indice_pos", "indice_delta",
-            "ribellioni", "ribellioni_pos", "ribellioni_delta",
-            "house",
-        )
+        fields = ('charge_type', 'site', 'site_parlamentarians_url',
+                  'start_date',
+                  'end_date' )
 
 
 class ParlamentareInlineSerializer(serializers.HyperlinkedModelSerializer):
-    url = serializers.HyperlinkedIdentityField(
-        view_name='parlamento:parlamentare-detail', 
-        lookup_field='chi_id'
-    )
+    self_url = fields.HyperlinkedParlamentareIdentityField()
+
     charge = fields.UnicodeField()
     group = fields.UnicodeField()
     politician = fields.UnicodeField(source='charge.politician')
@@ -77,7 +65,7 @@ class ParlamentareInlineSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = models.PoliticianHistoryCache
         fields = (
-            "politician", "charge", "group", "house", "url"
+            "politician", "charge", "group", "house", "self_url"
         )
 
 
@@ -100,7 +88,6 @@ class ParlamentareSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.PoliticianHistoryCache
-        view_name = 'parlamento:parlamentare-detail'
         statistic_fields = (
             "assenze", "assenze_pos", "assenze_delta",
             "presenze", "presenze_pos", "presenze_delta",

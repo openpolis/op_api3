@@ -239,7 +239,10 @@ class ParlamentareDetailView(APILegislaturaMixin, generics.RetrieveAPIView):
         queryset = queryset.select_related('charge', 'group', 'charge__politician', 'charge__charge_type')\
             .filter(update_date=last_update)
 
-        obj = get_object_or_404(queryset, chi_id=self.kwargs.get('carica'))
+        obj = get_object_or_404(
+            queryset,
+            charge__politician__id=self.kwargs.get('politician_id')
+        )
 
         # May raise a permission denied
         self.check_object_permissions(self.request, obj)
