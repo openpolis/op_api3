@@ -155,6 +155,9 @@ class CircoscrizioneDetailView(APILegislaturaMixin, APIView):
 
 class ParlamentareCacheListView(APILegislaturaMixin, generics.ListAPIView):
     """
+    This is a **DEPRECATED** view, as it uses an inner, incomplete storage,
+    and it may not show all updated information.
+
     Represents a list of parliamentarians
 
     Accepts these filters through the following **GET** querystring parameters:
@@ -260,10 +263,6 @@ class ParlamentareCacheDetailView(APILegislaturaMixin,
 
 class ParlamentareListView(APILegislaturaMixin, generics.ListAPIView):
     """
-
-    This is a **DEPRECATED** view, as it uses an inner, incomplete storage,
-    and it may not show all updated information.
-
     Represents a list of parliamentarians
 
     Accepts these filters through the following **GET** querystring parameters:
