@@ -231,6 +231,10 @@ class ParlamentareCacheListView(APILegislaturaMixin, generics.ListAPIView):
 
 class ParlamentareCacheDetailView(APILegislaturaMixin,
                                   generics.RetrieveAPIView):
+    """
+    This is a **DEPRECATED** view, as it uses an inner, incomplete storage,
+    and it may not show all updated information.
+    """
     serializer_class = ParlamentareCacheSerializer
     queryset = PoliticianHistoryCache.objects.filter(chi_tipo='P')
 
@@ -256,6 +260,10 @@ class ParlamentareCacheDetailView(APILegislaturaMixin,
 
 class ParlamentareListView(APILegislaturaMixin, generics.ListAPIView):
     """
+
+    This is a **DEPRECATED** view, as it uses an inner, incomplete storage,
+    and it may not show all updated information.
+
     Represents a list of parliamentarians
 
     Accepts these filters through the following **GET** querystring parameters:
@@ -376,6 +384,7 @@ class ParlamentareListView(APILegislaturaMixin, generics.ListAPIView):
                 )
 
         return queryset
+
 
 class ParlamentareDetailView(APILegislaturaMixin, generics.RetrieveAPIView):
     """
