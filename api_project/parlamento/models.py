@@ -178,7 +178,7 @@ class PoliticianHistoryCache(models.Model):
     ribellioni_pos = models.IntegerField(null=True, blank=True)
     ribellioni_delta = models.FloatField(null=True, blank=True)
     chi_tipo = models.CharField(max_length=1L)
-#    chi_id = models.IntegerField()
+    chi_id = models.IntegerField()
     charge = models.ForeignKey(Carica, blank=True, null=True,
                                db_column='chi_id',
                                related_name='+')

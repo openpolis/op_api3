@@ -89,6 +89,22 @@ class ParlamentareInlineSerializer(serializers.HyperlinkedModelSerializer):
         )
 
 
+class ParlamentareCacheInlineSerializer(serializers.HyperlinkedModelSerializer):
+    self_url = fields.HyperlinkedParlamentareCacheIdentityField(
+        view_name='parlamento:parlamentare-cache-detail',
+        lookup_field='chi_id'
+    )
+    charge = fields.UnicodeField()
+    group = fields.UnicodeField()
+    politician = fields.UnicodeField(source='charge.politician')
+    house = fields.RamoField()
+
+    class Meta:
+        model = models.PoliticianHistoryCache
+        fields = (
+            "politician", "charge", "group", "house", "self_url"
+        )
+
 class ParlamentareCacheSerializer(serializers.ModelSerializer):
     charge = CaricaSerializer()
     inner_charges = CaricaInternaSerializer(many=True, source='charge.innercharges')

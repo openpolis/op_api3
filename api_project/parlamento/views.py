@@ -14,7 +14,8 @@ from parlamento.models import Carica, Gruppo, PoliticianHistoryCache, Seduta, Vo
     Politico
 from parlamento.serializers import CaricaSerializer, GruppoSerializer, CustomPaginationSerializer, ParlamentareCacheSerializer, \
        ParlamentareInlineSerializer, VotazioneSerializer, SedutaSerializer, VotazioneDettagliataSerializer, SedeSerializer, \
-    PoliticoSerializer, CaricaInlineSerializer
+    PoliticoSerializer, CaricaInlineSerializer, \
+    ParlamentareCacheInlineSerializer
 from parlamento.utils import reverse_url, get_legislatura_from_request, get_last_update
 
 
@@ -181,7 +182,7 @@ class ParlamentareCacheListView(APILegislaturaMixin, generics.ListAPIView):
         >> print res['count']
         59
     """
-    serializer_class = ParlamentareInlineSerializer
+    serializer_class = ParlamentareCacheInlineSerializer
     pagination_serializer_class = CustomPaginationSerializer
     queryset = PoliticianHistoryCache.objects.filter(chi_tipo='P')\
         .select_related('charge', 'group', 'charge__politician', 'charge__charge_type')\
@@ -251,7 +252,6 @@ class ParlamentareCacheDetailView(APILegislaturaMixin,
         self.check_object_permissions(self.request, obj)
 
         return obj
-
 
 
 class ParlamentareListView(APILegislaturaMixin, generics.ListAPIView):
@@ -377,8 +377,24 @@ class ParlamentareListView(APILegislaturaMixin, generics.ListAPIView):
 
         return queryset
 
-
 class ParlamentareDetailView(APILegislaturaMixin, generics.RetrieveAPIView):
+    """
+    Details for a single **Parliamentarian**, include a small anagraphical
+    section with:
+
+    - `id` - the main ID, that connects openparlamento and openpolis
+    - `name', `surname`, `gender` - the only anagraphical information we have in openparlamento
+    - `monitoring_users` - the number of users who are monitoring this
+    politician in openparlamento
+
+    Then a list of `charges`, past or present.
+
+    For each charge:
+
+    - the list of past and present `groups` memberships and relevant charges,
+    - the list of past and present *internal* charges
+      (commitees and other internal house organs)
+    """
 
     def get(self, request, **kwargs):
         """
@@ -511,6 +527,7 @@ class ParlamentareDetailView(APILegislaturaMixin, generics.RetrieveAPIView):
 
 class CaricaListView(APILegislaturaMixin, generics.ListAPIView):
     """
+    -- DEPRECATED --
     Represents the list of institution charges
 
     Accepts these filters through the following **GET** querystring parameters:
