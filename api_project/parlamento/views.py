@@ -481,6 +481,11 @@ class ParlamentareDetailView(APILegislaturaMixin, generics.RetrieveAPIView):
             except ValueError:
                 indice_pos = None
 
+            try:
+                rebellions_perc = "{0:.2f}".format(100. * c.ribelle / c.presenze)
+            except ZeroDivisionError:
+                rebellions_perc = None
+
             if show_statistics:
                 c_dict['statistics'] = odict([
                     ('presences', c.presenze),
@@ -493,8 +498,7 @@ class ParlamentareDetailView(APILegislaturaMixin, generics.RetrieveAPIView):
                     ('missions_perc',
                      "{0:.2f}".format(100. * c.missioni / sum_votations) ),
                     ('rebellions', c.ribelle),
-                    ('rebellions_perc',
-                     "{0:.2f}".format(100. * c.ribelle / c.presenze) ),
+                    ('rebellions_perc', rebellions_perc),
                     ('productivity_index', c.indice),
                     ('productivity_index_pos', indice_pos)
                 ])
