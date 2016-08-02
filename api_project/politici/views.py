@@ -146,6 +146,7 @@ class PoliticianList(DefaultsMixin, PoliticiDBSelectMixin, generics.ListAPIView)
                 Q(last_name__icontains=namecontains)
             )
 
+
         # openpolis_id = self.request.QUERY_PARAMS.get('openpolis_id', None)
         # if openpolis_id:
         #     queryset = queryset.filter(identifiers__slug=slug,
@@ -216,8 +217,12 @@ class InstitutionChargeList(
     * ``institution_id`` - ID of the institution
     * ``charge_type_id`` - ID of the charge_type
     * ``location_id``    - ID of the location
+    * ``updated_after``  - charges updated after given timestamp
 
-    Dates have the format: ``YYYY-MM-DD``
+    Dates have the format: `YYYY-MM-DD`
+
+    Timestamps have the format: `YYYY-MM-DDTHH:MM:SSZ`
+
 
     Results can be sorted by date, specifying the ``order_by=date``
     query string parameter.
@@ -238,8 +243,15 @@ class InstitutionChargeList(
     """
     model = OpInstitutionCharge
     serializer_class = OpInstitutionChargeSerializer
-    queryset = model.objects.\
-        select_related('content').\
+    queryset = model.objects. \
+        prefetch_related('politician__education_levels__education_level').\
+        select_related('institution', 'charge_type', 'location',
+                       'politician', 'politician__profession',
+                       'politician__content',
+                       'politician__content__opopencontent',
+                       'party', 'group',
+                       'constituency', 'constituency__election_type',
+                       'content', 'content__content').\
         exclude(content__deleted_at__isnull=False)
 
 
@@ -339,6 +351,15 @@ class InstitutionChargeList(
         if order_by:
             if order_by == 'date':
                 queryset = queryset.order_by('-date_start')
+
+        # fetch all charges updated after a given timestamp
+        updated_after = self.request.QUERY_PARAMS.get(
+            'updated_after', None
+        )
+        if updated_after:
+            queryset = queryset.filter(
+                content__content__updated_at__gt=updated_after
+            )
 
         return queryset
 

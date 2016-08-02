@@ -301,8 +301,10 @@ class OpEducationLevel(models.Model):
         return self.getNormalizedDescription()
 
 class OpPoliticianHasOpEducationLevel(models.Model):
-    politician = models.ForeignKey(OpPolitician, primary_key=True)
-    education_level = models.ForeignKey(OpEducationLevel, primary_key=True)
+    politician = models.ForeignKey(OpPolitician, primary_key=True,
+                                   related_name='education_levels')
+    education_level = models.ForeignKey(OpEducationLevel, primary_key=True,
+                                        related_name='politicians')
     description = models.CharField(max_length=255, blank=True)
 
     def __unicode__(self):
