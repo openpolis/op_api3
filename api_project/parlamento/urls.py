@@ -10,9 +10,21 @@ urls = [
     url(r'^groups/(?P<gruppo>[\w_.-]+)$', views.GruppoDetail.as_view(), name='gruppo-detail'),
     url(r'^districts$', views.CircoscrizioneListView.as_view(), name='circoscrizione-list'),
     url(r'^districts/(?P<circoscrizione>[\w_.-]+)$', views.CircoscrizioneDetailView.as_view(), name='circoscrizione-detail'),
-    url(r'^parliamentarians$', views.ParlamentareListView.as_view(), name='parlamentare-list'),
+
+    # old views
+    url(r'^parliamentarians-cache$', views.ParlamentareCacheListView.as_view(),
+        name='parlamentare-cache-list'),
+    url(r'^parliamentarians-cache/(?P<politician_id>[0-9]+)$',
+        views.ParlamentareCacheDetailView.as_view(),
+        name='parlamentare-cache-detail'),
+
+    url(r'^parliamentarians$',
+        views.ParlamentareListView.as_view(),
+        name='parlamentare-list'),
     url(r'^parliamentarians/(?P<politician_id>[0-9]+)$',
-        views.ParlamentareDetailView.as_view(), name='parlamentare-detail'),
+        views.ParlamentareDetailView.as_view(),
+        name='parlamentare-detail'),
+
     url(r'^sites$', views.SedeListView.as_view(), name='sede-list'),
     url(r'^charges$', views.CaricaListView.as_view(), name='carica-list'),
     url(r'^sittings$', views.SedutaListView.as_view(), name='seduta-list'),

@@ -1,3 +1,4 @@
+from django.db.models import Q
 from rest_framework import serializers
 from parlamento.utils import get_legislatura_from_request, reverse_url, get_last_update
 
@@ -59,6 +60,32 @@ class UnicodeField(serializers.CharField):
         return value.__unicode__()
 
 
+class FirstUnicodeField(serializers.CharField):
+    """
+    Get the first element, and return its representation.
+    Delegates the serialisation of the field to the __unicode__ model
+    method.
+    """
+    def to_native(self, value):
+        return value.all()[0].__unicode__()
+
+
+class FirstParliamentarianChargeField(serializers.CharField):
+    """
+    Get the first charge , and return its representation.
+    Delegates the serialisation of the field to the __unicode__ model
+    method.
+    """
+    def to_native(self, value):
+        ret = value.filter(
+            Q(charge_type__name__iexact='deputato') |
+            Q(charge_type__name__icontains='senatore')
+        )
+
+        if not ret:
+            ret = value.all()
+
+        return ret[0].__unicode__()
 
 class SedeField(serializers.CharField):
     """
@@ -90,6 +117,21 @@ class HyperlinkedParlamentariField(serializers.HyperlinkedIdentityField):
         )
 
 
+class HyperlinkedParlamentareCacheIdentityField(
+    serializers.HyperlinkedIdentityField):
+
+    def __init__(self, *args, **kwargs):
+        kwargs = kwargs.copy()
+        kwargs.update({
+            'view_name': 'parlamentare-cache-detail',
+        })
+        super(HyperlinkedParlamentareCacheIdentityField, self).__init__(*args,
+                                                                 **kwargs)
+
+    def get_url(self, obj, view_name, request, format):
+        return reverse_url(view_name, request, format=format, kwargs={
+            'politician_id': obj.charge.politician_id})
+
 class HyperlinkedParlamentareIdentityField(
     serializers.HyperlinkedIdentityField):
 
@@ -103,7 +145,7 @@ class HyperlinkedParlamentareIdentityField(
 
     def get_url(self, obj, view_name, request, format):
         return reverse_url(view_name, request, format=format, kwargs={
-            'politician_id': obj.charge.politician_id})
+            'politician_id': obj.pk})
 
 
 class HyperlinkedSedutaField(serializers.HyperlinkedRelatedField):

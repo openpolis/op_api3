@@ -10,9 +10,11 @@ from rest_framework.response import Response
 
 from rest_framework import generics, filters
 from parlamento import lex
-from parlamento.models import Carica, Gruppo, PoliticianHistoryCache, Seduta, Votazione, Sede
-from parlamento.serializers import CaricaSerializer, GruppoSerializer, CustomPaginationSerializer, ParlamentareSerializer, \
-       ParlamentareInlineSerializer, VotazioneSerializer, SedutaSerializer, VotazioneDettagliataSerializer, SedeSerializer
+from parlamento.models import Carica, Gruppo, PoliticianHistoryCache, Seduta, Votazione, Sede, \
+    Politico
+from parlamento.serializers import CaricaSerializer, GruppoSerializer, CustomPaginationSerializer, ParlamentareCacheSerializer, \
+       ParlamentareInlineSerializer, VotazioneSerializer, SedutaSerializer, VotazioneDettagliataSerializer, SedeSerializer, \
+    PoliticoSerializer, CaricaInlineSerializer
 from parlamento.utils import reverse_url, get_legislatura_from_request, get_last_update
 
 
@@ -61,7 +63,7 @@ class APILegislaturaMixin(object):
             ('districts_url', self.get_reverse_url('circoscrizione-list', **url_kwargs)),
             ('sites_url', self.get_reverse_url('sede-list', **url_kwargs)),
             ('parliamentarians_url', self.get_reverse_url('parlamentare-list', **url_kwargs)),
-            ('charges_url', self.get_reverse_url('carica-list', **url_kwargs)),
+#            ('charges_url', self.get_reverse_url('carica-list', **url_kwargs)),
             ('sittings_url', self.get_reverse_url('seduta-list', **url_kwargs)),
             ('votes_url', self.get_reverse_url('votazione-list', **url_kwargs)),
         ])
@@ -150,7 +152,7 @@ class CircoscrizioneDetailView(APILegislaturaMixin, APIView):
     pass
 
 
-class ParlamentareListView(APILegislaturaMixin, generics.ListAPIView):
+class ParlamentareCacheListView(APILegislaturaMixin, generics.ListAPIView):
     """
     Represents a list of parliamentarians
 
@@ -171,7 +173,7 @@ class ParlamentareListView(APILegislaturaMixin, generics.ListAPIView):
 
     To get JSON format, specify ``format=json`` as a **GET** parameter
 
-    Example usage (extract all members of the 
+    Example usage (extract all members of the
         Commissione permanente I Affari Costituzionali at il Senato)
 
         >> r = requests.get('http://api3.openpolis.it/parlamento/17/parliamentarians/?site=1&format=json')
@@ -185,14 +187,14 @@ class ParlamentareListView(APILegislaturaMixin, generics.ListAPIView):
         .select_related('charge', 'group', 'charge__politician', 'charge__charge_type')\
         .prefetch_related('charge__innercharges__site')
     filter_backends = APILegislaturaMixin.filter_backends + (filters.OrderingFilter,)
-    ordering = ('charge__politician__surname', 'charge__politician__name') + ParlamentareSerializer.Meta.statistic_fields
+    ordering = ('charge__politician__surname', 'charge__politician__name') + ParlamentareCacheSerializer.Meta.statistic_fields
 
     def get_queryset(self):
         """
         Add filters to queryset provided in url querystring.
         """
 
-        queryset = super(ParlamentareListView, self).get_queryset()
+        queryset = super(ParlamentareCacheListView, self).get_queryset()
 
         # the last update from the index is taken
         last_update = get_last_update(self.db_alias)
@@ -226,8 +228,9 @@ class ParlamentareListView(APILegislaturaMixin, generics.ListAPIView):
         return queryset
 
 
-class ParlamentareDetailView(APILegislaturaMixin, generics.RetrieveAPIView):
-    serializer_class = ParlamentareSerializer
+class ParlamentareCacheDetailView(APILegislaturaMixin,
+                                  generics.RetrieveAPIView):
+    serializer_class = ParlamentareCacheSerializer
     queryset = PoliticianHistoryCache.objects.filter(chi_tipo='P')
 
     def get_object(self, queryset=None):
@@ -248,6 +251,258 @@ class ParlamentareDetailView(APILegislaturaMixin, generics.RetrieveAPIView):
         self.check_object_permissions(self.request, obj)
 
         return obj
+
+
+
+class ParlamentareListView(APILegislaturaMixin, generics.ListAPIView):
+    """
+    Represents a list of parliamentarians
+
+    Accepts these filters through the following **GET** querystring parameters:
+
+    * ``house``      - C for Camera, S for Senato
+    * ``district``   - Name of the district (electoral councail)
+                       see: http://api3.openpolis.it/parlamento/17/districts
+    * ``group``      - id of the group
+                       see: http://api3.openpolis.it/parlamento/17/groups
+    * ``site``       - id of the site (commission, or other organ)
+                       see: http://api3.openpolis.it/parlamento/17/sites
+    * ``gender``     - M for Male, F for Female
+    * ``status``     - A for Active, I for Inactive
+                       only currently active or inactive MPs are listed
+    * ``info_mode``  - C for Current, H for Historical
+                       related_info shown are current or historical
+
+
+    Results are ordered by surname, name of the parliamentarian.
+
+    Results have a standard pagination, with 25 results per page.
+
+    To get JSON format, specify ``format=json`` as a **GET** parameter
+
+    Example usage (extract all members of the
+        Commissione permanente I Affari Costituzionali at il Senato)
+
+        >> r = requests.get('http://api3.openpolis.it/parlamento/17/parliamentarians/?site=1&format=json')
+        >> res = r.json()
+        >> print res['count']
+        59
+    """
+    serializer_class = ParlamentareInlineSerializer
+    pagination_serializer_class = CustomPaginationSerializer
+    queryset = Politico.objects\
+        .select_related('charge', 'charge__charge_type')
+    filter_backends = APILegislaturaMixin.filter_backends + (filters.OrderingFilter,)
+    ordering = ('surname', 'name')
+
+    def get_queryset(self):
+        """
+        Add filters to queryset provided in url querystring.
+        """
+        queryset = super(ParlamentareListView, self).get_queryset()
+
+        # filtro per ramo
+        ramo = self.request.QUERY_PARAMS.get('house', '').upper()
+        if ramo == 'C':
+            queryset = queryset.filter(
+                charges__charge_type__name__iexact='deputato')
+        if ramo == 'S':
+            queryset = queryset.filter(
+                charges__charge_type__name__icontains='senatore')
+
+        # filtro per status
+        # only politicians who are currently active in the parliament
+        # are filtered
+        status = self.request.QUERY_PARAMS.get('status', '').upper()
+        if status == 'A':
+            queryset = queryset.filter(
+                (Q(charges__charge_type__name__iexact='deputato') |
+                 Q(charges__charge_type__name__icontains='senatore')) &
+                Q(charges__end_date__isnull=True)
+            )
+        if status == 'I':
+            queryset = queryset.filter(
+                (Q(charges__charge_type__name__iexact='deputato') |
+                 Q(charges__charge_type__name__icontains='senatore')) &
+                Q(charges__end_date__isnull=False)
+            )
+
+        # filtro per circoscrizione
+        circoscrizione = self.request.QUERY_PARAMS.get('district', None)
+        if circoscrizione is not None:
+            queryset = queryset.filter(charges__district=circoscrizione)
+
+        # filtro per genere
+        genere = self.request.QUERY_PARAMS.get('gender', None)
+        if genere in ('M', 'F'):
+            queryset = queryset.filter(gender=genere)
+
+        # filtro per info_mode
+        # defines which groups and sites info are shown
+        # if both (default), current or historical
+        info_mode = self.request.QUERY_PARAMS.get('info_mode', None)
+
+        # filtro per gruppo
+        gruppo = self.request.QUERY_PARAMS.get('group', None)
+        if gruppo is not None:
+            queryset = queryset.filter(
+                charges__caricahasgruppo__group_id=int(gruppo)
+            )
+
+            # current or historical info_mode add-on
+            if info_mode == 'C':
+                queryset = queryset.filter(
+                    charges__caricahasgruppo__end_date__isnull=True
+                )
+            if info_mode == 'H':
+                queryset = queryset.filter(
+                    charges__caricahasgruppo__end_date__isnull=False
+                )
+
+
+        # filtro per sede
+        sede = self.request.QUERY_PARAMS.get('site', None)
+        if sede is not None:
+            queryset = queryset.filter(charges__innercharges__site=int(sede))
+
+            # current or historical info_mode add-on
+            if info_mode == 'C':
+                queryset = queryset.filter(
+                    charges__innercharges__end_date__isnull=True
+                )
+            if info_mode == 'H':
+                queryset = queryset.filter(
+                    charges__innercharges__end_date__isnull=False
+                )
+
+        return queryset
+
+
+class ParlamentareDetailView(APILegislaturaMixin, generics.RetrieveAPIView):
+
+    def get(self, request, **kwargs):
+        """
+        The view for a Politico is a complex beast. We go manual here.
+
+        The get method is overriden and the db selection filter (using)
+        must be explicitly called, as the usual filter_backends in the
+        mixin are not called at that point.
+
+        The response is manually built, by looping on data structure that have
+        already been prefetched.
+
+        TODO: see if it's easy to include the filters, and avoid to
+        explicitly build the queryset using ``using``.
+        """
+
+        # list of all indici, sorted,
+        # used to get the position of the politician
+        # in a global ranking
+        # TODO: this could be cached into a redis key
+        #       with a 120 minutes timeout
+        indici = list(
+            Carica.objects.using('parlamento17').filter(
+                charge_type_id__in=[1, 4, 5],
+                end_date__isnull=True,
+                indice__isnull=False
+            ).values_list('indice', flat=True).
+                order_by('-indice')
+        )
+
+        # huge prefetch, to make all queries at once
+        # usually it gets faster
+        p = Politico.objects.using(self.db_alias).\
+            prefetch_related(
+                'charges__charge_type',
+                'charges__caricahasgruppo_set__group',
+                'charges__caricahasgruppo_set__groupcharges',
+                'charges__innercharges__site',
+                'charges__innercharges__charge_type'
+            ).get(pk=kwargs['politician_id'])
+
+        # will use an odict, to keep fields sorted
+        res_dict = odict([
+            ('id', p.id),
+            ('name', p.name), ('surname', p.surname), ('gender', p.gender),
+            ('monitoring_users', p.monitoring_users),
+        ])
+
+        charges = []
+        for c in p.charges.all():
+            c_dict = odict([])
+            c_dict['name'] = c.charge
+            c_dict['start_date'] = c.start_date
+            c_dict['end_date'] = c.end_date
+            c_dict['repr'] = c.__unicode__()
+
+            groups = []
+            for cg in c.caricahasgruppo_set.all():
+                g = cg.group
+                g_dict = odict([])
+                g_dict['name'] = g.name
+                g_dict['acronym'] = g.acronym
+                g_dict['repr'] = g.__unicode__()
+
+                g_dict['charges'] = []
+                for ig in cg.groupcharges.all():
+                    i_dict = odict([])
+                    i_dict['name'] = ig.charge
+                    i_dict['start_date'] = ig.start_date
+                    i_dict['end_date'] = ig.end_date
+
+                    g_dict['charges'].append(i_dict)
+
+                groups.append(g_dict)
+
+            if groups:
+                c_dict['groups'] = groups
+
+
+            inner_charges = []
+            for ic in c.innercharges.all():
+                ic_dict = odict([])
+                ic_dict['name'] = ic.charge_type.name
+                ic_dict['site'] = ic.site.__unicode__()
+                ic_dict['start_date'] = ic.start_date
+                ic_dict['end_date'] = ic.end_date
+                inner_charges.append(ic_dict)
+            if inner_charges:
+                c_dict['inner_charges'] = inner_charges
+
+
+            show_statistics = True
+            try:
+                sum_votations = float(c.presenze + c.assenze + c.missioni)
+            except TypeError:
+                show_statistics = False
+
+            try:
+                indice_pos = indici.index(c.indice) + 1
+            except ValueError:
+                indice_pos = None
+
+            if show_statistics:
+                c_dict['statistics'] = odict([
+                    ('presences', c.presenze),
+                    ('presences_perc',
+                     "{0:.2f}".format(100. * c.presenze / sum_votations) ),
+                    ('absences', c.assenze),
+                    ('absences_perc',
+                     "{0:.2f}".format(100. * c.assenze / sum_votations) ),
+                    ('missions', c.missioni),
+                    ('missions_perc',
+                     "{0:.2f}".format(100. * c.missioni / sum_votations) ),
+                    ('rebellions', c.ribelle),
+                    ('rebellions_perc',
+                     "{0:.2f}".format(100. * c.ribelle / c.presenze) ),
+                    ('productivity_index', c.indice),
+                    ('productivity_index_pos', indice_pos)
+                ])
+
+            charges.append(c_dict)
+
+        res_dict['charges'] = charges
+        return Response(res_dict)
 
 
 class CaricaListView(APILegislaturaMixin, generics.ListAPIView):
@@ -284,7 +539,7 @@ class CaricaListView(APILegislaturaMixin, generics.ListAPIView):
     """
 
     model = Carica
-    serializer_class = CaricaSerializer
+    serializer_class = CaricaInlineSerializer
     pagination_serializer_class = CustomPaginationSerializer
 
     def get_queryset(self):

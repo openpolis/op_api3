@@ -4,8 +4,10 @@ from django.db import models
 
 
 class Carica(models.Model):
-    politician = models.ForeignKey('Politico', db_column='politico_id')
-    charge_type = models.ForeignKey('TipoCarica', db_column='tipo_carica_id')
+    politician = models.ForeignKey('Politico', db_column='politico_id' ,
+                                   related_name='charges')
+    charge_type = models.ForeignKey('TipoCarica', db_column='tipo_carica_id',
+                                    related_name='charges')
     charge = models.CharField(max_length=30L, blank=True, db_column='carica')
     start_date = models.DateField(null=True, blank=True, db_column='data_inizio')
     end_date = models.DateField(null=True, blank=True, db_column='data_fine')
@@ -38,8 +40,8 @@ class Carica(models.Model):
 
 
 class CaricaHasGruppo(models.Model):
-    charge = models.ForeignKey(Carica, db_column='carica')
-    group = models.ForeignKey('Gruppo', db_column='gruppo')
+    charge = models.ForeignKey(Carica, db_column='carica_id')
+    group = models.ForeignKey('Gruppo', db_column='gruppo_id')
     start_date = models.DateField(db_column='data_inizio')
     end_date = models.DateField(null=True, blank=True, db_column='data_fine')
     presenze = models.IntegerField(null=True, blank=True)
@@ -52,7 +54,6 @@ class CaricaHasGruppo(models.Model):
 
 
 class Gruppo(models.Model):
-    
     name = models.CharField(max_length=255L, blank=True, db_column='nome')
     acronym = models.CharField(max_length=80L, blank=True, db_column='acronimo')
 
@@ -67,8 +68,8 @@ class Gruppo(models.Model):
 
 
 class GruppoIsMaggioranza(models.Model):
-    
-    group = models.ForeignKey(Gruppo, db_column='group')
+    group = models.ForeignKey(Gruppo, db_column='group',
+                              related_name="majorities")
     start_date = models.DateField(db_column='data_inizio')
     end_date = models.DateField(null=True, blank=True, db_column='data_fine')
     maggioranza = models.IntegerField(null=True, blank=True)
@@ -79,8 +80,8 @@ class GruppoIsMaggioranza(models.Model):
 
 
 class GruppoRamo(models.Model):
-    
-    group = models.ForeignKey(Gruppo, db_column='group')
+    group = models.ForeignKey(Gruppo, db_column='gruppo_id',
+                              related_name='houses')
     house = models.CharField(max_length=1L, blank=True, db_column='ramo')
     start_date = models.DateField(db_column='data_inizio')
     end_date = models.DateField(null=True, blank=True, db_column='data_fine')
@@ -91,10 +92,24 @@ class GruppoRamo(models.Model):
         managed = False
 
 
+class IncaricoGruppo(models.Model):
+    charge_group = models.ForeignKey(CaricaHasGruppo, db_column='chg_id',
+                                     related_name='groupcharges')
+    start_date = models.DateField(db_column='data_inizio')
+    end_date = models.DateField(blank=True, null=True, db_column='data_fine')
+    charge = models.CharField(max_length=60, db_column='incarico')
+    class Meta:
+        managed = False
+        db_table = 'opp_chg_incarico'
+
+
+
 class CaricaInterna(models.Model):
-    charge = models.ForeignKey(Carica, db_column='carica_id', related_name='innercharges')
+    charge = models.ForeignKey(Carica, db_column='carica_id',
+                               related_name='innercharges')
     charge_type = models.ForeignKey('TipoCarica', db_column='tipo_carica_id')
-    site = models.ForeignKey('Sede', db_column='sede_id')
+    site = models.ForeignKey('Sede', db_column='sede_id',
+                             related_name='innercharges')
     start_date = models.DateField(blank=True, null=True, db_column='data_inizio')
     end_date = models.DateField(blank=True, null=True, db_column='data_fine')
 #    description = models.CharField(max_length=255, blank=True, db_column='descrizione')
@@ -111,7 +126,7 @@ class CaricaInterna(models.Model):
         managed = False
 
 
-class TipoCarica(models.Model):    
+class TipoCarica(models.Model):
     name = models.CharField(max_length=255L, blank=True, db_column='nome')
 
     def __unicode__(self):
@@ -145,7 +160,6 @@ class Sede(models.Model):
 
 
 class PoliticianHistoryCache(models.Model):
-    
 #   legislatura = models.IntegerField(null=True, blank=True)
     update_date = models.DateField(db_column='data')
     assenze = models.FloatField(null=True, blank=True)

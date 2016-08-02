@@ -30,6 +30,21 @@ class PoliticoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Politico
+        fields = ('id', 'name', 'surname', 'gender', 'monitoring_users', )
+
+
+class CaricaInlineSerializer(serializers.HyperlinkedModelSerializer):
+
+    charge_type = fields.UnicodeField()
+    group = fields.UnicodeField()
+    politician = fields.UnicodeField(source='politician')
+    house = fields.RamoField()
+
+    class Meta:
+        model = models.PoliticianHistoryCache
+        fields = (
+            "politician", "charge_type"
+        )
 
 
 class CaricaSerializer(serializers.ModelSerializer):
@@ -56,21 +71,25 @@ class CaricaInternaSerializer(serializers.ModelSerializer):
 
 
 class ParlamentareInlineSerializer(serializers.HyperlinkedModelSerializer):
+    self_unicode = serializers.CharField(source='__unicode__')
     self_uri = fields.HyperlinkedParlamentareIdentityField()
+    parliamentary_charge = fields.FirstParliamentarianChargeField(
+        source='charges'
+    )
 
-    charge = fields.UnicodeField()
-    group = fields.UnicodeField()
-    politician = fields.UnicodeField(source='charge.politician')
-    house = fields.RamoField()
+
+    # group = fields.UnicodeField()
+    # politician = fields.UnicodeField(source='charge.politician')
+    # house = fields.RamoField()
 
     class Meta:
         model = models.PoliticianHistoryCache
         fields = (
-            "politician", "charge", "group", "house", "self_uri"
+            "self_unicode", "self_uri", "parliamentary_charge"
         )
 
 
-class ParlamentareSerializer(serializers.ModelSerializer):
+class ParlamentareCacheSerializer(serializers.ModelSerializer):
     charge = CaricaSerializer()
     inner_charges = CaricaInternaSerializer(many=True, source='charge.innercharges')
     group = GruppoSerializer()
@@ -78,7 +97,7 @@ class ParlamentareSerializer(serializers.ModelSerializer):
     house = fields.RamoField()
 
     def to_native(self, obj):
-        ret = super(ParlamentareSerializer, self).to_native(obj)
+        ret = super(ParlamentareCacheSerializer, self).to_native(obj)
 
         stats = {}
         for field in self.Meta.statistic_fields:
@@ -105,10 +124,6 @@ class ParlamentareSerializer(serializers.ModelSerializer):
 class CustomPaginationSerializer(pagination.PaginationSerializer):
 
     legislative_session = fields.LegislaturaField(source='*')
-    update_date = fields.UltimoAggiornamentoField(source='*')
-
-    #class Meta:
-    #    object_serializer_class = ParlamentareSerializer
 
 
 class SedutaSerializer(serializers.ModelSerializer):
