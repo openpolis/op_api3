@@ -1,5 +1,8 @@
+# coding=utf-8
 from datetime import date
 from collections import OrderedDict as odict
+
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -435,14 +438,21 @@ class ParlamentareDetailView(APILegislaturaMixin, generics.RetrieveAPIView):
 
         # huge prefetch, to make all queries at once
         # usually it gets faster
-        p = Politico.objects.using(self.db_alias).\
-            prefetch_related(
-                'charges__charge_type',
-                'charges__caricahasgruppo_set__group',
-                'charges__caricahasgruppo_set__groupcharges',
-                'charges__innercharges__site',
-                'charges__innercharges__charge_type'
-            ).get(pk=kwargs['politician_id'])
+        try:
+            p = Politico.objects.using(self.db_alias).\
+                prefetch_related(
+                    'charges__charge_type',
+                    'charges__caricahasgruppo_set__group',
+                    'charges__caricahasgruppo_set__groupcharges',
+                    'charges__innercharges__site',
+                    'charges__innercharges__charge_type'
+                ).get(pk=kwargs['politician_id'])
+        except ObjectDoesNotExist as e:
+            return Response({
+                "errore": u"Il politico corrispondente alla chiave {0} non è "
+                          u"presente nella base dati di openparlamento.".format(
+                    kwargs['politician_id'])
+            })
 
         # will use an odict, to keep fields sorted
         res_dict = odict([
