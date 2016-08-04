@@ -517,8 +517,9 @@ class ParlamentareDetailView(APILegislaturaMixin, generics.RetrieveAPIView):
 
             try:
                 rebellions_perc = "{0:.2f}".format(100. * c.ribelle / c.presenze)
-            except ZeroDivisionError:
+            except (ZeroDivisionError,TypeError) as e:
                 rebellions_perc = None
+
 
             if show_statistics:
                 c_dict['statistics'] = odict([
