@@ -95,7 +95,6 @@ class PoliticianList(DefaultsMixin, PoliticiDBSelectMixin, generics.ListAPIView)
                            with the value (case insensitive)
     * ``namecontains``   - get all Politicians with names containing
                            the value (case insensitive)
-    * ``openpolis_id``   - get all Politicians with the openpolis_id value
 
     Results can be sorted by date, specifying the ``order_by=date``
     query string parameter.
@@ -146,11 +145,6 @@ class PoliticianList(DefaultsMixin, PoliticiDBSelectMixin, generics.ListAPIView)
                 Q(last_name__icontains=namecontains)
             )
 
-
-        # openpolis_id = self.request.QUERY_PARAMS.get('openpolis_id', None)
-        # if openpolis_id:
-        #     queryset = queryset.filter(identifiers__slug=slug,
-        #                                placeidentifiers__value=value)
 
         order_by = self.request.QUERY_PARAMS.get('order_by', None)
         if order_by:

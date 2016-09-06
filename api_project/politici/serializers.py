@@ -67,6 +67,16 @@ class ProfessionSerializer(serializers.ModelSerializer):
         model = OpProfession
         fields = ("description",)
 
+class OpInstitutionChargeInlineSerializer(serializers.HyperlinkedModelSerializer):
+    self_uri = serializers.HyperlinkedIdentityField(view_name = 'politici:instcharge-detail')
+    charge = serializers.CharField(source='getExtendedTextualRepresentation')
+    class Meta:
+        model = OpInstitutionCharge
+        view_name = 'politici:instcharge-detail'
+        fields = (
+            'charge', 'self_uri',
+        )
+
 
 class PoliticianInlineSerializer(serializers.ModelSerializer):
     self_uri = serializers.HyperlinkedIdentityField(view_name = 'politici:politician-detail')
@@ -74,7 +84,7 @@ class PoliticianInlineSerializer(serializers.ModelSerializer):
     profession = ProfessionSerializer()
     education_levels = OpPoliticianHasOpEducationLevelSerializer(many=True)
     content = ContentSerializer()
-
+    institution_charges = OpInstitutionChargeInlineSerializer(many=True)
     class Meta:
         model = OpPolitician
         fields = (
@@ -84,6 +94,7 @@ class PoliticianInlineSerializer(serializers.ModelSerializer):
             'self_uri', 'image_uri',
             'profession',
             'education_levels',
+            'institution_charges',
         )
 
 
@@ -111,16 +122,6 @@ class OpInstitutionChargeSerializer(serializers.ModelSerializer):
             'description',
             'party', 'group',
             'content',
-        )
-
-class OpInstitutionChargeInlineSerializer(serializers.HyperlinkedModelSerializer):
-    self_uri = serializers.HyperlinkedIdentityField(view_name = 'politici:instcharge-detail')
-    charge = serializers.CharField(source='getExtendedTextualRepresentation')
-    class Meta:
-        model = OpInstitutionCharge
-        view_name = 'politici:instcharge-detail'
-        fields = (
-            'charge',
         )
 
 
