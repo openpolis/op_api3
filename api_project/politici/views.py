@@ -373,7 +373,7 @@ class HistoricalCityMayorsView(APIView):
     Accepts these filters through the following **GET** querystring parameters:
 
     * ``date_from`` - charges that end after this date
-    * ``date_to`` - charges that start after this date
+    * ``date_to`` - charges that start before this date
     * ``date`` - charges **active** on the date
 
     Dates have the format: ``YYYY-MM-DD``
@@ -440,9 +440,6 @@ class HistoricalCityMayorsView(APIView):
         date_to = self.request.QUERY_PARAMS.get('date_to', None)
         if date_to:
             date_to = parse_date(date_to)
-            if not date_to or date_to > date.today():
-                # TODO: raise an Exception
-                return {'sindaci': []}
             ics = ics.filter(date_start__lte=date_to)
 
         # fetch all charges active on a given date
