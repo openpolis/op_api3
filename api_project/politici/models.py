@@ -242,8 +242,15 @@ class OpPolitician(models.Model):
         return "http://politici.openpolis.it/politician/picture?content_id={}".format(self.content_id)
 
     @property
+    def last_resource_update(self):
+        return self.resources.first().content.content.updated_at
+
+    @property
     def resources(self):
-        return self.opresources_set.filter(content__deleted_at__isnull=True)
+        """return resources, ordered by last updated"""
+        return self.opresources_set\
+            .filter(content__deleted_at__isnull=True) \
+            .order_by('-content__content__updated_at')
 
     @property
     def education_levels(self):
