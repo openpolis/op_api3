@@ -243,7 +243,11 @@ class OpPolitician(models.Model):
 
     @property
     def last_resource_update(self):
-        return self.resources.first().content.content.updated_at
+        top = self.resources.first()
+        if top:
+            return top.content.content.updated_at
+        else:
+            return None
 
     @property
     def resources(self):
