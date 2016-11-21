@@ -465,6 +465,7 @@ class ParlamentareDetailView(APILegislaturaMixin, generics.RetrieveAPIView):
         for c in p.charges.all():
             c_dict = odict([])
             c_dict['name'] = c.charge
+            c_dict['parliament_id'] = c.parliament_id
             c_dict['start_date'] = c.start_date
             c_dict['end_date'] = c.end_date
             c_dict['repr'] = c.__unicode__()
