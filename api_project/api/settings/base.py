@@ -211,7 +211,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAuthenticatedOrReadOnly',),
     'PAGINATE_BY': 25,
     'PAGINATE_BY_PARAM': 'page_size',   # Allow client to override, using `?page_size=xxx`.
-    'MAX_PAGINATE_BY': 500              # Maximum limit allowed when using `?page_size=xxx`.
+    'MAX_PAGINATE_BY': 1000              # Maximum limit allowed when using `?page_size=xxx`.
 }
 
 # CORS Headers configuration

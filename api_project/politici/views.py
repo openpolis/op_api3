@@ -41,7 +41,7 @@ class DefaultsMixin(object):
 
     paginate_by = 25
     paginate_by_param = 'page_size'
-    max_paginate_by = 100
+    max_paginate_by = settings.REST_FRAMEWORK['MAX_PAGINATE_BY']
     filter_backends = (
         filters.DjangoFilterBackend,
         filters.SearchFilter,
