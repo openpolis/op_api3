@@ -98,6 +98,28 @@ class PoliticiansExport(DefaultsMixin, PoliticiDBSelectMixin, generics.ListAPIVi
     paginate_by = 25
     max_paginate_by = settings.REST_FRAMEWORK['MAX_PAGINATE_BY']
 
+    def get_queryset(self):
+        """
+        Add filters to queryset provided in url querystring.
+        """
+
+        queryset = super(PoliticiansExport, self).get_queryset()
+
+        # fetch all places whose name starts with the parameter
+        regional_id = self.request.QUERY_PARAMS.get('regional_id', None)
+        if regional_id:
+            queryset = queryset.filter(
+                opinstitutioncharge__content__deleted_at__isnull=True,
+                opinstitutioncharge__location__regional_id=regional_id)
+
+        provincial_id = self.request.QUERY_PARAMS.get('provincial_id', None)
+        if provincial_id:
+            queryset = queryset.filter(
+                opinstitutioncharge__content__deleted_at__isnull=True,
+                opinstitutioncharge__location__provincial_id=provincial_id)
+
+        return queryset
+
 
 class PoliticianList(DefaultsMixin, PoliticiDBSelectMixin, generics.ListAPIView):
     """
