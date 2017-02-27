@@ -123,6 +123,7 @@ class OpInstitutionChargeSerializer(serializers.ModelSerializer):
 
 class OpInstitutionChargeExportSerializer(serializers.ModelSerializer):
     content = OpenContentSerializer()
+    charge_extended_description = serializers.CharField(source='getExtendedTextualRepresentation')
     party = PartyInlineSerializer()
     group = GroupInlineSerializer()
     institution_descr = serializers.CharField(source='institution')
@@ -136,6 +137,7 @@ class OpInstitutionChargeExportSerializer(serializers.ModelSerializer):
         view_name = 'politici:instcharge-detail'
         fields = (
             'date_start', 'date_end',
+            'charge_extended_description',
             'charge_type_descr', 'institution_descr',
             'location_descr', 'location',
             'constituency_descr', 'constituency_election_type',
