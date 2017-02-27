@@ -110,13 +110,13 @@ class PoliticiansExport(DefaultsMixin, PoliticiDBSelectMixin, generics.ListAPIVi
         if regional_id:
             queryset = queryset.filter(
                 opinstitutioncharge__content__deleted_at__isnull=True,
-                opinstitutioncharge__location__regional_id=regional_id)
+                opinstitutioncharge__location__regional_id=regional_id).distinct()
 
         provincial_id = self.request.QUERY_PARAMS.get('provincial_id', None)
         if provincial_id:
             queryset = queryset.filter(
                 opinstitutioncharge__content__deleted_at__isnull=True,
-                opinstitutioncharge__location__provincial_id=provincial_id)
+                opinstitutioncharge__location__provincial_id=provincial_id).distinct()
 
         return queryset
 
