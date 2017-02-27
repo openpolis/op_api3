@@ -121,6 +121,28 @@ class OpInstitutionChargeSerializer(serializers.ModelSerializer):
             'content',
         )
 
+class OpInstitutionChargeExportSerializer(serializers.ModelSerializer):
+    content = OpenContentSerializer()
+    party = PartyInlineSerializer()
+    group = GroupInlineSerializer()
+    institution_descr = serializers.CharField(source='institution')
+    charge_type_descr = serializers.CharField(source='charge_type')
+    location = serializers.HyperlinkedRelatedField(view_name='territori:location-detail')
+    location_descr = serializers.CharField(source='location')
+    constituency_descr = serializers.CharField(source='constituency.name')
+    constituency_election_type = serializers.CharField(source='constituency.election_type.name')
+    class Meta:
+        model = OpInstitutionCharge
+        view_name = 'politici:instcharge-detail'
+        fields = (
+            'date_start', 'date_end',
+            'charge_type_descr', 'institution_descr',
+            'location_descr', 'location',
+            'constituency_descr', 'constituency_election_type',
+            'description',
+            'party', 'group',
+            'content',
+        )
 
 class PoliticianSerializer(serializers.HyperlinkedModelSerializer):
     content = ContentSerializer()
@@ -155,7 +177,7 @@ class PoliticianFullSerializer(serializers.HyperlinkedModelSerializer):
     profession = ProfessionSerializer()
     resources = ResourceSerializer(many=True)
     education_levels = OpPoliticianHasOpEducationLevelSerializer(many=True)
-    institution_charges = OpInstitutionChargeSerializer(many=True)
+    institution_charges = OpInstitutionChargeExportSerializer(many=True)
     class Meta:
         model = OpPolitician
         view_name = 'politici:politician-detail'
