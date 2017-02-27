@@ -8,13 +8,12 @@ from rest_framework import generics, pagination, authentication, permissions, fi
 from rest_framework.compat import parse_date
 from rest_framework.reverse import reverse
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
 from territori.models import OpLocation
 from .models import OpUser, OpPolitician, OpInstitution, OpChargeType, OpInstitutionCharge
-from .serializers import UserSerializer, PoliticianSerializer, OpInstitutionChargeSerializer, \
-    PoliticianInlineSerializer
+from .serializers import UserSerializer, PoliticianSerializer, PoliticianFullSerializer, \
+        OpInstitutionChargeSerializer, PoliticianInlineSerializer
 
 
 class PoliticiDBSelectMixin(object):
@@ -83,6 +82,21 @@ class UserDetail(PoliticiDBSelectMixin, generics.RetrieveAPIView):
     """
     model = OpUser
     serializer_class = UserSerializer
+
+
+
+class PoliticiansExport(DefaultsMixin, PoliticiDBSelectMixin, generics.ListAPIView):
+    """
+    Represents the list of politicians, with all details, neede for export purposes.
+
+    It should not be used as a public view, but only with internal requests,
+    in order to produce json files.
+    """
+    model = OpPolitician
+    queryset = model.objects.select_related('content')
+    serializer_class = PoliticianFullSerializer
+    paginate_by = 25
+    max_paginate_by = settings.REST_FRAMEWORK['MAX_PAGINATE_BY']
 
 
 class PoliticianList(DefaultsMixin, PoliticiDBSelectMixin, generics.ListAPIView):

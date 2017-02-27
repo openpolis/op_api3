@@ -146,3 +146,27 @@ class PoliticianSerializer(serializers.HyperlinkedModelSerializer):
             'education_levels',
         )
 
+
+class PoliticianFullSerializer(serializers.HyperlinkedModelSerializer):
+    content = ContentSerializer()
+    image_uri = serializers.CharField(source='get_image_uri', read_only=True)
+    last_resource_update = serializers.DateField(source='last_resource_update', read_only=True)
+    openparlamento_uri = HyperlinkedParlamentareIdentityField()
+    profession = ProfessionSerializer()
+    resources = ResourceSerializer(many=True)
+    education_levels = OpPoliticianHasOpEducationLevelSerializer(many=True)
+    institution_charges = OpInstitutionChargeSerializer(many=True)
+    class Meta:
+        model = OpPolitician
+        view_name = 'politici:politician-detail'
+        fields = (
+            'first_name', 'last_name',
+            'birth_date', 'death_date', 'birth_location', 'sex',
+            'last_charge_update','last_resource_update',
+            'content', 'image_uri', 'openparlamento_uri',
+            'profession', 'education_levels',
+            'resources',
+            'institution_charges',
+            'profession',
+            'education_levels',
+        )
