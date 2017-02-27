@@ -121,31 +121,6 @@ class OpInstitutionChargeSerializer(serializers.ModelSerializer):
             'content',
         )
 
-class OpInstitutionChargeExportSerializer(serializers.ModelSerializer):
-    content = OpenContentSerializer()
-    charge_extended_description = serializers.CharField(source='getExtendedTextualRepresentation')
-    party = PartyInlineSerializer()
-    group = GroupInlineSerializer()
-    institution_descr = serializers.CharField(source='institution')
-    charge_type_descr = serializers.CharField(source='charge_type')
-    location = serializers.HyperlinkedRelatedField(view_name='territori:location-detail')
-    location_descr = serializers.CharField(source='location')
-    constituency_descr = serializers.CharField(source='constituency.name')
-    constituency_election_type = serializers.CharField(source='constituency.election_type.name')
-    class Meta:
-        model = OpInstitutionCharge
-        view_name = 'politici:instcharge-detail'
-        fields = (
-            'date_start', 'date_end',
-            'charge_extended_description',
-            'charge_type_descr', 'institution_descr',
-            'location_descr', 'location',
-            'constituency_descr', 'constituency_election_type',
-            'description',
-            'party', 'group',
-            'content',
-        )
-
 class PoliticianSerializer(serializers.HyperlinkedModelSerializer):
     content = ContentSerializer()
     image_uri = serializers.CharField(source='get_image_uri', read_only=True)
@@ -171,26 +146,45 @@ class PoliticianSerializer(serializers.HyperlinkedModelSerializer):
         )
 
 
-class PoliticianFullSerializer(serializers.HyperlinkedModelSerializer):
-    content = ContentSerializer()
-    image_uri = serializers.CharField(source='get_image_uri', read_only=True)
-    last_resource_update = serializers.DateField(source='last_resource_update', read_only=True)
-    openparlamento_uri = HyperlinkedParlamentareIdentityField()
+class OpInstitutionChargeExportSerializer(serializers.ModelSerializer):
+    charge_extended_description = serializers.CharField(source='getExtendedTextualRepresentation')
+    party = PartyInlineSerializer()
+    group = GroupInlineSerializer()
+    institution_descr = serializers.CharField(source='institution')
+    charge_type_descr = serializers.CharField(source='charge_type')
+    location_istat_reg = serializers.CharField(source='location.regional_id')
+    location_istat_prov = serializers.CharField(source='location.provincial_id')
+    location_istat_city = serializers.CharField(source='location.city_id')
+    location_descr = serializers.CharField(source='location')
+    constituency_descr = serializers.CharField(source='constituency.name')
+    constituency_election_type = serializers.CharField(source='constituency.election_type.name')
+    class Meta:
+        model = OpInstitutionCharge
+        view_name = 'politici:instcharge-detail'
+        fields = (
+            'date_start', 'date_end',
+            'charge_extended_description',
+            'charge_type_descr', 'institution_descr',
+            'location_descr',
+            'location_istat_reg',
+            'location_istat_prov',
+            'location_istat_city',
+            'constituency_descr', 'constituency_election_type',
+            'description',
+            'party', 'group',
+        )
+
+
+class PoliticianExportSerializer(serializers.HyperlinkedModelSerializer):
     profession = ProfessionSerializer()
-    resources = ResourceSerializer(many=True)
     education_levels = OpPoliticianHasOpEducationLevelSerializer(many=True)
     institution_charges = OpInstitutionChargeExportSerializer(many=True)
     class Meta:
         model = OpPolitician
-        view_name = 'politici:politician-detail'
+        view_name = 'politici:politician-export'
         fields = (
             'first_name', 'last_name',
             'birth_date', 'death_date', 'birth_location', 'sex',
-            'last_charge_update','last_resource_update',
-            'content', 'image_uri', 'openparlamento_uri',
             'profession', 'education_levels',
-            'resources',
             'institution_charges',
-            'profession',
-            'education_levels',
         )

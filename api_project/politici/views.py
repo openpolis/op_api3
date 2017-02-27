@@ -12,7 +12,7 @@ from rest_framework.views import APIView
 
 from territori.models import OpLocation
 from .models import OpUser, OpPolitician, OpInstitution, OpChargeType, OpInstitutionCharge
-from .serializers import UserSerializer, PoliticianSerializer, PoliticianFullSerializer, \
+from .serializers import UserSerializer, PoliticianSerializer, PoliticianExportSerializer, \
         OpInstitutionChargeSerializer, PoliticianInlineSerializer
 
 
@@ -94,7 +94,7 @@ class PoliticiansExport(DefaultsMixin, PoliticiDBSelectMixin, generics.ListAPIVi
     """
     model = OpPolitician
     queryset = model.objects.select_related('content')
-    serializer_class = PoliticianFullSerializer
+    serializer_class = PoliticianExportSerializer
     paginate_by = 25
     max_paginate_by = settings.REST_FRAMEWORK['MAX_PAGINATE_BY']
 
