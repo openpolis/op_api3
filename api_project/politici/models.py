@@ -149,21 +149,21 @@ class OpPolitician(models.Model):
     def getInstitutionCharges(self, type=None):
         """docstring for getInstitutionCharges"""
         if type == 'current':
-            pol_charges = self.opinstitutioncharge_set.db_manager('politici').filter(
+            inst_charges = self.opinstitutioncharge_set.db_manager('politici').filter(
                 date_end__isnull=True,
                 content__deleted_at__isnull=True,
                 ).order_by('-date_start')
         elif type == 'past':
-            pol_charges = self.opinstitutioncharge_set.db_manager('politici').filter(
+            inst_charges = self.opinstitutioncharge_set.db_manager('politici').filter(
                 date_end__isnull=False,
                 content__deleted_at__isnull=True,
                 ).order_by('-date_end')
         else:
-            pol_charges = self.opinstitutioncharge_set.db_manager('politici').filter(
+            inst_charges = self.opinstitutioncharge_set.db_manager('politici').filter(
                 content__deleted_at__isnull=True,
                 )
         charges = []
-        for charge in pol_charges:
+        for charge in inst_charges:
             charges.append({
                 'date_start': charge.date_start,
                 'date_end': charge.date_end,
@@ -514,13 +514,13 @@ class OpInstitutionChargeManager(models.Manager):
         cursor = connections['politici'].cursor()
 
         base_sql = """
-            from op_institution_charge ic, op_institution i, op_open_content oc, op_politician p, 
-              op_location l, op_profession pr, op_politician_has_op_education_level pe, op_education_level e 
-            where l.id=ic.location_id and ic.institution_id=i.id and 
+            from op_institution_charge ic, op_institution i, op_open_content oc, op_politician p,
+              op_location l, op_profession pr, op_politician_has_op_education_level pe, op_education_level e
+            where l.id=ic.location_id and ic.institution_id=i.id and
               ic.politician_id=p.content_id and oc.content_id=ic.content_id and
               p.profession_id=pr.id and p.content_id=pe.politician_id and
-              pe.education_level_id=e.id and  
-              oc.deleted_at is null and ic.date_end is null 
+              pe.education_level_id=e.id and
+              oc.deleted_at is null and ic.date_end is null
             """
         filters = {}
         results = {}
@@ -650,7 +650,7 @@ class OpInstitutionChargeManager(models.Manager):
         }
         if age == 0:
             age_sql = """select YEAR(CURDATE())-YEAR(p.birth_date) as age, count(*) as n
-              %s %s      
+              %s %s
               group by age order by n desc""" % (base_sql, clauses_sql)
             cursor.execute(age_sql, clauses_params)
 
@@ -680,7 +680,7 @@ class OpInstitutionChargeManager(models.Manager):
 
         if sex == 0:
             sex_sql = """select p.sex, count(*) as n
-              %s %s      
+              %s %s
               group by p.sex order by n desc""" % (base_sql, clauses_sql)
             cursor.execute(sex_sql, clauses_params)
             sex_numbers = {}
@@ -707,7 +707,7 @@ class OpInstitutionChargeManager(models.Manager):
                 institution_numbers[inst['id']] = { 'name': inst['name'], 'count': 0 }
         if institution == 0:
             institution_sql = """select i.id, count(*) as n
-              %s %s      
+              %s %s
               group by i.id order by n desc""" % (base_sql, clauses_sql)
             cursor.execute(institution_sql, clauses_params)
             for row in cursor.fetchall():
@@ -1041,7 +1041,7 @@ class OpResources(models.Model):
     class Meta:
         db_table = u'op_resources'
         managed = False
-    
+
 
 
 
