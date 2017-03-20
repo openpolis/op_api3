@@ -131,6 +131,8 @@ class PoliticianList(DefaultsMixin, PoliticiDBSelectMixin, generics.ListAPIView)
                            with the value (case insensitive)
     * ``namecontains``   - get all Politicians with names containing
                            the value (case insensitive)
+    * ``charge_update_after`` - get all Politicians whose institutional charges
+                                were updated after the given date (in yyyy-mm-dd format)
 
     Results can be sorted by date, specifying the ``order_by=date``
     query string parameter.
@@ -162,9 +164,6 @@ class PoliticianList(DefaultsMixin, PoliticiDBSelectMixin, generics.ListAPIView)
 
         queryset = super(PoliticianList, self).get_queryset()
 
-        # exclude deleted content
-        # queryset = queryset.exclude(content__deleted_at__isnull=False)
-
         # fetch all places whose name starts with the parameter
         namestartswith = self.request.QUERY_PARAMS.get('namestartswith', None)
         if namestartswith:
@@ -181,6 +180,10 @@ class PoliticianList(DefaultsMixin, PoliticiDBSelectMixin, generics.ListAPIView)
                 Q(last_name__icontains=namecontains)
             )
 
+        # fetch all places whose last_charge_update is greater than the given date
+        last_charge_update_after = self.request.QUERY_PARAMS.get('charge_updated_after', None)
+        if last_charge_update_after:
+            queryset = queryset.filter(last_charge_update__gte=last_charge_update_after)
 
         order_by = self.request.QUERY_PARAMS.get('order_by', None)
         if order_by:
