@@ -131,7 +131,7 @@ class PoliticianList(DefaultsMixin, PoliticiDBSelectMixin, generics.ListAPIView)
                            with the value (case insensitive)
     * ``namecontains``   - get all Politicians with names containing
                            the value (case insensitive)
-    * ``charge_update_after`` - get all Politicians whose institutional charges
+    * ``charge_updated_after`` - get all Politicians whose institutional charges
                                 were updated after the given date (in yyyy-mm-dd format)
 
     Results can be sorted by date, specifying the ``order_by=date``
