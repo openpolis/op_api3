@@ -280,6 +280,7 @@ class ParlamentareListView(APILegislaturaMixin, generics.ListAPIView):
     * ``gender``     - M for Male, F for Female
     * ``status``     - A for Active, I for Inactive
                        only currently active or inactive MPs are listed
+    * ``status_date``- date to which the ``status`` refers to (None = today)
     * ``info_mode``  - C for Current, H for Historical
                        related_info shown are current or historical
 
@@ -321,21 +322,38 @@ class ParlamentareListView(APILegislaturaMixin, generics.ListAPIView):
                 charges__charge_type__name__icontains='senatore')
 
         # filtro per status
-        # only politicians who are currently active in the parliament
+        # only politicians who are active or inactive in the parliament
         # are filtered
+        # if status_date is specified, then the condition is evaluated at the
+        # given date
         status = self.request.QUERY_PARAMS.get('status', '').upper()
+        status_date = self.request.QUERY_PARAMS.get('status_date', None)
+        qs_condition = (
+            Q(charges__charge_type__name__iexact='deputato') |
+            Q(charges__charge_type__name__icontains='senatore')
+        )
         if status == 'A':
-            queryset = queryset.filter(
-                (Q(charges__charge_type__name__iexact='deputato') |
-                 Q(charges__charge_type__name__icontains='senatore')) &
-                Q(charges__end_date__isnull=True)
-            )
+            if status_date:
+                qs_condition &= (
+                    Q(charges__start_date__lte=status_date) &
+                    (Q(charges__end_date__gte=status_date) |
+                     Q(charges__end_date__isnull=True))
+                )
+            else:
+                qs_condition &= (
+                    Q(charges__end_date__isnull=True)
+                )
         if status == 'I':
-            queryset = queryset.filter(
-                (Q(charges__charge_type__name__iexact='deputato') |
-                 Q(charges__charge_type__name__icontains='senatore')) &
+            qs_condition &= (
                 Q(charges__end_date__isnull=False)
             )
+            if status_date:
+                qs_condition &= (
+                    Q(charges__start_date__gt=status_date) |
+                    Q(charges__end_date__lt=status_date)
+                )
+
+        queryset = queryset.filter(qs_condition)
 
         # filtro per circoscrizione
         circoscrizione = self.request.QUERY_PARAMS.get('district', None)
@@ -384,6 +402,7 @@ class ParlamentareListView(APILegislaturaMixin, generics.ListAPIView):
                 queryset = queryset.filter(
                     charges__innercharges__end_date__isnull=False
                 )
+
 
         return queryset
 
