@@ -8,4 +8,8 @@ class LocationSerializer(serializers.ModelSerializer):
     id = serializers.HyperlinkedIdentityField(view_name='territori:location-detail')
     class Meta:
         model = OpLocation
-        fields = ('id', 'location_type', 'name', 'inhabitants', 'regional_id', 'provincial_id', 'city_id', 'prov' )
+        fields = (
+            'id', 'location_type', 'name', 'inhabitants',
+            'macroregional_id', 'regional_id', 'provincial_id', 'city_id',
+            'prov'
+        )

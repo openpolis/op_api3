@@ -61,6 +61,7 @@ class LocationList(PoliticiDBSelectMixin, generics.ListAPIView):
         'C': 'comune',
         'P': 'provincia',
         'R': 'regione',
+        'M': 'macroregione',
         'N': 'nazionale',
     }
 
