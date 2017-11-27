@@ -11,3 +11,5 @@ dump.sql
 /static
 /data
 .vagrant
+.DS_Store
+
