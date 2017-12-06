@@ -1,10 +1,11 @@
 # Local development dependencies go here
 -r base.txt
 
-django-debug-toolbar<1.1
+django-debug-toolbar==1.1
+sqlparse==0.1.0
 
-# django-popolo dev
--e /Users/gu/Workspace/django-popolo
+# django-popolo, release 1.6
+git+https://github.com/openpolis/django-popolo.git@v.1.6#egg=django-popolo
 
 # CouchDB==0.9
 SPARQLWrapper==1.5.2

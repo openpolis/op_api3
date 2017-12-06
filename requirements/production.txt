@@ -1,4 +1,6 @@
 # Pro-tip: Try not to put anything here. There should be no dependency in
 #	production that isn't in development.
 -r base.txt
--e git+https://github.com/openpolis/django-popolo.git@develop#egg=django-popolo
+
+# django-popolo, release 1.6
+git+https://github.com/openpolis/django-popolo.git@v.1.6#egg=django-popolo

@@ -14,7 +14,7 @@ Werkzeug
 docutils
 django-environ
 
-django-cors-headers
+django-cors-headers==1.1.0
 django-mptt<0.8
 django-treeadmin
 
