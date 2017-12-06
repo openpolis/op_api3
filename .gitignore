@@ -12,4 +12,5 @@ dump.sql
 /data
 .vagrant
 .DS_Store
-
+/venv
+/venv2
