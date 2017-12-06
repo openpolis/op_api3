@@ -232,8 +232,7 @@ CORS_ORIGIN_ALLOW_ALL = True
 INTERNAL_IPS = ('127.0.0.1',)
 DEBUG_TOOLBAR_CONFIG = {
     'INTERCEPT_REDIRECTS': False,
-    'HIDE_DJANGO_SQL': False,
-    'TAG': 'div',
+    'INSERT_BEFORE  ': 'div',
     'ENABLE_STACKTRACES' : True,
 }
 
