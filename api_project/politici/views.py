@@ -277,9 +277,9 @@ class InstitutionChargeList(
     model = OpInstitutionCharge
     serializer_class = OpInstitutionChargeSerializer
     queryset = model.objects. \
-        prefetch_related('politician__education_levels__education_level').\
         select_related('institution', 'charge_type', 'location',
                        'politician', 'politician__profession',
+                       'politician__education_levels__education_level',
                        'politician__content',
                        'politician__content__opopencontent',
                        'party', 'group',
@@ -297,9 +297,6 @@ class InstitutionChargeList(
 
         # date filters
         # date format is YYYY-MM-DD
-
-        # exclude deleted content
-        queryset = queryset.exclude(content__deleted_at__isnull=False)
 
         # fetch all charges in a given status
         charge_status = self.request.QUERY_PARAMS.get(

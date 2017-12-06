@@ -52,7 +52,7 @@ class OpPoliticianHasOpEducationLevelSerializer(serializers.ModelSerializer):
     education_level = EducationLevelSerializer()
     class Meta:
         model = OpPoliticianHasOpEducationLevel
-        fields = ('description', 'education_level')
+        fields = ('description', 'education_level',)
 
 
 class ProfessionSerializer(serializers.ModelSerializer):
@@ -76,8 +76,10 @@ class OpInstitutionChargeInlineSerializer(serializers.HyperlinkedModelSerializer
 class PoliticianInlineSerializer(serializers.ModelSerializer):
     self_uri = serializers.HyperlinkedIdentityField(view_name = 'politici:politician-detail')
     image_uri = serializers.CharField(source='get_image_uri', read_only=True)
+    openparlamento_uri = HyperlinkedParlamentareIdentityField()
     profession = ProfessionSerializer()
     education_levels = OpPoliticianHasOpEducationLevelSerializer(many=True)
+    resources = ResourceSerializer(many=True)
     content = ContentSerializer()
     last_resource_update = serializers.DateField(source='last_resource_update', read_only=True)
     institution_charges = OpInstitutionChargeInlineSerializer(many=True)
@@ -87,10 +89,9 @@ class PoliticianInlineSerializer(serializers.ModelSerializer):
             'content',
             'first_name', 'last_name',
             'birth_date', 'death_date', 'birth_location', 'sex',
-            'self_uri', 'image_uri',
+            'self_uri', 'image_uri', 'openparlamento_uri',
             'last_charge_update','last_resource_update',
-            'profession',
-            'education_levels',
+            'profession', 'education_levels', 'resources',
             'institution_charges',
         )
 
@@ -138,11 +139,8 @@ class PoliticianSerializer(serializers.HyperlinkedModelSerializer):
             'birth_date', 'death_date', 'birth_location', 'sex',
             'last_charge_update','last_resource_update',
             'content', 'image_uri', 'openparlamento_uri',
-            'profession', 'education_levels',
-            'resources',
+            'profession', 'education_levels', 'resources',
             'institution_charges',
-            'profession',
-            'education_levels',
         )
 
 
