@@ -117,19 +117,19 @@ class OpLocationQuerySet(models.query.QuerySet):
 
 class OpLocationManager(models.Manager):
 
-    def get_query_set(self):
+    def get_queryset(self):
         return OpLocationQuerySet(self.model, using=self._db)
 
-    def regioni(self): return self.get_query_set().regioni()
-    def regione(self, territorio, codename='op'): return self.get_query_set().regione(territorio, codename)
+    def regioni(self): return self.get_queryset().regioni()
+    def regione(self, territorio, codename='op'): return self.get_queryset().regione(territorio, codename)
     def regione_from_id(self, id): return self.regione(id, codename='op')
     def regione_from_istat_id(self, id): return self.regione(id, codename='istat')
-    def province(self): return self.get_query_set().province()
-    def provincia(self, territorio, codename='op'): return self.get_query_set().provincia(territorio, codename)
+    def province(self): return self.get_queryset().province()
+    def provincia(self, territorio, codename='op'): return self.get_queryset().provincia(territorio, codename)
     def provincia_from_id(self, id): return self.provincia(id, codename='op')
     def provincia_from_istat_id(self, id): return self.provincia(id, codename='istat')
-    def comuni(self): return self.get_query_set().comuni()
-    def comune(self, territorio_id, codename='op'): return self.get_query_set().comune(territorio_id, codename=codename)
+    def comuni(self): return self.get_queryset().comuni()
+    def comune(self, territorio_id, codename='op'): return self.get_queryset().comune(territorio_id, codename=codename)
     def comune_from_id(self, id): return self.comune(id, codename='op')
     def comune_from_istat_id(self, id): return self.comune(id, codename='istat')
     def comune_from_minint_id(self, id): return self.comune(id, codename='minint')
