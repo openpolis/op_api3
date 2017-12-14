@@ -114,6 +114,11 @@ class LocationList(PoliticiDBSelectMixin, generics.ListAPIView):
         if provincial_id:
             queryset = queryset.filter(provincial_id=provincial_id)
 
+        order_by = self.request.QUERY_PARAMS.get('order_by', 'id')
+        if order_by:
+            queryset = queryset.order_by(order_by)
+
+
 
         return queryset
 
