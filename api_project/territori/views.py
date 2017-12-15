@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.utils.datastructures import SortedDict
 from rest_framework import generics
 from rest_framework.decorators import api_view
@@ -67,7 +68,7 @@ class LocationList(PoliticiDBSelectMixin, generics.ListAPIView):
 
     model = OpLocation
     paginate_by = 25
-    max_paginate_by = 100
+    max_paginate_by = settings.REST_FRAMEWORK['MAX_PAGINATE_BY']
     serializer_class = LocationSerializer
 
     def get_queryset(self):
