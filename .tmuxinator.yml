@@ -7,7 +7,7 @@ root: ./
 # socket_name: foo
 
 # Runs before everything. Use it to start daemons etc.
-# pre: service nginx start;
+# pre:
 
 # Runs in each window and pane before window/pane specific commands. Useful for setting up interpreter versions.
 # pre_window: rbenv shell 2.0.0-p247
@@ -33,7 +33,7 @@ windows:
     - sleep 5
     - python api_project/manage.py shell_plus
   - runsever:
-    - source venv/bin/activate
+    - spurce venv/bin/activate
     - sleep 5
     - python api_project/manage.py runserver
   - ssh_tunnel_to_postgres:
@@ -42,3 +42,5 @@ windows:
     - ssh -L 3307:localhost:3306 -Nv root@api3.openpolis.it
   - free_shell:
     - source venv/bin/activate
+
+
