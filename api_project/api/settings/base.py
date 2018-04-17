@@ -22,6 +22,7 @@ DATABASES = {
     'politici': env.db('DB_POLITICI_URL'),
     'parlamento16': env.db('DB_PARLAMENTO16_URL'),
     'parlamento17': env.db('DB_PARLAMENTO17_URL'),
+    'parlamento18': env.db('DB_PARLAMENTO18_URL'),
 }
 
 

@@ -28,8 +28,8 @@ LEGISLATURE = [
     Lex(14, 'XIV Legislatura',      date(2001, 5, 13),  date(2001, 5, 30),  date(2006, 4, 27),  None),
     Lex(15, 'XV Legislatura',       date(2006, 4, 9),   date(2006, 4, 28),  date(2008, 4, 28),  None),
     Lex(16, 'XVI Legislatura',      date(2008, 4, 13),  date(2008, 4, 29),  date(2013, 3, 14),  'parlamento16'),
-    Lex(17, 'XVII Legislatura',     date(2013, 2, 24),  date(2013, 3, 15),  date(2018, 3, 23),  'parlamento17')
-    Lex(18, 'XVII Legislatura',     date(2018, 3, 4),   date(2018, 4, 24),  None,               'parlamento18')
+    Lex(17, 'XVII Legislatura',     date(2013, 2, 24),  date(2013, 3, 15),  date(2018, 3, 23),  'parlamento17'),
+    Lex(18, 'XVIII Legislatura',    date(2018, 3, 4),   date(2018, 4, 24),  None,               'parlamento18')
 ]
 
 
