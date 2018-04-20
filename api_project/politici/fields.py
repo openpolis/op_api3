@@ -24,7 +24,7 @@ class HyperlinkedParlamentareIdentityField(serializers.HyperlinkedIdentityField)
             view_name, request, format=format,
             kwargs={
                 'politician_id': obj.pk,
-                'legislatura': 17, # only 17 legislature can work
+                'legislatura': 18, # only current legislature can work
             }
         )
 
