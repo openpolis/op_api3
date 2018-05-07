@@ -173,24 +173,26 @@ class VotazioneSerializer(serializers.ModelSerializer):
 
 
 class VotoSerializer(serializers.ModelSerializer):
+    politician = serializers.IntegerField(source='charge__politician')
+    group = serializers.IntegerField(source='charge__caricahasgruppo__group')
 
     class Meta:
         model = models.VotazioneHasCarica
         fields = (
-            'charge', 'voting', 'rebel', 'maggioranza_sotto_salva',
+            'politician', 'group', 'voting', 'rebel', 'maggioranza_sotto_salva',
         )
 
 
 class VotazioneDettagliataSerializer(serializers.ModelSerializer):
 
-    charge_votes = VotoSerializer(many=True, source='votazionehascarica_set')
+    charge_votes = VotoSerializer(many=True, source='dettagli')
     vote_uri = fields.HyperlinkedVotazioneIdentityField()
     sitting = fields.HyperlinkedSedutaField(read_only=True)
 
     class Meta:
         model = models.Votazione
         fields = (
-            'id', 'sitting', 'vote_uri',
+            'sitting', 'vote_uri',
             'numero_votazione',
             'titolo', 'titolo_aggiuntivo', 'descrizione',
             'presenti', 'votanti', 'maggioranza', 'astenuti',

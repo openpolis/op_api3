@@ -270,6 +270,9 @@ class Votazione(models.Model):
     ut_contr = models.IntegerField()
     is_maggioranza_sotto_salva = models.IntegerField()
 
+    def dettagli(self):
+        return self.votazionehascarica_set.values('vote', 'charge__politician', 'charge__caricahasgruppo__group', 'voting', 'rebel', 'maggioranza_sotto_salva')
+
     class Meta:
         db_table = 'opp_votazione'
         ordering = ('numero_votazione', )
@@ -282,6 +285,13 @@ class VotazioneHasCarica(models.Model):
     voting = models.CharField(max_length=40L, blank=True, db_column='voto')
     rebel = models.IntegerField(db_column='ribelle')
     maggioranza_sotto_salva = models.IntegerField()
+
+    def __str__(self):
+        return "vote: {0}, charge: {1}, voting: {2}".format(
+            self.vote.titolo,
+            self.charge.politician.name,
+            self.voting
+        )
 
     class Meta:
         db_table = 'opp_votazione_has_carica'

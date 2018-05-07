@@ -33,7 +33,7 @@ windows:
     - sleep 5
     - python api_project/manage.py shell_plus
   - runsever:
-    - spurce venv/bin/activate
+    - source venv/bin/activate
     - sleep 5
     - python api_project/manage.py runserver
   - ssh_tunnel_to_postgres:

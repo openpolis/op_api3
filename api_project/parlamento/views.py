@@ -691,7 +691,6 @@ class VotazioneListView(APILegislaturaMixin, generics.ListAPIView):
 
 
 class VotazioneDetailView(APILegislaturaMixin, generics.RetrieveAPIView):
-    queryset = Votazione.objects.prefetch_related('votazionehascarica_set')
     model = Votazione
     pk_url_kwarg = 'votazione'
     serializer_class = VotazioneDettagliataSerializer
