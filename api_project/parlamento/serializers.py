@@ -174,12 +174,11 @@ class VotazioneSerializer(serializers.ModelSerializer):
 
 class VotoSerializer(serializers.ModelSerializer):
     politician = serializers.IntegerField(source='charge__politician')
-    group = serializers.IntegerField(source='charge__caricahasgruppo__group')
 
     class Meta:
         model = models.VotazioneHasCarica
         fields = (
-            'politician', 'group', 'voting', 'rebel', 'maggioranza_sotto_salva',
+            'politician', 'voting', 'rebel', 'maggioranza_sotto_salva',
         )
 
 

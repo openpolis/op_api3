@@ -271,7 +271,7 @@ class Votazione(models.Model):
     is_maggioranza_sotto_salva = models.IntegerField()
 
     def dettagli(self):
-        return self.votazionehascarica_set.values('vote', 'charge__politician', 'charge__caricahasgruppo__group', 'voting', 'rebel', 'maggioranza_sotto_salva')
+        return self.votazionehascarica_set.values('vote', 'charge__politician', 'voting', 'rebel', 'maggioranza_sotto_salva')
 
     class Meta:
         db_table = 'opp_votazione'
