@@ -9,8 +9,8 @@ __author__ = 'guglielmo'
 
 urlpatterns = patterns('politici.views',
    url(r'^$', PoliticiView.as_view(), name='api-root'),
-   url(r'^users$', UserList.as_view(), name='user-list'),
-   url(r'^users/(?P<pk>\d+)$', UserDetail.as_view(), name='user-detail'),
+   # url(r'^users$', UserList.as_view(), name='user-list'),
+   # url(r'^users/(?P<pk>\d+)$', UserDetail.as_view(), name='user-detail'),
    url(r'^politicians-export$', PoliticiansExport.as_view(), name='politician-export'),
    url(r'^politicians$', PoliticianList.as_view(), name='politician-list'),
    url(r'^politicians/(?P<pk>\d+)$', PoliticianDetail.as_view(), name='politician-detail'),

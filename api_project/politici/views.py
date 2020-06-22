@@ -57,7 +57,7 @@ class PoliticiView(APIView):
     def get(self, request, **kwargs):
         format = kwargs.get('format', None)
         data = SortedDict([
-            ('users [protected]', reverse('politici:user-list', request=request, format=format)),
+#            ('users [protected]', reverse('politici:user-list', request=request, format=format)),
             ('politicians', reverse('politici:politician-list', request=request, format=format)),
             ('institutions', reverse('politici:institution-list', request=request, format=format)),
             ('chargetypes', reverse('politici:chargetype-list', request=request, format=format)),
