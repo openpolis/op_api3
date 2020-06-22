@@ -18,4 +18,5 @@ Then these values can be set in the `.env` file::
     DB_POLITICI_URL=mysql://root:@127.0.0.1:3307/op_openpolis
     DB_PARLAMENTO16_URL=mysql://root:@127.0.0.1:3307/op_openparlamento
     DB_PARLAMENTO17_URL=mysql://root:@127.0.0.1:3307/opp17
+    DB_PARLAMENTO18_URL=mysql://root:@127.0.0.1:3307/opp18
 
